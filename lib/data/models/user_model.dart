@@ -1,6 +1,7 @@
 class UserModel {
   const UserModel({
     this.id,
+    this.firebaseUid,
     required this.fullName,
     required this.email,
     required this.password,
@@ -18,6 +19,7 @@ class UserModel {
   });
 
   final int? id;
+  final String? firebaseUid;
   final String fullName;
   final String email;
   final String password;
@@ -42,6 +44,7 @@ class UserModel {
   Map<String, Object?> toMap() {
     return {
       'id': id,
+      'firebase_uid': firebaseUid,
       'full_name': fullName,
       'email': email,
       'password': password,
@@ -62,6 +65,7 @@ class UserModel {
   factory UserModel.fromMap(Map<String, Object?> map) {
     return UserModel(
       id: map['id'] as int?,
+      firebaseUid: map['firebase_uid'] as String?,
       fullName: (map['full_name'] as String?) ?? '',
       email: (map['email'] as String?) ?? '',
       password: (map['password'] as String?) ?? '',
@@ -81,6 +85,7 @@ class UserModel {
 
   UserModel copyWith({
     int? id,
+    String? firebaseUid,
     String? fullName,
     String? email,
     String? password,
@@ -98,6 +103,7 @@ class UserModel {
   }) {
     return UserModel(
       id: id ?? this.id,
+      firebaseUid: firebaseUid ?? this.firebaseUid,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       password: password ?? this.password,

@@ -17,6 +17,7 @@ dependencies:
   cloud_firestore: ^5.6.11
   flutter_tts: ^4.2.5
   shared_preferences: ^2.5.3
+  firebase_auth: ^5.7.0
 
 dev_dependencies:
   flutter_test:

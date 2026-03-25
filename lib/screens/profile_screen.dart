@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/repositories/user_repository.dart';
@@ -304,7 +304,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 1.25,
+                      childAspectRatio: 1.05,
                       children: _stats.map((s) => _StatCard(stat: s)).toList(),
                     ),
                   ],
@@ -862,22 +862,28 @@ class _StatCard extends StatelessWidget {
               ),
               child: Icon(stat.icon, color: stat.color, size: 20),
             ),
-            const SizedBox(height: 10),
-            Text(
-              stat.value,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF111827),
+            const Spacer(),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                stat.value,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
               ),
             ),
             const SizedBox(height: 2),
             Text(
               stat.unit,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
           ],
-        ),
+        ),  
       ),
     );
   }

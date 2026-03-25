@@ -30,6 +30,18 @@ class UserLocalDataSource {
     return UserModel.fromMap(maps.first);
   }
 
+  Future<UserModel?> getUserByFirebaseUid(String firebaseUid) async {
+    final db = await _appDatabase.database;
+    final maps = await db.query(
+      AppDatabase.usersTable,
+      where: 'firebase_uid = ?',
+      whereArgs: [firebaseUid],
+      limit: 1,
+    );
+    if (maps.isEmpty) return null;
+    return UserModel.fromMap(maps.first);
+  }
+
   Future<UserModel?> getUserById(int id) async {
     final db = await _appDatabase.database;
     final maps = await db.query(
