@@ -492,7 +492,8 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
       setState(() { _isRecording = false; _hasRecorded = true; });
       Future.delayed(const Duration(seconds: 1), () {
         if (!mounted) return;
-        setState(() => _accuracy = 92);
+        final rng = math.Random();
+        setState(() => _accuracy = 85 + rng.nextInt(16));
         _resultCtrl.forward();
       });
     });
@@ -600,13 +601,13 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
                       child: isExcellent ? const Icon(Icons.check_circle_rounded, color: Colors.white, size: 32) : const Center(child: Text('💪', style: TextStyle(fontSize: 26)))),
                     const SizedBox(width: 14),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(isExcellent ? 'Excellent!' : 'Good try!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isExcellent ? const Color(0xFF15803D) : const Color(0xFF854D0E))),
+                      Text(isExcellent ? 'Rất tốt! 🎉' : 'Cố gắng hơn!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isExcellent ? const Color(0xFF15803D) : const Color(0xFF854D0E))),
                       const SizedBox(height: 2),
-                      Text(isExcellent ? 'Perfect pronunciation!' : 'Practice makes perfect', style: TextStyle(fontSize: 13, color: isExcellent ? const Color(0xFF16A34A) : const Color(0xFF92400E))),
+                      Text(isExcellent ? 'Phát âm rất chuẩn!' : 'Luyện tập thêm nhé', style: TextStyle(fontSize: 13, color: isExcellent ? const Color(0xFF16A34A) : const Color(0xFF92400E))),
                     ])),
                     Column(children: [
-                      Text('$acc%', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: isExcellent ? const Color(0xFF22C55E) : const Color(0xFFEAB308))),
-                      const Text('Accuracy', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                      Text(isExcellent ? 'Rất tốt' : '$acc%', style: TextStyle(fontSize: isExcellent ? 22 : 36, fontWeight: FontWeight.bold, color: isExcellent ? const Color(0xFF22C55E) : const Color(0xFFEAB308))),
+                      Text(isExcellent ? 'Chính xác' : 'Độ chính xác', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
                     ]),
                   ]),
                   const SizedBox(height: 16),
