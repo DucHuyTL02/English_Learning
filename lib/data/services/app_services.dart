@@ -1,0 +1,21 @@
+import '../app_database.dart';
+import '../datasources/dictionary_local_datasource.dart';
+import '../datasources/user_local_datasource.dart';
+import '../repositories/dictionary_repository.dart';
+import '../repositories/user_repository.dart';
+
+class AppServices {
+  AppServices._();
+
+  static final AppDatabase database = AppDatabase.instance;
+  static final UserRepository userRepository = UserRepository(
+    UserLocalDataSource(database),
+  );
+  static final DictionaryRepository dictionaryRepository = DictionaryRepository(
+    DictionaryLocalDataSource(database),
+  );
+
+  static Future<void> initialize() async {
+    await database.database;
+  }
+}

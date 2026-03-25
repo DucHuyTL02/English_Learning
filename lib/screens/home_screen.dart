@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/services/app_services.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -25,11 +27,29 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 // Header
-// ──────────────────────────────────────────────────────────────────────────────
-class _Header extends StatelessWidget {
+// ------------------------------------------------------------------------------
+class _Header extends StatefulWidget {
+  @override
+  State<_Header> createState() => _HeaderState();
+}
+
+class _HeaderState extends State<_Header> {
+  String _displayName = 'Bạn';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveUser();
+  }
+
+  Future<void> _loadActiveUser() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (!mounted || user == null) return;
+    setState(() => _displayName = user.displayName);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -45,16 +65,17 @@ class _Header extends StatelessWidget {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
-                'Xin chào, Sarah! 👋',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A1A)),
+                'Xin chào, $_displayName! 👋',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
+                ),
               ),
-              SizedBox(height: 2),
-              Text(
+              const SizedBox(height: 2),
+              const Text(
                 'Sẵn sàng học hôm nay chưa?',
                 style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
               ),
@@ -68,26 +89,32 @@ class _Header extends StatelessWidget {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      const Icon(Icons.notifications_outlined,
-                          size: 22, color: Color(0xFF6B7280)),
-                      Positioned(
-                      top: -4,
-                      right: -4,
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFA5C5C),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Text('2',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold)),
-                        ),
+                      const Icon(
+                        Icons.notifications_outlined,
+                        size: 22,
+                        color: Color(0xFF6B7280),
                       ),
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFA5C5C),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '2',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -108,9 +135,10 @@ class _Header extends StatelessWidget {
                     borderRadius: BorderRadius.circular(21),
                     boxShadow: const [
                       BoxShadow(
-                          color: Color(0x33FA5C5C),
-                          blurRadius: 8,
-                          offset: Offset(0, 4))
+                        color: Color(0x33FA5C5C),
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: const Center(
@@ -122,8 +150,11 @@ class _Header extends StatelessWidget {
               GestureDetector(
                 onTap: () => context.go('/settings'),
                 child: _IconBtn(
-                  child: const Icon(Icons.settings_outlined,
-                      size: 22, color: Color(0xFF6B7280)),
+                  child: const Icon(
+                    Icons.settings_outlined,
+                    size: 22,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
               ),
             ],
@@ -152,9 +183,9 @@ class _IconBtn extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 // Stats Banner
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 class _StatsBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -166,7 +197,10 @@ class _StatsBanner extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2))
+              color: Color(0x0F000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -232,14 +266,18 @@ class _StatItem extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A1A))),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: Color(0xFF9CA3AF))),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+            ),
           ],
         ),
       ],
@@ -247,9 +285,9 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 // Next Lesson Card
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 class _NextLessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -265,9 +303,10 @@ class _NextLessonCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x40FA5C5C),
-                blurRadius: 20,
-                offset: Offset(0, 8))
+              color: Color(0x40FA5C5C),
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
           ],
         ),
         clipBehavior: Clip.hardEdge,
@@ -304,31 +343,39 @@ class _NextLessonCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text('Đơn vị 1 - Bài 4',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500)),
+                    child: const Text(
+                      'Đơn Vị 1 - Bài 4',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   const Text(
                     'Học Màu Sắc 🎨',
                     style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Thành thạo các màu cơ bản trong tiếng Anh\nvới bài tập thú vị',
                     style: TextStyle(
-                        fontSize: 14, color: Colors.white.withValues(alpha: 0.9)),
+                      fontSize: 14,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -336,14 +383,20 @@ class _NextLessonCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Tiến Độ Bài Học',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.9))),
-                      Text('0%',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.9))),
+                      Text(
+                        'Tiến Độ Bài Học',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      Text(
+                        '0%',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -353,8 +406,9 @@ class _NextLessonCard extends StatelessWidget {
                       value: 0,
                       minHeight: 8,
                       backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -365,9 +419,13 @@ class _NextLessonCard extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () => context.go('/lesson-intro'),
                       icon: const Icon(Icons.play_arrow_rounded, size: 26),
-                      label: const Text('Bắt Đầu Bài Học',
-                          style: TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Bắt Đầu Bài Học',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFFFA5C5C),
@@ -388,9 +446,9 @@ class _NextLessonCard extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 // Learning Path Map
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 
 class _PathNode {
   const _PathNode({
@@ -414,12 +472,61 @@ class _PathNode {
 }
 
 const _pathNodes = [
-  _PathNode(id: 1, title: 'Greetings', emoji: '👋', completed: true, locked: false, xPercent: 0.30, yPercent: 0.08),
-  _PathNode(id: 2, title: 'Family',    emoji: '👨‍👩‍👧', completed: true, locked: false, xPercent: 0.72, yPercent: 0.22),
-  _PathNode(id: 3, title: 'Food',      emoji: '🍎', completed: true, locked: false, xPercent: 0.38, yPercent: 0.38),
-  _PathNode(id: 4, title: 'Colors',    emoji: '🎨', completed: false, locked: false, current: true, xPercent: 0.65, yPercent: 0.55),
-  _PathNode(id: 5, title: 'Animals',   emoji: '🐾', completed: false, locked: true, xPercent: 0.30, yPercent: 0.72),
-  _PathNode(id: 6, title: 'Weather',   emoji: '⛅', completed: false, locked: true, xPercent: 0.68, yPercent: 0.88),
+  _PathNode(
+    id: 1,
+    title: 'Greetings',
+    emoji: '👋',
+    completed: true,
+    locked: false,
+    xPercent: 0.30,
+    yPercent: 0.08,
+  ),
+  _PathNode(
+    id: 2,
+    title: 'Family',
+    emoji: '👨‍👩‍👧',
+    completed: true,
+    locked: false,
+    xPercent: 0.72,
+    yPercent: 0.22,
+  ),
+  _PathNode(
+    id: 3,
+    title: 'Food',
+    emoji: '🍕',
+    completed: true,
+    locked: false,
+    xPercent: 0.38,
+    yPercent: 0.38,
+  ),
+  _PathNode(
+    id: 4,
+    title: 'Colors',
+    emoji: '🎨',
+    completed: false,
+    locked: false,
+    current: true,
+    xPercent: 0.65,
+    yPercent: 0.55,
+  ),
+  _PathNode(
+    id: 5,
+    title: 'Animals',
+    emoji: '🐶',
+    completed: false,
+    locked: true,
+    xPercent: 0.30,
+    yPercent: 0.72,
+  ),
+  _PathNode(
+    id: 6,
+    title: 'Weather',
+    emoji: '🌤',
+    completed: false,
+    locked: true,
+    xPercent: 0.68,
+    yPercent: 0.88,
+  ),
 ];
 
 class _LearningPathMap extends StatelessWidget {
@@ -432,18 +539,24 @@ class _LearningPathMap extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Lộ Trình Học Tập',
-                  style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A))),
+              const Text(
+                'Lộ Trình Học Tập',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
               GestureDetector(
                 onTap: () => context.go('/course-map'),
-                child: const Text('Xem Tất Cả',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFFFA5C5C),
-                        fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Xem Tất Cả',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFFFA5C5C),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -455,9 +568,10 @@ class _LearningPathMap extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               boxShadow: const [
                 BoxShadow(
-                    color: Color(0x0F000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2))
+                  color: Color(0x0F000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
               ],
             ),
             child: ClipRRect(
@@ -482,7 +596,10 @@ class _LearningPathMap extends StatelessWidget {
                             onTap: node.locked
                                 ? null
                                 : () => context.go(
-                                    node.current ? '/lesson-intro' : '/course-map'),
+                                    node.current
+                                        ? '/lesson-intro'
+                                        : '/course-map',
+                                  ),
                             child: _NodeWidget(node: node),
                           ),
                         );
@@ -565,23 +682,27 @@ class _NodeWidget extends StatelessWidget {
     if (node.completed) {
       bgStart = const Color(0xFFFBEF76);
       bgEnd = const Color(0xFFFEC288);
-      nodeIcon = const Icon(Icons.check_circle_rounded,
-          color: Colors.white, size: 28);
+      nodeIcon = const Icon(
+        Icons.check_circle_rounded,
+        color: Colors.white,
+        size: 28,
+      );
     } else if (node.current) {
       bgStart = const Color(0xFFFA5C5C);
       bgEnd = const Color(0xFFFD8A6B);
-      nodeIcon = Text(node.emoji,
-          style: const TextStyle(fontSize: 26));
+      nodeIcon = Text(node.emoji, style: const TextStyle(fontSize: 26));
     } else if (node.locked) {
       bgStart = const Color(0xFFE5E7EB);
       bgEnd = const Color(0xFFE5E7EB);
-      nodeIcon = const Icon(Icons.lock_rounded,
-          color: Color(0xFF9CA3AF), size: 24);
+      nodeIcon = const Icon(
+        Icons.lock_rounded,
+        color: Color(0xFF9CA3AF),
+        size: 24,
+      );
     } else {
       bgStart = Colors.white;
       bgEnd = Colors.white;
-      nodeIcon = Text(node.emoji,
-          style: const TextStyle(fontSize: 22));
+      nodeIcon = Text(node.emoji, style: const TextStyle(fontSize: 22));
     }
 
     return Column(
@@ -601,8 +722,7 @@ class _NodeWidget extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: (!node.completed && !node.current && !node.locked)
-                    ? Border.all(
-                        color: const Color(0xFFFA5C5C), width: 3)
+                    ? Border.all(color: const Color(0xFFFA5C5C), width: 3)
                     : null,
                 boxShadow: [
                   BoxShadow(
@@ -628,34 +748,36 @@ class _NodeWidget extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: Color(0x1A000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 1))
+                        color: Color(0x1A000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
                     ],
                   ),
-                  child: const Icon(Icons.check_circle,
-                      color: Color(0xFF22C55E), size: 18),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF22C55E),
+                    size: 18,
+                  ),
                 ),
               ),
           ],
         ),
         const SizedBox(height: 6),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
-            color: node.current
-                ? const Color(0xFFFA5C5C)
-                : Colors.white,
+            color: node.current ? const Color(0xFFFA5C5C) : Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: node.current
                 ? null
                 : Border.all(color: const Color(0xFFE5E7EB)),
             boxShadow: const [
               BoxShadow(
-                  color: Color(0x0F000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 1))
+                color: Color(0x0F000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
             ],
           ),
           child: Text(
@@ -663,9 +785,7 @@ class _NodeWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: node.current
-                  ? Colors.white
-                  : const Color(0xFF374151),
+              color: node.current ? Colors.white : const Color(0xFF374151),
             ),
           ),
         ),
@@ -674,27 +794,27 @@ class _NodeWidget extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 // Quick Actions
-// ──────────────────────────────────────────────────────────────────────────────
+// ------------------------------------------------------------------------------
 class _QuickActions extends StatelessWidget {
   final _actions = const [
     _Action(
-      emoji: '💭',
+      emoji: '📚',
       title: 'Từ Vựng',
       subtitle: 'Luyện từ',
       gradientColors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
       route: '/practice/vocabulary',
     ),
     _Action(
-      emoji: '🗣️',
+      emoji: '🎤',
       title: 'Phát Âm',
       subtitle: 'Cải thiện khả năng nói',
       gradientColors: [Color(0xFFFEC288), Color(0xFFFBEF76)],
       route: '/practice/speaking',
     ),
     _Action(
-      emoji: '📚',
+      emoji: '📖',
       title: 'Từ Điển',
       subtitle: 'Từ đã lưu',
       gradientColors: [Color(0xFFFD8A6B), Color(0xFFFEC288)],
@@ -718,11 +838,14 @@ class _QuickActions extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Luyện Tập Nhanh',
-              style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A))),
+          const Text(
+            'Luyện Tập Nhanh',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
           const SizedBox(height: 12),
           GridView.count(
             crossAxisCount: 2,
@@ -768,9 +891,10 @@ class _ActionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x0F000000),
-                blurRadius: 8,
-                offset: Offset(0, 2))
+              color: Color(0x0F000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         padding: const EdgeInsets.all(14),
@@ -789,20 +913,23 @@ class _ActionCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
-                child: Text(action.emoji,
-                    style: const TextStyle(fontSize: 22)),
+                child: Text(action.emoji, style: const TextStyle(fontSize: 22)),
               ),
             ),
             const SizedBox(height: 10),
-            Text(action.title,
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A))),
+            Text(
+              action.title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(action.subtitle,
-                style: const TextStyle(
-                    fontSize: 11, color: Color(0xFF9CA3AF))),
+            Text(
+              action.subtitle,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+            ),
           ],
         ),
       ),

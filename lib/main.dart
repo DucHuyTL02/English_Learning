@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'data/services/app_services.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -12,7 +13,9 @@ import 'screens/dictionary_screen.dart';
 import 'screens/streak_screen.dart';
 import 'widgets/bottom_navigation.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppServices.initialize();
   runApp(const MainApp());
 }
 
@@ -47,10 +50,7 @@ class _ShellScaffold extends StatelessWidget {
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const SplashScreen(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/onboarding-1',
       builder: (context, state) => const OnboardingScreen1(),
@@ -63,10 +63,7 @@ final _router = GoRouter(
       path: '/onboarding-3',
       builder: (context, state) => const OnboardingScreen3(),
     ),
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
@@ -129,25 +126,25 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/subscription',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Gói Premium'),
+      builder: (context, state) =>
+          const _PlaceholderScreen(title: 'Gói Premium'),
     ),
     GoRoute(
       path: '/help',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Trợ Giúp & Hỗ Trợ'),
+      builder: (context, state) =>
+          const _PlaceholderScreen(title: 'Trợ Giúp & Hỗ Trợ'),
     ),
     GoRoute(
       path: '/forgot-password',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Đổi Mật Khẩu'),
+      builder: (context, state) =>
+          const _PlaceholderScreen(title: 'Đổi Mật Khẩu'),
     ),
 
     // ── Shell: các màn hình chính có BottomNavigation ──────────────────────
     ShellRoute(
       builder: (context, state, child) => _ShellScaffold(child: child),
       routes: [
-        GoRoute(
-          path: '/home',
-          builder: (context, state) => const HomeScreen(),
-        ),
+        GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
         GoRoute(
           path: '/course-map',
           builder: (context, state) => const CourseMapScreen(),

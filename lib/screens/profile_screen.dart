@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared helpers
-// ─────────────────────────────────────────────────────────────────────────────
+import '../data/repositories/user_repository.dart';
+import '../data/services/app_services.dart';
 
 class _SlideIn extends StatefulWidget {
   const _SlideIn({
@@ -31,11 +30,17 @@ class _SlideInState extends State<_SlideIn>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
-    _slide = Tween<double>(begin: 1.0, end: 0.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-    _opacity = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _slide = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _opacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) _ctrl.forward();
     });
@@ -54,10 +59,7 @@ class _SlideInState extends State<_SlideIn>
       builder: (_, child) => Opacity(
         opacity: _opacity.value,
         child: Transform.translate(
-          offset: Offset(
-            widget.dx * _slide.value,
-            widget.dy * _slide.value,
-          ),
+          offset: Offset(widget.dx * _slide.value, widget.dy * _slide.value),
           child: child,
         ),
       ),
@@ -66,9 +68,6 @@ class _SlideInState extends State<_SlideIn>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// USER PROFILE SCREEN
-// ─────────────────────────────────────────────────────────────────────────────
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -86,74 +85,105 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   static const int _level = 8;
   static const double _levelPct = 0.65;
   static const double _goalPct = 0.75;
+  String _profileName = 'Sarah Chen';
+  int _savedWordCount = 342;
 
-  final _stats = const [
+  List<_StatData> get _stats => [
     _StatData(
-        label: 'Ngày Liên Tiếp',
-        value: '15',
-        unit: 'ngày',
-        icon: Icons.local_fire_department_rounded,
-        color: Color(0xFFFA5C5C),
-        route: '/streak'),
+      label: 'Ngày Liên Tiếp',
+      value: '15',
+      unit: 'ngày',
+      icon: Icons.local_fire_department_rounded,
+      color: Color(0xFFFA5C5C),
+      route: '/streak',
+    ),
     _StatData(
-        label: 'Từ Đã Học',
-        value: '342',
-        unit: 'từ',
-        icon: Icons.menu_book_rounded,
-        color: Color(0xFFFD8A6B),
-        route: '/dictionary'),
+      label: 'Từ Đã Học',
+      value: '$_savedWordCount',
+      unit: 'từ',
+      icon: Icons.menu_book_rounded,
+      color: Color(0xFFFD8A6B),
+      route: '/dictionary',
+    ),
     _StatData(
-        label: 'Tổng Thời Gian',
-        value: '24',
-        unit: 'giờ',
-        icon: Icons.access_time_rounded,
-        color: Color(0xFFFEC288),
-        route: null),
+      label: 'Tổng Thời Gian',
+      value: '24',
+      unit: 'giờ',
+      icon: Icons.access_time_rounded,
+      color: Color(0xFFFEC288),
+      route: null,
+    ),
     _StatData(
-        label: 'Thành Tích',
-        value: '12',
-        unit: 'huy hiệu',
-        icon: Icons.emoji_events_rounded,
-        color: Color(0xFFFBEF76),
-        route: '/achievements'),
+      label: 'Thành Tích',
+      value: '12',
+      unit: 'huy hiệu',
+      icon: Icons.emoji_events_rounded,
+      color: Color(0xFFFBEF76),
+      route: '/achievements',
+    ),
   ];
 
   final _achievements = const [
     _AchievData(
-        title: 'Bước Đầu Tiên',
-        desc: 'Hoàn thành bài học đầu tiên',
-        emoji: '🎯',
-        date: '2 ngày trước'),
+      title: 'Bước Đầu Tiên',
+      desc: 'Hoàn thành bài học đầu tiên',
+      emoji: '🎯',
+      date: '2 ngày trước',
+    ),
     _AchievData(
-        title: 'Bậc Thầy Từ Vựng',
-        desc: 'Học 100 từ mới',
-        emoji: '📚',
-        date: '1 tuần trước'),
+      title: 'Bậc Thầy Từ Vựng',
+      desc: 'Học 100 từ mới',
+      emoji: '📚',
+      date: '1 tuần trước',
+    ),
     _AchievData(
-        title: 'Người Học Kiên Trì',
-        desc: 'Chuỗi học 7 ngày',
-        emoji: '🔥',
-        date: '2 tuần trước'),
+      title: 'Người Học Kiên Trì',
+      desc: 'Chuỗi học 7 ngày',
+      emoji: '🔥',
+      date: '2 tuần trước',
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
+    _loadProfileSummary();
     _progressCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1000));
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
     _levelProgress = Tween<double>(begin: 0, end: _levelPct).animate(
       CurvedAnimation(
-          parent: _progressCtrl,
-          curve: const Interval(0.0, 1.0, curve: Curves.easeOut)),
+        parent: _progressCtrl,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
+      ),
     );
     _goalProgress = Tween<double>(begin: 0, end: _goalPct).animate(
       CurvedAnimation(
-          parent: _progressCtrl,
-          curve: const Interval(0.2, 1.0, curve: Curves.easeOut)),
+        parent: _progressCtrl,
+        curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
+      ),
     );
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) _progressCtrl.forward();
     });
+  }
+
+  Future<void> _loadProfileSummary() async {
+    try {
+      final user = await AppServices.userRepository.getActiveUser();
+      final savedWordCount = await AppServices.dictionaryRepository
+          .countSavedWords();
+      if (!mounted) return;
+      setState(() {
+        if (user != null) {
+          _profileName = user.displayName;
+        }
+        _savedWordCount = savedWordCount;
+      });
+    } catch (_) {
+      // Keep default values if loading fails.
+    }
   }
 
   @override
@@ -177,6 +207,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 level: _level,
                 progressAnim: _levelProgress,
                 progressCtrl: _progressCtrl,
+                displayName: _profileName,
               ),
             ),
 
@@ -203,11 +234,14 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Thống Kê Học Tập',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827))),
+                    const Text(
+                      'Thống Kê Học Tập',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     GridView.count(
                       crossAxisCount: 2,
@@ -216,9 +250,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                       childAspectRatio: 1.25,
-                      children: _stats
-                          .map((s) => _StatCard(stat: s))
-                          .toList(),
+                      children: _stats.map((s) => _StatCard(stat: s)).toList(),
                     ),
                   ],
                 ),
@@ -236,9 +268,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: const [
                       BoxShadow(
-                          color: Color(0x0F000000),
-                          blurRadius: 8,
-                          offset: Offset(0, 2))
+                        color: Color(0x0F000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
                     ],
                   ),
                   padding: const EdgeInsets.all(20),
@@ -248,16 +281,22 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Mục Tiêu Hàng Ngày',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF111827))),
-                          Text('${(_goalPct * 100).toInt()}%',
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFFFA5C5C))),
+                          const Text(
+                            'Mục Tiêu Hàng Ngày',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                          Text(
+                            '${(_goalPct * 100).toInt()}%',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFA5C5C),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -270,14 +309,19 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                             minHeight: 12,
                             backgroundColor: const Color(0xFFF3F4F6),
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFFFA5C5C)),
+                              Color(0xFFFA5C5C),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text('15 trong 20 phút đã hoàn thành hôm nay',
-                          style: TextStyle(
-                              fontSize: 13, color: Color(0xFF9CA3AF))),
+                      const Text(
+                        '15 trong 20 phút đã hoàn thành hôm nay',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -294,38 +338,49 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Thành Tích Gần Đây',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF111827))),
+                        const Text(
+                          'Thành Tích Gần Đây',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
                         GestureDetector(
                           onTap: () => context.go('/achievements'),
                           child: Row(
                             children: const [
-                              Text('Xem Tất Cả',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFFFA5C5C),
-                                      fontWeight: FontWeight.w600)),
+                              Text(
+                                'Xem Tất Cả',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFFFA5C5C),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               SizedBox(width: 2),
-                              Icon(Icons.chevron_right_rounded,
-                                  size: 16, color: Color(0xFFFA5C5C)),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 16,
+                                color: Color(0xFFFA5C5C),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    ..._achievements.asMap().entries.map((e) => _SlideIn(
-                          delay: 700 + e.key * 100,
-                          dx: -20,
-                          dy: 0,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _AchievCard(data: e.value),
-                          ),
-                        )),
+                    ..._achievements.asMap().entries.map(
+                      (e) => _SlideIn(
+                        delay: 700 + e.key * 100,
+                        dx: -20,
+                        dy: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _AchievCard(data: e.value),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -339,16 +394,19 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 child: Column(
                   children: [
                     _OutlineBtn(
-                        label: 'Chỉnh Sửa Hồ Sơ',
-                        onTap: () => context.go('/edit-profile')),
+                      label: 'Chỉnh Sửa Hồ Sơ',
+                      onTap: () => context.go('/edit-profile'),
+                    ),
                     const SizedBox(height: 10),
                     _GradientBtn(
-                        label: '👑  Nâng Cấp Premium',
-                        onTap: () => context.go('/subscription')),
+                      label: '👑  Nâng Cấp Premium',
+                      onTap: () => context.go('/subscription'),
+                    ),
                     const SizedBox(height: 10),
                     _SolidBtn(
-                        label: 'Đi Tới Cài Đặt',
-                        onTap: () => context.go('/settings')),
+                      label: 'Đi Tới Cài Đặt',
+                      onTap: () => context.go('/settings'),
+                    ),
                   ],
                 ),
               ),
@@ -366,10 +424,12 @@ class _ProfileHeader extends StatelessWidget {
     required this.level,
     required this.progressAnim,
     required this.progressCtrl,
+    required this.displayName,
   });
   final int level;
   final Animation<double> progressAnim;
   final AnimationController progressCtrl;
+  final String displayName;
 
   @override
   Widget build(BuildContext context) {
@@ -420,11 +480,14 @@ class _ProfileHeader extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Hồ Sơ Của Tôi',
-                      style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white)),
+                  const Text(
+                    'Hồ Sơ Của Tôi',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () => context.go('/settings'),
                     child: Container(
@@ -434,8 +497,11 @@ class _ProfileHeader extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.settings_outlined,
-                          color: Colors.white, size: 20),
+                      child: const Icon(
+                        Icons.settings_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],
@@ -458,14 +524,15 @@ class _ProfileHeader extends StatelessWidget {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: const [
                               BoxShadow(
-                                  color: Color(0x30000000),
-                                  blurRadius: 12,
-                                  offset: Offset(0, 4))
+                                color: Color(0x30000000),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
                             ],
                           ),
                           child: const Center(
-                              child: Text('👤',
-                                  style: TextStyle(fontSize: 44))),
+                            child: Text('👤', style: TextStyle(fontSize: 44)),
+                          ),
                         ),
                       ),
                       Positioned(
@@ -479,13 +546,17 @@ class _ProfileHeader extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                  color: Color(0x30000000),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2))
+                                color: Color(0x30000000),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
                             ],
                           ),
-                          child: const Icon(Icons.edit_rounded,
-                              size: 14, color: Color(0xFF374151)),
+                          child: const Icon(
+                            Icons.edit_rounded,
+                            size: 14,
+                            color: Color(0xFF374151),
+                          ),
                         ),
                       ),
                     ],
@@ -494,28 +565,39 @@ class _ProfileHeader extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Sarah Chen',
-                          style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text('Học viên Trung Cấp',
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.8))),
+                      Text(
+                        'Học viên Trung Cấp',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.star_rounded,
-                              color: Color(0xFFFBEF76), size: 16),
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Color(0xFFFBEF76),
+                            size: 16,
+                          ),
                           const SizedBox(width: 4),
-                          Text('Cấp độ $level',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      Colors.white.withValues(alpha: 0.9))),
+                          Text(
+                            'Cấp độ $level',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -539,19 +621,20 @@ class _ProfileHeader extends StatelessWidget {
                         Text(
                           'Tiến độ đến Cấp độ ${level + 1}',
                           style: TextStyle(
-                              fontSize: 13,
-                              color:
-                                  Colors.white.withValues(alpha: 0.9),
-                              fontWeight: FontWeight.w500),
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         AnimatedBuilder(
                           animation: progressAnim,
                           builder: (context, _) => Text(
                             '${(progressAnim.value * 100).toInt()}%',
                             style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ],
@@ -564,10 +647,10 @@ class _ProfileHeader extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: progressAnim.value,
                           minHeight: 10,
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.3),
+                          backgroundColor: Colors.white.withValues(alpha: 0.3),
                           valueColor: const AlwaysStoppedAnimation<Color>(
-                              Colors.white),
+                            Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -577,9 +660,9 @@ class _ProfileHeader extends StatelessWidget {
                       child: Text(
                         '350 / 500 XP',
                         style: TextStyle(
-                            fontSize: 11,
-                            color:
-                                Colors.white.withValues(alpha: 0.7)),
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
                       ),
                     ),
                   ],
@@ -604,9 +687,10 @@ class _StreakBanner extends StatelessWidget {
         border: Border.all(color: const Color(0xFFFBEF76), width: 2),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x1A000000),
-              blurRadius: 16,
-              offset: Offset(0, 6))
+            color: Color(0x1A000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(16),
@@ -617,36 +701,47 @@ class _StreakBanner extends StatelessWidget {
             height: 60,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                  colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight),
+                colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.local_fire_department_rounded,
-                color: Colors.white, size: 30),
+            child: const Icon(
+              Icons.local_fire_department_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text('Chuỗi 15 Ngày!',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827))),
+                Text(
+                  'Chuỗi 15 Ngày!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
+                ),
                 SizedBox(height: 2),
-                Text('Cố lên! Đừng phá vỡ chuỗi 🔥',
-                    style: TextStyle(
-                        fontSize: 13, color: Color(0xFF6B7280))),
+                Text(
+                  'Cố lên! Đừng phá vỡ chuỗi 🔥',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                ),
               ],
             ),
           ),
-          const Text('15',
-              style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFFA5C5C))),
+          const Text(
+            '15',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFFA5C5C),
+            ),
+          ),
         ],
       ),
     );
@@ -688,9 +783,10 @@ class _StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x0F000000),
-                blurRadius: 8,
-                offset: Offset(0, 2))
+              color: Color(0x0F000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         padding: const EdgeInsets.all(16),
@@ -707,15 +803,19 @@ class _StatCard extends StatelessWidget {
               child: Icon(stat.icon, color: stat.color, size: 20),
             ),
             const SizedBox(height: 10),
-            Text(stat.value,
-                style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827))),
+            Text(
+              stat.value,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF111827),
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(stat.unit,
-                style: const TextStyle(
-                    fontSize: 12, color: Color(0xFF9CA3AF))),
+            Text(
+              stat.unit,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            ),
           ],
         ),
       ),
@@ -750,7 +850,10 @@ class _AchievCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2))
+            color: Color(0x0F000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(14),
@@ -761,35 +864,44 @@ class _AchievCard extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                  colors: [Color(0xFFFBEF76), Color(0xFFFEC288)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight),
+                colors: [Color(0xFFFBEF76), Color(0xFFFEC288)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
-                child: Text(data.emoji,
-                    style: const TextStyle(fontSize: 22))),
+              child: Text(data.emoji, style: const TextStyle(fontSize: 22)),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(data.title,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827))),
+                Text(
+                  data.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(data.desc,
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF9CA3AF))),
+                Text(
+                  data.desc,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ),
               ],
             ),
           ),
-          Text(data.date,
-              style: const TextStyle(
-                  fontSize: 11, color: Color(0xFFD1D5DB))),
+          Text(
+            data.date,
+            style: const TextStyle(fontSize: 11, color: Color(0xFFD1D5DB)),
+          ),
         ],
       ),
     );
@@ -814,11 +926,14 @@ class _OutlineBtn extends StatelessWidget {
           side: const BorderSide(color: Color(0xFFE5E7EB), width: 2),
           backgroundColor: Colors.white,
         ),
-        child: Text(label,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF374151))),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
       ),
     );
   }
@@ -838,23 +953,28 @@ class _GradientBtn extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-              colors: [Color(0xFFFBEF76), Color(0xFFFEC288)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight),
+            colors: [Color(0xFFFBEF76), Color(0xFFFEC288)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
           borderRadius: BorderRadius.circular(50),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x30FEC288),
-                blurRadius: 12,
-                offset: Offset(0, 4))
+              color: Color(0x30FEC288),
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
           ],
         ),
-        child: Text(label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF111827))),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF111827),
+          ),
+        ),
       ),
     );
   }
@@ -878,9 +998,10 @@ class _SolidBtn extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
         ),
-        child: Text(label,
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w600)),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
@@ -898,15 +1019,22 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _nameCtrl =
-      TextEditingController(text: 'Sarah Chen');
-  final _emailCtrl =
-      TextEditingController(text: 'sarah.chen@example.com');
-  final _bioCtrl =
-      TextEditingController(text: 'Passionate English learner 📚');
-  final _locationCtrl =
-      TextEditingController(text: 'San Francisco, CA');
+  final _nameCtrl = TextEditingController(text: 'Sarah Chen');
+  final _emailCtrl = TextEditingController(text: 'sarah.chen@example.com');
+  final _bioCtrl = TextEditingController(
+    text: 'Passionate English learner 📚',
+  );
+  final _locationCtrl = TextEditingController(text: 'San Francisco, CA');
   String _birthdate = '1995-03-15';
+  int? _activeUserId;
+  bool _isSaving = false;
+  bool _isLoadingUser = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveUser();
+  }
 
   @override
   void dispose() {
@@ -915,6 +1043,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _bioCtrl.dispose();
     _locationCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadActiveUser() async {
+    try {
+      final user = await AppServices.userRepository.getActiveUser();
+      if (!mounted || user == null) return;
+      setState(() {
+        _activeUserId = user.id;
+        _nameCtrl.text = user.fullName;
+        _emailCtrl.text = user.email;
+        _bioCtrl.text = user.bio;
+        _locationCtrl.text = user.location;
+        _birthdate = user.birthDate.isEmpty ? _birthdate : user.birthDate;
+      });
+    } catch (_) {
+      // Keep fallback values if loading fails.
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingUser = false);
+      }
+    }
   }
 
   Future<void> _pickDate() async {
@@ -926,9 +1075,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: const ColorScheme.light(
-              primary: Color(0xFFFA5C5C),
-              onPrimary: Colors.white,
-              surface: Colors.white),
+            primary: Color(0xFFFA5C5C),
+            onPrimary: Colors.white,
+            surface: Colors.white,
+          ),
         ),
         child: child!,
       ),
@@ -939,6 +1089,90 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       });
     }
+  }
+
+  Future<void> _saveProfile() async {
+    if (_activeUserId == null) {
+      _showSnackBar('Không tìm thấy tài khoản đang đăng nhập.');
+      return;
+    }
+    if (_nameCtrl.text.trim().isEmpty || _emailCtrl.text.trim().isEmpty) {
+      _showSnackBar('Họ tên và email không được để trống.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      await AppServices.userRepository.updateProfile(
+        userId: _activeUserId!,
+        fullName: _nameCtrl.text.trim(),
+        email: _emailCtrl.text.trim(),
+        bio: _bioCtrl.text.trim(),
+        location: _locationCtrl.text.trim(),
+        birthDate: _birthdate.trim(),
+      );
+      if (!mounted) return;
+      context.go('/profile');
+    } on UserRepositoryException catch (e) {
+      if (!mounted) return;
+      _showSnackBar(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar('Không thể lưu hồ sơ, vui lòng thử lại.');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xóa tài khoản'),
+        content: const Text(
+          'Bạn có chắc muốn xóa tài khoản này không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'Xóa',
+              style: TextStyle(color: Color(0xFFDC2626)),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (shouldDelete != true) return;
+
+    try {
+      if (_activeUserId != null) {
+        await AppServices.userRepository.deleteUser(_activeUserId!);
+      }
+      if (!mounted) return;
+      context.go('/login');
+    } on UserRepositoryException catch (e) {
+      if (!mounted) return;
+      _showSnackBar(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar('Không thể xóa tài khoản lúc này.');
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFA5C5C),
+      ),
+    );
   }
 
   @override
@@ -962,16 +1196,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   IconButton(
                     onPressed: () => context.go('/profile'),
-                    icon: const Icon(Icons.arrow_back_rounded,
-                        color: Color(0xFF374151)),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Color(0xFF374151),
+                    ),
                   ),
                   const Expanded(
-                    child: Text('Chỉnh Sửa Hồ Sơ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF111827))),
+                    child: Text(
+                      'Chỉnh Sửa Hồ Sơ',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 48),
                 ],
@@ -981,184 +1220,234 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
           // ── Scrollable content ──
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  // Avatar
-                  _SlideIn(
-                    delay: 100,
+            child: _isLoadingUser
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        Stack(
-                          children: [
-                            Container(
-                              width: 110,
-                              height: 110,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFFA5C5C),
-                                      Color(0xFFFD8A6B)
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight),
-                                shape: BoxShape.circle,
-                                boxShadow: const [
-                                  BoxShadow(
-                                      color: Color(0x40FA5C5C),
-                                      blurRadius: 16,
-                                      offset: Offset(0, 6))
+                        // Avatar
+                        _SlideIn(
+                          delay: 100,
+                          child: Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  Container(
+                                    width: 110,
+                                    height: 110,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFA5C5C),
+                                          Color(0xFFFD8A6B),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      shape: BoxShape.circle,
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x40FA5C5C),
+                                          blurRadius: 16,
+                                          offset: Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Center(
+                                      child: Text(
+                                        '👤',
+                                        style: TextStyle(fontSize: 54),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFBEF76),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        ),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Color(0x20000000),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt_rounded,
+                                        size: 18,
+                                        color: Color(0xFF374151),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
-                              child: const Center(
-                                  child: Text('👤',
-                                      style: TextStyle(fontSize: 54))),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFBEF76),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: Colors.white, width: 3),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                        color: Color(0x20000000),
-                                        blurRadius: 6)
-                                  ],
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Nhấn để đổi ảnh',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF9CA3AF),
                                 ),
-                                child: const Icon(Icons.camera_alt_rounded,
-                                    size: 18, color: Color(0xFF374151)),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text('Nhấn để đổi ảnh',
-                            style: TextStyle(
-                                fontSize: 13, color: Color(0xFF9CA3AF))),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Form fields
-                  _SlideIn(
-                    delay: 200,
-                    child: Column(
-                      children: [
-                        _EditField(
-                            label: 'Họ Tên',
-                            icon: Icons.person_outline_rounded,
-                            controller: _nameCtrl),
-                        const SizedBox(height: 16),
-                        _EditField(
-                            label: 'Email',
-                            icon: Icons.mail_outline_rounded,
-                            controller: _emailCtrl,
-                            keyboardType: TextInputType.emailAddress),
-                        const SizedBox(height: 16),
-                        _EditMultilineField(
-                            label: 'Bio', controller: _bioCtrl),
-                        const SizedBox(height: 16),
-                        _EditField(
-                            label: 'Địa Điểm',
-                            icon: Icons.location_on_outlined,
-                            controller: _locationCtrl),
-                        const SizedBox(height: 16),
-                        _DateField(
-                            label: 'Ngày Sinh',
-                            value: _birthdate,
-                            onTap: _pickDate),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // Action buttons
-                  _SlideIn(
-                    delay: 300,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () => context.go('/profile'),
-                            style: ElevatedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
-                              shape: const StadiumBorder(),
-                              backgroundColor: const Color(0xFFFA5C5C),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                            ),
-                            child: const Text('Lưu Thay Đổi',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600)),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () => context.go('/profile'),
-                            style: OutlinedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
-                              shape: const StadiumBorder(),
-                              side: const BorderSide(
-                                  color: Color(0xFFE5E7EB), width: 2),
-                            ),
-                            child: const Text('Hủy',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF374151))),
+                        const SizedBox(height: 28),
+
+                        // Form fields
+                        _SlideIn(
+                          delay: 200,
+                          child: Column(
+                            children: [
+                              _EditField(
+                                label: 'Họ Tên',
+                                icon: Icons.person_outline_rounded,
+                                controller: _nameCtrl,
+                              ),
+                              const SizedBox(height: 16),
+                              _EditField(
+                                label: 'Email',
+                                icon: Icons.mail_outline_rounded,
+                                controller: _emailCtrl,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: 16),
+                              _EditMultilineField(
+                                label: 'Bio',
+                                controller: _bioCtrl,
+                              ),
+                              const SizedBox(height: 16),
+                              _EditField(
+                                label: 'Địa Điểm',
+                                icon: Icons.location_on_outlined,
+                                controller: _locationCtrl,
+                              ),
+                              const SizedBox(height: 16),
+                              _DateField(
+                                label: 'Ngày Sinh',
+                                value: _birthdate,
+                                onTap: _pickDate,
+                              ),
+                            ],
                           ),
                         ),
+
+                        const SizedBox(height: 28),
+
+                        // Action buttons
+                        _SlideIn(
+                          delay: 300,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _isSaving ? null : _saveProfile,
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: const StadiumBorder(),
+                                    backgroundColor: const Color(0xFFFA5C5C),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                  ),
+                                  child: _isSaving
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.white,
+                                                ),
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Lưu Thay Đổi',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: () => context.go('/profile'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: const StadiumBorder(),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE5E7EB),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Hủy',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF374151),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+                        const Divider(color: Color(0xFFE5E7EB)),
+                        const SizedBox(height: 20),
+
+                        // Account actions
+                        _SlideIn(
+                          delay: 400,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Tùy Chọn Tài Khoản',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _AccountActionBtn(
+                                label: 'Đổi Mật Khẩu',
+                                danger: false,
+                                onTap: () {},
+                              ),
+                              const SizedBox(height: 10),
+                              _AccountActionBtn(
+                                label: 'Xóa Tài Khoản',
+                                danger: true,
+                                onTap: _deleteAccount,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-                  const Divider(color: Color(0xFFE5E7EB)),
-                  const SizedBox(height: 20),
-
-                  // Account actions
-                  _SlideIn(
-                    delay: 400,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Tùy Chọn Tài Khoản',
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF111827))),
-                        const SizedBox(height: 12),
-                        _AccountActionBtn(
-                            label: 'Đổi Mật Khẩu',
-                            danger: false,
-                            onTap: () {}),
-                        const SizedBox(height: 10),
-                        _AccountActionBtn(
-                            label: 'Xóa Tài Khoản',
-                            danger: true,
-                            onTap: () {}),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -1183,11 +1472,14 @@ class _EditField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF374151))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -1196,18 +1488,22 @@ class _EditField extends StatelessWidget {
             prefixIcon: Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
             filled: true,
             fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide:
-                    const BorderSide(color: Color(0xFFFA5C5C), width: 2)),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFFA5C5C), width: 2),
+            ),
           ),
         ),
       ],
@@ -1216,8 +1512,7 @@ class _EditField extends StatelessWidget {
 }
 
 class _EditMultilineField extends StatelessWidget {
-  const _EditMultilineField(
-      {required this.label, required this.controller});
+  const _EditMultilineField({required this.label, required this.controller});
   final String label;
   final TextEditingController controller;
 
@@ -1226,11 +1521,14 @@ class _EditMultilineField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF374151))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -1242,15 +1540,17 @@ class _EditMultilineField extends StatelessWidget {
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.all(16),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide:
-                    const BorderSide(color: Color(0xFFFA5C5C), width: 2)),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFFA5C5C), width: 2),
+            ),
           ),
         ),
       ],
@@ -1259,10 +1559,11 @@ class _EditMultilineField extends StatelessWidget {
 }
 
 class _DateField extends StatelessWidget {
-  const _DateField(
-      {required this.label,
-      required this.value,
-      required this.onTap});
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
   final String label;
   final String value;
   final VoidCallback onTap;
@@ -1272,17 +1573,19 @@ class _DateField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF374151))),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -1290,12 +1593,19 @@ class _DateField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_month_outlined,
-                    color: Color(0xFF9CA3AF), size: 20),
+                const Icon(
+                  Icons.calendar_month_outlined,
+                  color: Color(0xFF9CA3AF),
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 15, color: Color(0xFF111827))),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF111827),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1306,10 +1616,11 @@ class _DateField extends StatelessWidget {
 }
 
 class _AccountActionBtn extends StatelessWidget {
-  const _AccountActionBtn(
-      {required this.label,
-      required this.danger,
-      required this.onTap});
+  const _AccountActionBtn({
+    required this.label,
+    required this.danger,
+    required this.onTap,
+  });
   final String label;
   final bool danger;
   final VoidCallback onTap;
@@ -1320,23 +1631,22 @@ class _AccountActionBtn extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: danger
-                  ? const Color(0xFFFECACA)
-                  : const Color(0xFFE5E7EB)),
+            color: danger ? const Color(0xFFFECACA) : const Color(0xFFE5E7EB),
+          ),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: danger
-                    ? const Color(0xFFDC2626)
-                    : const Color(0xFF374151))),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: danger ? const Color(0xFFDC2626) : const Color(0xFF374151),
+          ),
+        ),
       ),
     );
   }
@@ -1357,80 +1667,158 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifications = true;
   bool _sound = true;
   bool _darkMode = false;
+  bool _isLoading = true;
+  int? _activeUserId;
+  String _displayName = 'Sarah Chen';
+  String _displayEmail = 'sarah.chen@example.com';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final user = await AppServices.userRepository.getActiveUser();
+      if (!mounted || user == null) return;
+      setState(() {
+        _activeUserId = user.id;
+        _displayName = user.fullName;
+        _displayEmail = user.email;
+        _notifications = user.notificationsEnabled;
+        _sound = user.soundEnabled;
+        _darkMode = user.darkModeEnabled;
+      });
+    } catch (_) {
+      // Keep defaults if loading fails.
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _persistSettings() async {
+    if (_activeUserId == null) return;
+    try {
+      await AppServices.userRepository.updatePreferences(
+        userId: _activeUserId!,
+        notificationsEnabled: _notifications,
+        soundEnabled: _sound,
+        darkModeEnabled: _darkMode,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể lưu cài đặt, vui lòng thử lại.'),
+          backgroundColor: Color(0xFFFA5C5C),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final groups = [
-      _SettingsGroup(title: 'Tài Khoản', items: [
-        _SettingsItem(
+      _SettingsGroup(
+        title: 'Tài Khoản',
+        items: [
+          _SettingsItem(
             icon: Icons.person_outline_rounded,
             label: 'Chỉnh Sửa Hồ Sơ',
             desc: 'Cập nhật thông tin cá nhân',
             type: _ItemType.navigate,
-            onTap: () => context.go('/edit-profile')),
-        _SettingsItem(
+            onTap: () => context.go('/edit-profile'),
+          ),
+          _SettingsItem(
             icon: Icons.smartphone_rounded,
             label: 'Gói Premium',
             desc: 'Nâng cấp để mở khóa tất cả tính năng',
             type: _ItemType.navigate,
-            onTap: () => context.go('/subscription')),
-        _SettingsItem(
+            onTap: () => context.go('/subscription'),
+          ),
+          _SettingsItem(
             icon: Icons.lock_outline_rounded,
             label: 'Đổi Mật Khẩu',
             desc: 'Cập nhật thông tin bảo mật',
             type: _ItemType.navigate,
-            onTap: () => context.go('/forgot-password')),
-        _SettingsItem(
+            onTap: () => context.go('/forgot-password'),
+          ),
+          _SettingsItem(
             icon: Icons.shield_outlined,
             label: 'Quyền Riêng Tư',
             desc: 'Quản lý cài đặt quyền riêng tư',
             type: _ItemType.navigate,
-            onTap: () {}),
-      ]),
-      _SettingsGroup(title: 'Tùy Chọn', items: [
-        _SettingsItem(
+            onTap: () {},
+          ),
+        ],
+      ),
+      _SettingsGroup(
+        title: 'Tùy Chọn',
+        items: [
+          _SettingsItem(
             icon: Icons.language_rounded,
             label: 'Ngôn Ngữ',
             desc: 'Tiếng Việt',
             type: _ItemType.navigate,
-            onTap: () {}),
-        _SettingsItem(
+            onTap: () {},
+          ),
+          _SettingsItem(
             icon: Icons.volume_up_rounded,
             label: 'Âm Thanh',
             desc: 'Hiệu ứng âm thanh và giọng nói',
             type: _ItemType.toggle,
             toggleValue: _sound,
-            onTap: () => setState(() => _sound = !_sound)),
-        _SettingsItem(
+            onTap: () {
+              setState(() => _sound = !_sound);
+              _persistSettings();
+            },
+          ),
+          _SettingsItem(
             icon: Icons.notifications_outlined,
             label: 'Thông Báo',
             desc: 'Nhắc nhở hàng ngày và cập nhật',
             type: _ItemType.toggle,
             toggleValue: _notifications,
-            onTap: () =>
-                setState(() => _notifications = !_notifications)),
-        _SettingsItem(
+            onTap: () {
+              setState(() => _notifications = !_notifications);
+              _persistSettings();
+            },
+          ),
+          _SettingsItem(
             icon: Icons.dark_mode_outlined,
             label: 'Chế Độ Tối',
             desc: 'Chuyển sang giao diện tối',
             type: _ItemType.toggle,
             toggleValue: _darkMode,
-            onTap: () => setState(() => _darkMode = !_darkMode)),
-      ]),
-      _SettingsGroup(title: 'Hỗ Trợ', items: [
-        _SettingsItem(
+            onTap: () {
+              setState(() => _darkMode = !_darkMode);
+              _persistSettings();
+            },
+          ),
+        ],
+      ),
+      _SettingsGroup(
+        title: 'Hỗ Trợ',
+        items: [
+          _SettingsItem(
             icon: Icons.help_outline_rounded,
             label: 'Trợ Giúp & Hỗ Trợ',
             desc: 'Câu hỏi thường gặp và liên hệ',
             type: _ItemType.navigate,
-            onTap: () => context.go('/help')),
-        _SettingsItem(
+            onTap: () => context.go('/help'),
+          ),
+          _SettingsItem(
             icon: Icons.info_outline_rounded,
             label: 'Giới Thiệu',
             desc: 'Phiên bản ứng dụng và thông tin',
             type: _ItemType.navigate,
-            onTap: () {}),
-      ]),
+            onTap: () {},
+          ),
+        ],
+      ),
     ];
 
     return Scaffold(
@@ -1452,161 +1840,208 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   IconButton(
                     onPressed: () => context.go('/profile'),
-                    icon: const Icon(Icons.arrow_back_rounded,
-                        color: Color(0xFF374151)),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Color(0xFF374151),
+                    ),
                   ),
-                  const Text('Cài Đặt',
-                      style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827))),
+                  const Text(
+                    'Cài Đặt',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
 
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 16),
 
-                  // ── Profile summary ──
-                  _SlideIn(
-                    delay: 100,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFFA5C5C),
-                              Color(0xFFFD8A6B)
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Color(0x30FA5C5C),
-                              blurRadius: 16,
-                              offset: Offset(0, 6))
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
+                        // ── Profile summary ──
+                        _SlideIn(
+                          delay: 100,
+                          child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
                               boxShadow: const [
                                 BoxShadow(
-                                    color: Color(0x20000000),
-                                    blurRadius: 8)
+                                  color: Color(0x30FA5C5C),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 6),
+                                ),
                               ],
                             ),
-                            child: const Center(
-                                child: Text('👤',
-                                    style: TextStyle(fontSize: 30))),
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x20000000),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      '👤',
+                                      style: TextStyle(fontSize: 30),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _displayName,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _displayEmail,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                          const SizedBox(width: 14),
-                          Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              const Text('Sarah Chen',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white)),
-                              const SizedBox(height: 2),
-                              Text('sarah.chen@example.com',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.white
-                                          .withValues(alpha: 0.8))),
-                            ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // ── Groups ──
+                        ...groups.asMap().entries.map(
+                          (e) => _SlideIn(
+                            delay: 200 + e.key * 100,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 24),
+                              child: _SettingsGroupWidget(group: e.value),
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+
+                        // ── Logout ──
+                        _SlideIn(
+                          delay: 500,
+                          child: GestureDetector(
+                            onTap: () async {
+                              try {
+                                await AppServices.userRepository
+                                    .logoutActiveUser();
+                              } catch (_) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Đăng xuất thất bại.'),
+                                      backgroundColor: Color(0xFFFA5C5C),
+                                    ),
+                                  );
+                                }
+                              }
+                              if (!mounted) return;
+                              context.go('/');
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFFFECACA),
+                                  width: 2,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0F000000),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(
+                                    Icons.logout_rounded,
+                                    color: Color(0xFFDC2626),
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Đăng Xuất',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFDC2626),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // ── Version ──
+                        _SlideIn(
+                          delay: 600,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Column(
+                              children: const [
+                                Text(
+                                  'LinguaJoy v1.0.0',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF9CA3AF),
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  '© 2026 All rights reserved',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFFD1D5DB),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Groups ──
-                  ...groups.asMap().entries.map((e) => _SlideIn(
-                        delay: 200 + e.key * 100,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 24),
-                          child: _SettingsGroupWidget(group: e.value),
-                        ),
-                      )),
-
-                  // ── Logout ──
-                  _SlideIn(
-                    delay: 500,
-                    child: GestureDetector(
-                      onTap: () => context.go('/'),
-                      child: Container(
-                        width: double.infinity,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: const Color(0xFFFECACA), width: 2),
-                          boxShadow: const [
-                            BoxShadow(
-                                color: Color(0x0F000000),
-                                blurRadius: 8,
-                                offset: Offset(0, 2))
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.logout_rounded,
-                                color: Color(0xFFDC2626), size: 20),
-                            SizedBox(width: 8),
-                            Text('Đăng Xuất',
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFFDC2626))),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // ── Version ──
-                  _SlideIn(
-                    delay: 600,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Column(
-                        children: const [
-                          Text('LinguaJoy v1.0.0',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF9CA3AF))),
-                          SizedBox(height: 4),
-                          Text('© 2026 All rights reserved',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFFD1D5DB))),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -1654,10 +2089,11 @@ class _SettingsGroupWidget extends StatelessWidget {
           child: Text(
             group.title.toUpperCase(),
             style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF9CA3AF),
-                letterSpacing: 1.0),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF9CA3AF),
+              letterSpacing: 1.0,
+            ),
           ),
         ),
         Container(
@@ -1666,9 +2102,10 @@ class _SettingsGroupWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
               BoxShadow(
-                  color: Color(0x0F000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2))
+                color: Color(0x0F000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
             ],
           ),
           child: Column(
@@ -1680,26 +2117,33 @@ class _SettingsGroupWidget extends StatelessWidget {
                 children: [
                   if (!isFirst)
                     const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: Color(0xFFF3F4F6),
-                        indent: 56),
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFF3F4F6),
+                      indent: 56,
+                    ),
                   ClipRRect(
                     borderRadius: BorderRadius.only(
-                      topLeft:
-                          isFirst ? const Radius.circular(16) : Radius.zero,
-                      topRight:
-                          isFirst ? const Radius.circular(16) : Radius.zero,
-                      bottomLeft:
-                          isLast ? const Radius.circular(16) : Radius.zero,
-                      bottomRight:
-                          isLast ? const Radius.circular(16) : Radius.zero,
+                      topLeft: isFirst
+                          ? const Radius.circular(16)
+                          : Radius.zero,
+                      topRight: isFirst
+                          ? const Radius.circular(16)
+                          : Radius.zero,
+                      bottomLeft: isLast
+                          ? const Radius.circular(16)
+                          : Radius.zero,
+                      bottomRight: isLast
+                          ? const Radius.circular(16)
+                          : Radius.zero,
                     ),
                     child: InkWell(
                       onTap: item.onTap,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         child: Row(
                           children: [
                             Container(
@@ -1709,34 +2153,44 @@ class _SettingsGroupWidget extends StatelessWidget {
                                 color: const Color(0xFFF3F4F6),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Icon(item.icon,
-                                  color: const Color(0xFF6B7280),
-                                  size: 20),
+                              child: Icon(
+                                item.icon,
+                                color: const Color(0xFF6B7280),
+                                size: 20,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(item.label,
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF111827))),
+                                  Text(
+                                    item.label,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF111827),
+                                    ),
+                                  ),
                                   const SizedBox(height: 1),
-                                  Text(item.desc,
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF9CA3AF))),
+                                  Text(
+                                    item.desc,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF9CA3AF),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                             if (item.type == _ItemType.toggle)
                               _Toggle(value: item.toggleValue ?? false)
                             else
-                              const Icon(Icons.chevron_right_rounded,
-                                  color: Color(0xFFD1D5DB), size: 20),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Color(0xFFD1D5DB),
+                                size: 20,
+                              ),
                           ],
                         ),
                       ),
@@ -1763,15 +2217,13 @@ class _Toggle extends StatelessWidget {
       width: 46,
       height: 26,
       decoration: BoxDecoration(
-        color:
-            value ? const Color(0xFFFA5C5C) : const Color(0xFFD1D5DB),
+        color: value ? const Color(0xFFFA5C5C) : const Color(0xFFD1D5DB),
         borderRadius: BorderRadius.circular(13),
       ),
       child: AnimatedAlign(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        alignment:
-            value ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: value ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           width: 20,
           height: 20,
@@ -1781,9 +2233,10 @@ class _Toggle extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                  color: Color(0x30000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 1))
+                color: Color(0x30000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
             ],
           ),
         ),

@@ -1,98 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-// ─────────────────────────────────────────────
+import '../data/models/dictionary_word_model.dart';
+import '../data/repositories/dictionary_repository.dart';
+import '../data/services/app_services.dart';
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Data Model
-// ─────────────────────────────────────────────
-class _Word {
-  final int id;
-  final String word;
-  final String phonetic;
-  final String partOfSpeech;
-  final String definition;
-  final String example;
-  bool saved;
-  final String dateAdded;
-
-  _Word({
-    required this.id,
-    required this.word,
-    required this.phonetic,
-    required this.partOfSpeech,
-    required this.definition,
-    required this.example,
-    required this.saved,
-    required this.dateAdded,
-  });
-
-  _Word copyWith({bool? saved}) => _Word(
-        id: id,
-        word: word,
-        phonetic: phonetic,
-        partOfSpeech: partOfSpeech,
-        definition: definition,
-        example: example,
-        saved: saved ?? this.saved,
-        dateAdded: dateAdded,
-      );
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+String _relativeDateLabel(DateTime createdAt) {
+  final now = DateTime.now();
+  final diff = now.difference(createdAt);
+  if (diff.inDays >= 7) {
+    final weeks = (diff.inDays / 7).floor();
+    return '$weeks week${weeks > 1 ? 's' : ''} ago';
+  }
+  if (diff.inDays >= 1) {
+    return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+  }
+  if (diff.inHours >= 1) {
+    return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+  }
+  return 'today';
 }
 
-final _initialWords = [
-  _Word(
-    id: 1,
-    word: 'Beautiful',
-    phonetic: '/ˈbjuːtɪfəl/',
-    partOfSpeech: 'adjective',
-    definition: 'Pleasing the senses or mind aesthetically',
-    example: 'The flower is beautiful',
-    saved: true,
-    dateAdded: '2 days ago',
-  ),
-  _Word(
-    id: 2,
-    word: 'Delicious',
-    phonetic: '/dɪˈlɪʃəs/',
-    partOfSpeech: 'adjective',
-    definition: 'Highly pleasant to the taste',
-    example: 'This food is delicious',
-    saved: true,
-    dateAdded: '3 days ago',
-  ),
-  _Word(
-    id: 3,
-    word: 'Exciting',
-    phonetic: '/ɪkˈsaɪtɪŋ/',
-    partOfSpeech: 'adjective',
-    definition: 'Causing great enthusiasm and eagerness',
-    example: 'The game is exciting',
-    saved: true,
-    dateAdded: '5 days ago',
-  ),
-  _Word(
-    id: 4,
-    word: 'Wonderful',
-    phonetic: '/ˈwʌndərfəl/',
-    partOfSpeech: 'adjective',
-    definition: 'Inspiring delight, pleasure, or admiration',
-    example: "It's a wonderful day",
-    saved: true,
-    dateAdded: '1 week ago',
-  ),
-  _Word(
-    id: 5,
-    word: 'Magnificent',
-    phonetic: '/mæɡˈnɪfɪsənt/',
-    partOfSpeech: 'adjective',
-    definition: 'Impressively beautiful, elaborate, or extravagant',
-    example: 'The view is magnificent',
-    saved: true,
-    dateAdded: '1 week ago',
-  ),
-];
-
-// ─────────────────────────────────────────────
 // Screen
-// ─────────────────────────────────────────────
+// ------------------------------------------------------------------------------// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({super.key});
 
@@ -111,9 +44,13 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   late Animation<double> _footerFade;
 
   final TextEditingController _searchCtrl = TextEditingController();
+  final DictionaryRepository _dictionaryRepository =
+      AppServices.dictionaryRepository;
   String _searchQuery = '';
   String _activeTab = 'saved'; // 'saved' | 'all'
-  List<_Word> _words = List.from(_initialWords);
+  List<DictionaryWordModel> _words = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -136,8 +73,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     _footerSlide = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(
-        CurvedAnimation(parent: _footerCtrl, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _footerCtrl, curve: Curves.easeOut));
     _footerFade = CurvedAnimation(parent: _footerCtrl, curve: Curves.easeOut);
 
     _headerCtrl.forward();
@@ -148,6 +84,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     _searchCtrl.addListener(() {
       setState(() => _searchQuery = _searchCtrl.text);
     });
+    _loadWords();
   }
 
   @override
@@ -158,20 +95,77 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     super.dispose();
   }
 
-  void _toggleBookmark(int id) {
+  Future<void> _loadWords() async {
     setState(() {
-      _words = _words.map((w) => w.id == id ? w.copyWith(saved: !w.saved) : w).toList();
+      _isLoading = true;
+      _errorMessage = null;
     });
+    try {
+      final words = await _dictionaryRepository.getWords();
+      if (!mounted) return;
+      setState(() => _words = words);
+    } on DictionaryRepositoryException catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _errorMessage = 'Failed to load words.');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
-  List<_Word> get _filteredWords => _words.where((w) {
-        final matchesSearch =
-            w.word.toLowerCase().contains(_searchQuery.toLowerCase());
-        final matchesTab = _activeTab == 'all' || w.saved;
-        return matchesSearch && matchesTab;
-      }).toList();
+  Future<void> _toggleBookmark(int id) async {
+    DictionaryWordModel? currentWord;
+    for (final item in _words) {
+      if (item.id == id) {
+        currentWord = item;
+        break;
+      }
+    }
+    if (currentWord == null) return;
 
-  int get _savedCount => _words.where((w) => w.saved).length;
+    final updatedLocal = _words
+        .map(
+          (item) => item.id == id
+              ? item.copyWith(isSaved: !item.isSaved, updatedAt: DateTime.now())
+              : item,
+        )
+        .toList();
+    setState(() => _words = updatedLocal);
+
+    try {
+      await _dictionaryRepository.toggleSaved(
+        wordId: id,
+        isSaved: !currentWord.isSaved,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _words = _words
+            .map((item) => item.id == id ? currentWord! : item)
+            .toList(),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to update bookmark. Please try again.'),
+          backgroundColor: Color(0xFFFA5C5C),
+        ),
+      );
+    }
+  }
+
+  List<DictionaryWordModel> get _filteredWords => _words.where((w) {
+    final matchesSearch = w.word.toLowerCase().contains(
+      _searchQuery.toLowerCase(),
+    );
+    final matchesTab = _activeTab == 'all' || w.isSaved;
+    return matchesSearch && matchesTab;
+  }).toList();
+
+  int get _savedCount => _words.where((w) => w.isSaved).length;
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +173,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       backgroundColor: const Color(0xFFF9F9F9),
       body: CustomScrollView(
         slivers: [
-          // ── Header ──────────────────────────────────────────────────────
+          // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SliverToBoxAdapter(
             child: SlideTransition(
               position: _headerSlide,
@@ -200,13 +194,25 @@ class _DictionaryScreenState extends State<DictionaryScreen>
             ),
           ),
 
-          // ── Word List ────────────────────────────────────────────────────
-          if (_filteredWords.isEmpty)
+          // â”€â”€ Word List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          if (_isLoading)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_errorMessage != null)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: _DictionaryErrorState(
+                message: _errorMessage!,
+                onRetry: _loadWords,
+              ),
+            )
+          else if (_filteredWords.isEmpty)
             SliverToBoxAdapter(child: _EmptyState(searchQuery: _searchQuery))
           else
             SliverPadding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, i) => _WordCard(
@@ -219,7 +225,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               ),
             ),
 
-          // ── Stats Footer ─────────────────────────────────────────────────
+          // â”€â”€ Stats Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SliverToBoxAdapter(
             child: SlideTransition(
               position: _footerSlide,
@@ -238,9 +244,9 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Header Section
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _Header extends StatelessWidget {
   final int savedCount;
   final TextEditingController searchCtrl;
@@ -281,8 +287,11 @@ class _Header extends StatelessWidget {
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(Icons.arrow_back,
-                          size: 20, color: Color(0xFF374151)),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        size: 20,
+                        color: Color(0xFF374151),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -290,14 +299,21 @@ class _Header extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text('Dictionary',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF111827))),
-                        Text('Your saved vocabulary',
-                            style: TextStyle(
-                                fontSize: 12, color: Color(0xFF6B7280))),
+                        Text(
+                          'Dictionary',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        Text(
+                          'Your saved vocabulary',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -313,7 +329,8 @@ class _Header extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Center(
-                        child: Text('📚', style: TextStyle(fontSize: 22))),
+                      child: Text('📚', style: TextStyle(fontSize: 22)),
+                    ),
                   ),
                 ],
               ),
@@ -325,14 +342,16 @@ class _Header extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9F9F9),
                   borderRadius: BorderRadius.circular(16),
-                  border:
-                      Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
                 ),
                 child: Row(
                   children: [
                     const SizedBox(width: 16),
-                    const Icon(Icons.search,
-                        size: 20, color: Color(0xFF9CA3AF)),
+                    const Icon(
+                      Icons.search,
+                      size: 20,
+                      color: Color(0xFF9CA3AF),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
@@ -340,12 +359,16 @@ class _Header extends StatelessWidget {
                         decoration: const InputDecoration(
                           hintText: 'Search words...',
                           hintStyle: TextStyle(
-                              color: Color(0xFF9CA3AF), fontSize: 14),
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 14,
+                          ),
                           border: InputBorder.none,
                           isDense: true,
                         ),
                         style: const TextStyle(
-                            fontSize: 14, color: Color(0xFF1F2937)),
+                          fontSize: 14,
+                          color: Color(0xFF1F2937),
+                        ),
                       ),
                     ),
                     if (searchQuery.isNotEmpty)
@@ -353,8 +376,11 @@ class _Header extends StatelessWidget {
                         onTap: onClearSearch,
                         child: const Padding(
                           padding: EdgeInsets.only(right: 14),
-                          child: Icon(Icons.close,
-                              size: 20, color: Color(0xFF9CA3AF)),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Color(0xFF9CA3AF),
+                          ),
                         ),
                       ),
                   ],
@@ -422,9 +448,10 @@ class _Tab extends StatelessWidget {
             boxShadow: active
                 ? [
                     BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1))
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
                   ]
                 : null,
           ),
@@ -432,11 +459,13 @@ class _Tab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon,
-                    size: 14,
-                    color: active
-                        ? const Color(0xFF111827)
-                        : const Color(0xFF6B7280)),
+                Icon(
+                  icon,
+                  size: 14,
+                  color: active
+                      ? const Color(0xFF111827)
+                      : const Color(0xFF6B7280),
+                ),
                 const SizedBox(width: 6),
               ],
               Text(
@@ -457,11 +486,11 @@ class _Tab extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Word Card
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _WordCard extends StatefulWidget {
-  final _Word word;
+  final DictionaryWordModel word;
   final int index;
   final ValueChanged<int> onToggleBookmark;
 
@@ -520,9 +549,10 @@ class _WordCardState extends State<_WordCard>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2))
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           padding: const EdgeInsets.all(18),
@@ -553,8 +583,11 @@ class _WordCardState extends State<_WordCard>
                             color: const Color(0xFFFA5C5C),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.volume_up,
-                              size: 18, color: Colors.white),
+                          child: const Icon(
+                            Icons.volume_up,
+                            size: 18,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
@@ -574,13 +607,12 @@ class _WordCardState extends State<_WordCard>
                     // Part of speech chip
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [
-                            Color(0x33FEC288),
-                            Color(0x33FBEF76),
-                          ],
+                          colors: [Color(0x33FEC288), Color(0x33FBEF76)],
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -599,7 +631,9 @@ class _WordCardState extends State<_WordCard>
                     Text(
                       w.definition,
                       style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF374151)),
+                        fontSize: 13,
+                        color: Color(0xFF374151),
+                      ),
                     ),
                     const SizedBox(height: 8),
 
@@ -623,9 +657,11 @@ class _WordCardState extends State<_WordCard>
 
                     // Date added
                     Text(
-                      'Added ${w.dateAdded}',
+                      'Added ${_relativeDateLabel(w.createdAt)}',
                       style: const TextStyle(
-                          fontSize: 11, color: Color(0xFF9CA3AF)),
+                        fontSize: 11,
+                        color: Color(0xFF9CA3AF),
+                      ),
                     ),
                   ],
                 ),
@@ -633,20 +669,26 @@ class _WordCardState extends State<_WordCard>
 
               // Bookmark button
               GestureDetector(
-                onTap: () => widget.onToggleBookmark(w.id),
+                onTap: w.id == null
+                    ? null
+                    : () => widget.onToggleBookmark(w.id!),
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8, top: 2),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    child: w.saved
-                        ? const Icon(Icons.bookmark,
+                    child: w.isSaved
+                        ? const Icon(
+                            Icons.bookmark,
                             key: ValueKey('saved'),
                             size: 24,
-                            color: Color(0xFFFA5C5C))
-                        : const Icon(Icons.bookmark_border,
+                            color: Color(0xFFFA5C5C),
+                          )
+                        : const Icon(
+                            Icons.bookmark_border,
                             key: ValueKey('unsaved'),
                             size: 24,
-                            color: Color(0xFFD1D5DB)),
+                            color: Color(0xFFD1D5DB),
+                          ),
                   ),
                 ),
               ),
@@ -658,9 +700,9 @@ class _WordCardState extends State<_WordCard>
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Empty State
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EmptyState extends StatelessWidget {
   final String searchQuery;
   const _EmptyState({required this.searchQuery});
@@ -679,14 +721,18 @@ class _EmptyState extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Center(
-                child: Text('📖', style: TextStyle(fontSize: 40))),
+              child: Text('📖', style: TextStyle(fontSize: 40)),
+            ),
           ),
           const SizedBox(height: 16),
-          const Text('No words found',
-              style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827))),
+          const Text(
+            'No words found',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             searchQuery.isNotEmpty
@@ -701,9 +747,46 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
+class _DictionaryErrorState extends StatelessWidget {
+  const _DictionaryErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 40, color: Color(0xFFFA5C5C)),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFA5C5C),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Stats Footer
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _StatsFooter extends StatelessWidget {
   final int savedCount;
   const _StatsFooter({required this.savedCount});
@@ -722,9 +805,10 @@ class _StatsFooter extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-                color: const Color(0xFFFA5C5C).withOpacity(0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 8))
+              color: const Color(0xFFFA5C5C).withOpacity(0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
         clipBehavior: Clip.hardEdge,
@@ -754,10 +838,13 @@ class _StatsFooter extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Total Saved Words',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withOpacity(0.8))),
+                          Text(
+                            'Total Saved Words',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             '$savedCount',
@@ -778,8 +865,8 @@ class _StatsFooter extends StatelessWidget {
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: const Center(
-                            child:
-                                Text('📖', style: TextStyle(fontSize: 28))),
+                          child: Text('📖', style: TextStyle(fontSize: 28)),
+                        ),
                       ),
                     ],
                   ),
@@ -787,8 +874,9 @@ class _StatsFooter extends StatelessWidget {
                   Text(
                     'Keep learning and expanding your vocabulary! 🚀',
                     style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withOpacity(0.9)),
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
                   ),
                 ],
               ),
