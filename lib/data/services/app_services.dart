@@ -1,7 +1,9 @@
 import '../app_database.dart';
 import '../datasources/dictionary_local_datasource.dart';
+import '../datasources/learning_local_datasource.dart';
 import '../datasources/user_local_datasource.dart';
 import '../repositories/dictionary_repository.dart';
+import '../repositories/learning_repository.dart';
 import '../repositories/user_repository.dart';
 
 class AppServices {
@@ -13,6 +15,9 @@ class AppServices {
   );
   static final DictionaryRepository dictionaryRepository = DictionaryRepository(
     DictionaryLocalDataSource(database),
+  );
+  static final LearningRepository learningRepository = LearningRepository(
+    LearningLocalDataSource(database),
   );
 
   static Future<void> initialize() async {

@@ -11,6 +11,7 @@ class UserModel {
     required this.notificationsEnabled,
     required this.soundEnabled,
     required this.darkModeEnabled,
+    this.totalXp = 0,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -27,6 +28,7 @@ class UserModel {
   final bool notificationsEnabled;
   final bool soundEnabled;
   final bool darkModeEnabled;
+  final int totalXp;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -50,6 +52,7 @@ class UserModel {
       'notifications_enabled': notificationsEnabled ? 1 : 0,
       'sound_enabled': soundEnabled ? 1 : 0,
       'dark_mode_enabled': darkModeEnabled ? 1 : 0,
+      'total_xp': totalXp,
       'is_active': isActive ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
@@ -69,6 +72,7 @@ class UserModel {
       notificationsEnabled: _toBool(map['notifications_enabled']),
       soundEnabled: _toBool(map['sound_enabled']),
       darkModeEnabled: _toBool(map['dark_mode_enabled']),
+      totalXp: (map['total_xp'] as int?) ?? 0,
       isActive: _toBool(map['is_active']),
       createdAt: _toDate(map['created_at']),
       updatedAt: _toDate(map['updated_at']),
@@ -87,6 +91,7 @@ class UserModel {
     bool? notificationsEnabled,
     bool? soundEnabled,
     bool? darkModeEnabled,
+    int? totalXp,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -103,6 +108,7 @@ class UserModel {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       darkModeEnabled: darkModeEnabled ?? this.darkModeEnabled,
+      totalXp: totalXp ?? this.totalXp,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

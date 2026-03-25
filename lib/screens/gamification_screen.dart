@@ -249,7 +249,7 @@ class _PodiumSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 340,
+      height: 360,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: users.asMap().entries.map((e) {

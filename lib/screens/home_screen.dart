@@ -186,7 +186,34 @@ class _IconBtn extends StatelessWidget {
 // ------------------------------------------------------------------------------
 // Stats Banner
 // ------------------------------------------------------------------------------
-class _StatsBanner extends StatelessWidget {
+class _StatsBanner extends StatefulWidget {
+  @override
+  State<_StatsBanner> createState() => _StatsBannerState();
+}
+
+class _StatsBannerState extends State<_StatsBanner> {
+  String _streak = '0';
+  String _totalXp = '0';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (!mounted || user?.id == null) return;
+    final repo = AppServices.learningRepository;
+    final streak = await repo.getCurrentStreak(user!.id!);
+    final xp = await repo.getTotalXp(user.id!);
+    if (!mounted) return;
+    setState(() {
+      _streak = '$streak';
+      _totalXp = '$xp';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -212,7 +239,7 @@ class _StatsBanner extends StatelessWidget {
               child: _StatItem(
                 icon: Icons.local_fire_department,
                 gradientColors: const [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
-                value: '15',
+                value: _streak,
                 label: 'Ngày Liên Tiếp',
               ),
             ),
@@ -222,7 +249,7 @@ class _StatsBanner extends StatelessWidget {
               child: _StatItem(
                 icon: Icons.star_rounded,
                 gradientColors: const [Color(0xFFFEC288), Color(0xFFFBEF76)],
-                value: '850',
+                value: _totalXp,
                 label: 'Tổng XP',
               ),
             ),
@@ -288,9 +315,78 @@ class _StatItem extends StatelessWidget {
 // ------------------------------------------------------------------------------
 // Next Lesson Card
 // ------------------------------------------------------------------------------
-class _NextLessonCard extends StatelessWidget {
+class _NextLessonCard extends StatefulWidget {
+  @override
+  State<_NextLessonCard> createState() => _NextLessonCardState();
+}
+
+class _NextLessonCardState extends State<_NextLessonCard> {
+  String _unitLabel = '';
+  String _lessonTitle = '';
+  String _lessonIcon = '📖';
+  int _lessonId = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNextLesson();
+  }
+
+  Future<void> _loadNextLesson() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (!mounted || user?.id == null) return;
+    final repo = AppServices.learningRepository;
+    final completedIds = await repo.getCompletedLessonIds(user!.id!);
+    final units = await repo.getUnits();
+    for (final unit in units) {
+      final lessons = await repo.getLessonsByUnit(unit.id!);
+      for (final lesson in lessons) {
+        if (!completedIds.contains(lesson.id)) {
+          if (!mounted) return;
+          setState(() {
+            _unitLabel = 'Đơn Vị ${unit.id} - Bài ${lesson.sortOrder}';
+            _lessonTitle = lesson.title;
+            _lessonIcon = lesson.icon;
+            _lessonId = lesson.id!;
+            _loading = false;
+          });
+          return;
+        }
+      }
+    }
+    if (!mounted) return;
+    setState(() => _loading = false);
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+        child: SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
+      );
+    }
+    if (_lessonId == 0) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: const Center(
+            child: Text('🎉 Bạn đã hoàn thành tất cả bài học!',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Container(
@@ -351,8 +447,8 @@ class _NextLessonCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Đơn Vị 1 - Bài 4',
+                    child: Text(
+                      _unitLabel,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.white,
@@ -361,9 +457,9 @@ class _NextLessonCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Học Màu Sắc 🎨',
-                    style: TextStyle(
+                  Text(
+                    '$_lessonTitle $_lessonIcon',
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

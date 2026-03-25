@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/services/app_services.dart';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Data models
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,113 +80,84 @@ class _CourseMapScreenState extends State<CourseMapScreen>
   late AnimationController _ctrl;
   late Animation<double> _overallProgress;
 
-  static const _units = [
-    _UnitData(
-      id: 1,
-      title: 'Đơn Vị 1: Cơ Bản',
-      progress: 75,
-      lessons: [
-        _LessonItem(
-            id: 1,
-            title: 'Chào Hỏi',
-            icon: '👋',
-            completed: true,
-            locked: false),
-        _LessonItem(
-            id: 2,
-            title: 'Gia Đình',
-            icon: '👨‍👩‍👧',
-            completed: true,
-            locked: false),
-        _LessonItem(
-            id: 3,
-            title: 'Đồ Ăn',
-            icon: '🍕',
-            completed: true,
-            locked: false),
-        _LessonItem(
-            id: 4,
-            title: 'Màu Sắc',
-            icon: '🎨',
-            completed: false,
-            locked: false,
-            current: true),
-        _LessonItem(
-            id: 5,
-            title: 'Số Đếm',
-            icon: '🔢',
-            completed: false,
-            locked: true),
-      ],
-    ),
-    _UnitData(
-      id: 2,
-      title: 'Đơn Vị 2: Cuộc Sống Hàng Ngày',
-      progress: 0,
-      lessons: [
-        _LessonItem(
-            id: 6,
-            title: 'Thời Gian',
-            icon: '⏰',
-            completed: false,
-            locked: true),
-        _LessonItem(
-            id: 7,
-            title: 'Thời Tiết',
-            icon: '🌤',
-            completed: false,
-            locked: true),
-        _LessonItem(
-            id: 8,
-            title: 'Mua Sắm',
-            icon: '🛍',
-            completed: false,
-            locked: true),
-        _LessonItem(
-            id: 9,
-            title: 'Phương Tiện',
-            icon: '🚗',
-            completed: false,
-            locked: true),
-      ],
-    ),
-    _UnitData(
-      id: 3,
-      title: 'Đơn Vị 3: Giao Tiếp',
-      progress: 0,
-      lessons: [
-        _LessonItem(
-            id: 10,
-            title: 'Đặt Câu Hỏi',
-            icon: '❓',
-            completed: false,
-            locked: true),
-        _LessonItem(
-            id: 11,
-            title: 'Chỉ Đường',
-            icon: '🧭',
-            completed: false,
-            locked: true),
-        _LessonItem(
-            id: 12,
-            title: 'Gọi Điện',
-            icon: '📞',
-            completed: false,
-            locked: true),
-      ],
-    ),
-  ];
+  List<_UnitData> _units = [];
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1400));
-    _overallProgress = Tween<double>(begin: 0, end: 0.25).animate(
+    _overallProgress = Tween<double>(begin: 0, end: 0.0).animate(
       CurvedAnimation(
           parent: _ctrl,
           curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
     );
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    final repo = AppServices.learningRepository;
+    final units = await repo.getUnits();
+    final completedIds = user?.id != null
+        ? await repo.getCompletedLessonIds(user!.id!)
+        : <int>{};
+
+    final List<_UnitData> builtUnits = [];
+    bool foundCurrent = false;
+
+    for (final unit in units) {
+      final lessons = await repo.getLessonsByUnit(unit.id!);
+      final lessonItems = <_LessonItem>[];
+
+      for (final lesson in lessons) {
+        final completed = completedIds.contains(lesson.id);
+        final locked = !completed && foundCurrent;
+        final current = !completed && !foundCurrent;
+        if (current) foundCurrent = true;
+
+        lessonItems.add(_LessonItem(
+          id: lesson.id!,
+          title: lesson.title,
+          icon: lesson.icon,
+          completed: completed,
+          locked: locked,
+          current: current,
+        ));
+      }
+
+      final completedCount = lessonItems.where((l) => l.completed).length;
+      final progress = lessonItems.isEmpty
+          ? 0
+          : ((completedCount / lessonItems.length) * 100).round();
+
+      builtUnits.add(_UnitData(
+        id: unit.id!,
+        title: 'Đơn Vị ${unit.id}: ${unit.title}',
+        progress: progress,
+        lessons: lessonItems,
+      ));
+    }
+
+    if (!mounted) return;
+
+    final totalLessons = builtUnits.fold<int>(0, (s, u) => s + u.lessons.length);
+    final totalCompleted = builtUnits.fold<int>(
+        0, (s, u) => s + u.lessons.where((l) => l.completed).length);
+    final overall = totalLessons == 0 ? 0.0 : totalCompleted / totalLessons;
+
+    _overallProgress = Tween<double>(begin: 0, end: overall).animate(
+      CurvedAnimation(
+          parent: _ctrl,
+          curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
+    );
+
+    setState(() {
+      _units = builtUnits;
+      _loading = false;
+    });
+
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _ctrl.forward();
     });
@@ -198,6 +171,12 @@ class _CourseMapScreenState extends State<CourseMapScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF3F4F6),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: Column(

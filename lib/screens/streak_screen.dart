@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/services/app_services.dart';
+
 // ─────────────────────────────────────────────
 // Streak Screen
 // ─────────────────────────────────────────────
@@ -37,22 +39,21 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseScale;
 
-  DateTime _currentMonth = DateTime(2026, 2);
+  DateTime _currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
-  static const _streakData = {
-    'current': 15,
-    'longest': 25,
-    'total': 68,
-    'thisMonth': 12,
+  Map<String, int> _streakData = {
+    'current': 0,
+    'longest': 0,
+    'total': 0,
+    'thisMonth': 0,
   };
 
-  static const _activeDays = [
-    1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 18, 22, 25
-  ];
+  List<int> _activeDays = [];
 
   @override
   void initState() {
     super.initState();
+    _loadStreakData();
 
     _headerCtrl = _makeCtrl(400);
     _headerSlide = _slideAnim(_headerCtrl, const Offset(0, -0.3));
@@ -94,6 +95,38 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
         () { if (mounted) _tipsCtrl.forward(); });
     Future.delayed(const Duration(milliseconds: 600),
         () { if (mounted) _footerCtrl.forward(); });
+  }
+
+  Future<void> _loadStreakData() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (!mounted || user?.id == null) return;
+    final repo = AppServices.learningRepository;
+    final current = await repo.getCurrentStreak(user!.id!);
+    final longest = await repo.getLongestStreak(user.id!);
+    final total = await repo.getTotalActivityDays(user.id!);
+    final thisMonth = await repo.getMonthActivityCount(
+        user.id!, _currentMonth.year, _currentMonth.month);
+    await _loadMonthActivities(user.id!);
+    if (!mounted) return;
+    setState(() {
+      _streakData = {
+        'current': current,
+        'longest': longest,
+        'total': total,
+        'thisMonth': thisMonth,
+      };
+    });
+  }
+
+  Future<void> _loadMonthActivities(int userId) async {
+    final activities = await AppServices.learningRepository
+        .getActivitiesForMonth(userId, _currentMonth.year, _currentMonth.month);
+    final days = activities.map((a) {
+      final date = DateTime.parse(a.date);
+      return date.day;
+    }).toList();
+    if (!mounted) return;
+    setState(() => _activeDays = days);
   }
 
   AnimationController _makeCtrl(int ms) =>
@@ -142,13 +175,23 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
     return '${months[_currentMonth.month - 1]} ${_currentMonth.year}';
   }
 
-  void _previousMonth() =>
-      setState(() => _currentMonth =
-          DateTime(_currentMonth.year, _currentMonth.month - 1));
+  void _previousMonth() {
+    setState(() => _currentMonth =
+        DateTime(_currentMonth.year, _currentMonth.month - 1));
+    _reloadMonthActivities();
+  }
 
-  void _nextMonth() =>
-      setState(() => _currentMonth =
-          DateTime(_currentMonth.year, _currentMonth.month + 1));
+  void _nextMonth() {
+    setState(() => _currentMonth =
+        DateTime(_currentMonth.year, _currentMonth.month + 1));
+    _reloadMonthActivities();
+  }
+
+  Future<void> _reloadMonthActivities() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (user?.id == null) return;
+    await _loadMonthActivities(user!.id!);
+  }
 
   @override
   Widget build(BuildContext context) {

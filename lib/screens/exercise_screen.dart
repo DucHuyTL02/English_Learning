@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/services/app_services.dart';
+
 // ─── MULTIPLE CHOICE ─────────────────────────────────────────────────────────
 
 class MultipleChoiceScreen extends StatefulWidget {
@@ -67,7 +69,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
             const SizedBox(height: 20),
             Container(width: double.infinity, height: 180,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFFBEF76), Color(0xFFFEC288)],
+                gradient: const LinearGradient(colors: [Color(0xFF87CEEB), Color(0xFF5BA3D9)],
                     begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(24)),
               child: const Center(child: Text('☁️', style: TextStyle(fontSize: 80)))),
@@ -783,6 +785,7 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
   @override
   void initState() {
     super.initState();
+    _saveProgress();
     final rng = math.Random(42);
     final colors = [const Color(0xFFFA5C5C), const Color(0xFFFD8A6B), const Color(0xFFFEC288), const Color(0xFFFBEF76)];
     _confettiPieces = List.generate(50, (i) => _ConfettiPiece(
@@ -808,6 +811,18 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
     Future.delayed(const Duration(milliseconds: 1100), () {
       if (mounted) { _contentCtrl.forward(); _scoreCtrl.forward(); }
     });
+  }
+
+  Future<void> _saveProgress() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (user?.id == null) return;
+    // Save completion for lesson 4 (Màu Sắc) with score 92 and 50 XP
+    await AppServices.learningRepository.completeLesson(
+      userId: user!.id!,
+      lessonId: 4,
+      score: 92,
+      xpEarned: 50,
+    );
   }
 
   @override
