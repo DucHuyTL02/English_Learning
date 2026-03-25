@@ -1,17 +1,20 @@
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+
 import 'data/services/app_services.dart';
-import 'screens/splash_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/onboarding_screen.dart';
+import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/lesson_screen.dart';
+import 'screens/dictionary_screen.dart';
 import 'screens/exercise_screen.dart';
 import 'screens/gamification_screen.dart';
-import 'screens/dictionary_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/lesson_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/streak_screen.dart';
 import 'widgets/bottom_navigation.dart';
 
@@ -19,33 +22,42 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppServices.initialize();
+  _attachRouteStateListener();
   runApp(const MainApp());
 }
 
-/// Shell scaffold — dùng Stack để đặt BottomNavigation lên trên màn hình con.
-/// Tránh double-Scaffold bằng cách dùng Overlay/Stack thay vì lồng Scaffold.
 class _ShellScaffold extends StatelessWidget {
-  final Widget child;
   const _ShellScaffold({required this.child});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Màn hình con (có Scaffold riêng), thêm padding phía dưới cho bottom nav
-        MediaQuery.removePadding(
-          context: context,
-          removeBottom: false,
-          child: child,
-        ),
-        // BottomNavigation cố định ở dưới
-        const Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: BottomNavigationBar2(),
-        ),
-      ],
+    final currentPath = GoRouterState.of(context).uri.path;
+
+    return PopScope(
+      canPop: currentPath == '/home',
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (currentPath != '/home') {
+          context.go('/home');
+        }
+      },
+      child: Stack(
+        children: [
+          MediaQuery.removePadding(
+            context: context,
+            removeBottom: false,
+            child: child,
+          ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: BottomNavigationBar2(),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -142,8 +154,6 @@ final _router = GoRouter(
       builder: (context, state) =>
           const _PlaceholderScreen(title: 'Đổi Mật Khẩu'),
     ),
-
-    // ── Shell: các màn hình chính có BottomNavigation ──────────────────────
     ShellRoute(
       builder: (context, state, child) => _ShellScaffold(child: child),
       routes: [
@@ -173,6 +183,19 @@ final _router = GoRouter(
   ],
 );
 
+bool _isRouteListenerAttached = false;
+
+void _attachRouteStateListener() {
+  if (_isRouteListenerAttached) return;
+  _isRouteListenerAttached = true;
+
+  _router.routerDelegate.addListener(() {
+    final currentRoute = _router.routerDelegate.currentConfiguration.uri
+        .toString();
+    unawaited(AppServices.routeStateService.saveRoute(currentRoute));
+  });
+}
+
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
@@ -193,6 +216,7 @@ class MainApp extends StatelessWidget {
 
 class _PlaceholderScreen extends StatelessWidget {
   const _PlaceholderScreen({required this.title});
+
   final String title;
 
   @override

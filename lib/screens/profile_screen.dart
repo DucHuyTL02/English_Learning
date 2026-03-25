@@ -1,8 +1,37 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/repositories/user_repository.dart';
 import '../data/services/app_services.dart';
+
+const Set<String> _detailRoutes = {
+  '/notifications',
+  '/settings',
+  '/streak',
+  '/achievements',
+  '/lesson-intro',
+  '/edit-profile',
+  '/subscription',
+  '/forgot-password',
+  '/help',
+};
+
+void _openDetailAwareRoute(BuildContext context, String route) {
+  if (_detailRoutes.contains(route)) {
+    context.push(route);
+    return;
+  }
+  context.go(route);
+}
+
+void _popOrGo(BuildContext context, String fallbackRoute) {
+  final router = GoRouter.of(context);
+  if (router.canPop()) {
+    context.pop();
+    return;
+  }
+  context.go(fallbackRoute);
+}
 
 class _SlideIn extends StatefulWidget {
   const _SlideIn({
@@ -67,7 +96,6 @@ class _SlideInState extends State<_SlideIn>
     );
   }
 }
-
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -179,7 +207,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       int streak = 0;
       int totalXp = 0;
       if (user != null && user.id != null) {
-        streak = await AppServices.learningRepository.getCurrentStreak(user.id!);
+        streak = await AppServices.learningRepository.getCurrentStreak(
+          user.id!,
+        );
         totalXp = await AppServices.learningRepository.getTotalXp(user.id!);
       }
       if (!mounted) return;
@@ -244,7 +274,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 child: Transform.translate(
                   offset: const Offset(0, -36),
                   child: GestureDetector(
-                    onTap: () => context.go('/streak'),
+                    onTap: () => context.push('/streak'),
                     child: _StreakBanner(streak: _streak),
                   ),
                 ),
@@ -372,7 +402,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => context.go('/achievements'),
+                          onTap: () => context.push('/achievements'),
                           child: Row(
                             children: const [
                               Text(
@@ -420,17 +450,17 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                   children: [
                     _OutlineBtn(
                       label: 'Chỉnh Sửa Hồ Sơ',
-                      onTap: () => context.go('/edit-profile'),
+                      onTap: () => context.push('/edit-profile'),
                     ),
                     const SizedBox(height: 10),
                     _GradientBtn(
                       label: '👑  Nâng Cấp Premium',
-                      onTap: () => context.go('/subscription'),
+                      onTap: () => context.push('/subscription'),
                     ),
                     const SizedBox(height: 10),
                     _SolidBtn(
                       label: 'Đi Tới Cài Đặt',
-                      onTap: () => context.go('/settings'),
+                      onTap: () => context.push('/settings'),
                     ),
                   ],
                 ),
@@ -516,7 +546,7 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => context.go('/settings'),
+                    onTap: () => context.push('/settings'),
                     child: Container(
                       width: 40,
                       height: 40,
@@ -542,7 +572,7 @@ class _ProfileHeader extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       GestureDetector(
-                        onTap: () => context.go('/edit-profile'),
+                        onTap: () => context.push('/edit-profile'),
                         child: Container(
                           width: 88,
                           height: 88,
@@ -805,7 +835,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (stat.route != null) context.go(stat.route!);
+        if (stat.route != null) _openDetailAwareRoute(context, stat.route!);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -1051,9 +1081,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameCtrl = TextEditingController(text: 'Sarah Chen');
   final _emailCtrl = TextEditingController(text: 'sarah.chen@example.com');
-  final _bioCtrl = TextEditingController(
-    text: 'Passionate English learner 📚',
-  );
+  final _bioCtrl = TextEditingController(text: 'Passionate English learner 📚');
   final _locationCtrl = TextEditingController(text: 'San Francisco, CA');
   String _birthdate = '1995-03-15';
   int? _activeUserId;
@@ -1142,7 +1170,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         birthDate: _birthdate.trim(),
       );
       if (!mounted) return;
-      context.go('/profile');
+      _popOrGo(context, '/profile');
     } on UserRepositoryException catch (e) {
       if (!mounted) return;
       _showSnackBar(e.message);
@@ -1161,9 +1189,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Xóa tài khoản'),
-        content: const Text(
-          'Bạn có chắc muốn xóa tài khoản này không?',
-        ),
+        content: const Text('Bạn có chắc muốn xóa tài khoản này không?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -1185,6 +1211,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (_activeUserId != null) {
         await AppServices.userRepository.deleteUser(_activeUserId!);
       }
+      await AppServices.routeStateService.clear();
       if (!mounted) return;
       context.go('/login');
     } on UserRepositoryException catch (e) {
@@ -1225,7 +1252,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => context.go('/profile'),
+                    onPressed: () => _popOrGo(context, '/profile'),
                     icon: const Icon(
                       Icons.arrow_back_rounded,
                       color: Color(0xFF374151),
@@ -1416,7 +1443,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton(
-                                  onPressed: () => context.go('/profile'),
+                                  onPressed: () =>
+                                      _popOrGo(context, '/profile'),
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
@@ -1760,21 +1788,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: 'Chỉnh Sửa Hồ Sơ',
             desc: 'Cập nhật thông tin cá nhân',
             type: _ItemType.navigate,
-            onTap: () => context.go('/edit-profile'),
+            onTap: () => context.push('/edit-profile'),
           ),
           _SettingsItem(
             icon: Icons.smartphone_rounded,
             label: 'Gói Premium',
             desc: 'Nâng cấp để mở khóa tất cả tính năng',
             type: _ItemType.navigate,
-            onTap: () => context.go('/subscription'),
+            onTap: () => context.push('/subscription'),
           ),
           _SettingsItem(
             icon: Icons.lock_outline_rounded,
             label: 'Đổi Mật Khẩu',
             desc: 'Cập nhật thông tin bảo mật',
             type: _ItemType.navigate,
-            onTap: () => context.go('/forgot-password'),
+            onTap: () => context.push('/forgot-password'),
           ),
           _SettingsItem(
             icon: Icons.shield_outlined,
@@ -1838,7 +1866,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: 'Trợ Giúp & Hỗ Trợ',
             desc: 'Câu hỏi thường gặp và liên hệ',
             type: _ItemType.navigate,
-            onTap: () => context.go('/help'),
+            onTap: () => context.push('/help'),
           ),
           _SettingsItem(
             icon: Icons.info_outline_rounded,
@@ -1869,7 +1897,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => context.go('/profile'),
+                    onPressed: () => _popOrGo(context, '/profile'),
                     icon: const Icon(
                       Icons.arrow_back_rounded,
                       color: Color(0xFF374151),
@@ -1989,18 +2017,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               try {
                                 await AppServices.userRepository
                                     .logoutActiveUser();
+                                await AppServices.routeStateService.clear();
                               } catch (_) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Đăng xuất thất bại.'),
-                                      backgroundColor: Color(0xFFFA5C5C),
-                                    ),
-                                  );
-                                }
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Đăng xuất thất bại.'),
+                                    backgroundColor: Color(0xFFFA5C5C),
+                                  ),
+                                );
+                                return;
                               }
-                              if (!mounted) return;
-                              context.go('/');
+                              if (!context.mounted) return;
+                              context.go('/login');
                             },
                             child: Container(
                               width: double.infinity,

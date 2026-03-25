@@ -60,14 +60,18 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
     _headerFade = CurvedAnimation(parent: _headerCtrl, curve: Curves.easeOut);
 
     _heroCtrl = _makeCtrl(500);
-    _heroScale = Tween<double>(begin: 0.85, end: 1.0).animate(
-        CurvedAnimation(parent: _heroCtrl, curve: Curves.elasticOut));
+    _heroScale = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _heroCtrl, curve: Curves.elasticOut));
     _heroFade = CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOut);
 
     _calendarCtrl = _makeCtrl(450);
     _calendarSlide = _slideAnim(_calendarCtrl, const Offset(0, 0.4));
-    _calendarFade =
-        CurvedAnimation(parent: _calendarCtrl, curve: Curves.easeOut);
+    _calendarFade = CurvedAnimation(
+      parent: _calendarCtrl,
+      curve: Curves.easeOut,
+    );
 
     _tipsCtrl = _makeCtrl(400);
     _tipsSlide = _slideAnim(_tipsCtrl, const Offset(0, 0.3));
@@ -75,26 +79,31 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
 
     _footerCtrl = _makeCtrl(400);
     _footerSlide = _slideAnim(_footerCtrl, const Offset(0, 1));
-    _footerFade =
-        CurvedAnimation(parent: _footerCtrl, curve: Curves.easeOut);
+    _footerFade = CurvedAnimation(parent: _footerCtrl, curve: Curves.easeOut);
 
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
-    _pulseScale = Tween<double>(begin: 1.0, end: 1.1).animate(
-        CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+    _pulseScale = Tween<double>(
+      begin: 1.0,
+      end: 1.1,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     // Stagger animations
     _headerCtrl.forward();
-    Future.delayed(const Duration(milliseconds: 100),
-        () { if (mounted) _heroCtrl.forward(); });
-    Future.delayed(const Duration(milliseconds: 300),
-        () { if (mounted) _calendarCtrl.forward(); });
-    Future.delayed(const Duration(milliseconds: 500),
-        () { if (mounted) _tipsCtrl.forward(); });
-    Future.delayed(const Duration(milliseconds: 600),
-        () { if (mounted) _footerCtrl.forward(); });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _heroCtrl.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _calendarCtrl.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _tipsCtrl.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) _footerCtrl.forward();
+    });
   }
 
   Future<void> _loadStreakData() async {
@@ -105,7 +114,10 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
     final longest = await repo.getLongestStreak(user.id!);
     final total = await repo.getTotalActivityDays(user.id!);
     final thisMonth = await repo.getMonthActivityCount(
-        user.id!, _currentMonth.year, _currentMonth.month);
+      user.id!,
+      _currentMonth.year,
+      _currentMonth.month,
+    );
     await _loadMonthActivities(user.id!);
     if (!mounted) return;
     setState(() {
@@ -129,12 +141,16 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
     setState(() => _activeDays = days);
   }
 
-  AnimationController _makeCtrl(int ms) =>
-      AnimationController(vsync: this, duration: Duration(milliseconds: ms));
+  AnimationController _makeCtrl(int ms) => AnimationController(
+    vsync: this,
+    duration: Duration(milliseconds: ms),
+  );
 
   Animation<Offset> _slideAnim(AnimationController ctrl, Offset begin) =>
-      Tween<Offset>(begin: begin, end: Offset.zero)
-          .animate(CurvedAnimation(parent: ctrl, curve: Curves.easeOut));
+      Tween<Offset>(
+        begin: begin,
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: ctrl, curve: Curves.easeOut));
 
   @override
   void dispose() {
@@ -169,21 +185,35 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
 
   String get _monthName {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[_currentMonth.month - 1]} ${_currentMonth.year}';
   }
 
   void _previousMonth() {
-    setState(() => _currentMonth =
-        DateTime(_currentMonth.year, _currentMonth.month - 1));
+    setState(
+      () =>
+          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1),
+    );
     _reloadMonthActivities();
   }
 
   void _nextMonth() {
-    setState(() => _currentMonth =
-        DateTime(_currentMonth.year, _currentMonth.month + 1));
+    setState(
+      () =>
+          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1),
+    );
     _reloadMonthActivities();
   }
 
@@ -269,10 +299,7 @@ class _StreakCalendarScreenState extends State<StreakCalendarScreen>
             bottom: 0,
             child: SlideTransition(
               position: _footerSlide,
-              child: FadeTransition(
-                opacity: _footerFade,
-                child: _CtaBar(),
-              ),
+              child: FadeTransition(opacity: _footerFade, child: _CtaBar()),
             ),
           ),
         ],
@@ -296,29 +323,43 @@ class _StreakHeader extends StatelessWidget {
           child: Row(
             children: [
               GestureDetector(
-                onTap: () => context.go('/home'),
+                onTap: () {
+                  final router = GoRouter.of(context);
+                  if (router.canPop()) {
+                    context.pop();
+                    return;
+                  }
+                  context.go('/home');
+                },
                 child: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(Icons.arrow_back,
-                      size: 20, color: Color(0xFF374151)),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    size: 20,
+                    color: Color(0xFF374151),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('Your Streak',
-                      style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827))),
-                  Text('Keep the fire burning! 🔥',
-                      style:
-                          TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                  Text(
+                    'Your Streak',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  Text(
+                    'Keep the fire burning! 🔥',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  ),
                 ],
               ),
             ],
@@ -352,9 +393,10 @@ class _HeroCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-                color: const Color(0xFFFA5C5C).withOpacity(0.4),
-                blurRadius: 28,
-                offset: const Offset(0, 10))
+              color: const Color(0xFFFA5C5C).withOpacity(0.4),
+              blurRadius: 28,
+              offset: const Offset(0, 10),
+            ),
           ],
         ),
         clipBehavior: Clip.hardEdge,
@@ -400,10 +442,7 @@ class _HeroCard extends StatelessWidget {
                           size: 80,
                           color: Color(0xFFFBEF76),
                           shadows: [
-                            Shadow(
-                              color: Color(0x66FBEF76),
-                              blurRadius: 20,
-                            )
+                            Shadow(color: Color(0x66FBEF76), blurRadius: 20),
                           ],
                         ),
                       ),
@@ -495,14 +534,21 @@ class _StatChip extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: Colors.white),
             const SizedBox(height: 4),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 10, color: Colors.white.withOpacity(0.8))),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
           ],
         ),
       ),
@@ -540,9 +586,10 @@ class _CalendarCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 4))
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         padding: const EdgeInsets.all(20),
@@ -561,15 +608,21 @@ class _CalendarCard extends StatelessWidget {
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(Icons.chevron_left,
-                        size: 20, color: Color(0xFF374151)),
+                    child: const Icon(
+                      Icons.chevron_left,
+                      size: 20,
+                      color: Color(0xFF374151),
+                    ),
                   ),
                 ),
-                Text(monthName,
-                    style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827))),
+                Text(
+                  monthName,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
+                ),
                 GestureDetector(
                   onTap: onNextMonth,
                   child: Container(
@@ -579,8 +632,11 @@ class _CalendarCard extends StatelessWidget {
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(Icons.chevron_right,
-                        size: 20, color: Color(0xFF374151)),
+                    child: const Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: Color(0xFF374151),
+                    ),
                   ),
                 ),
               ],
@@ -590,15 +646,20 @@ class _CalendarCard extends StatelessWidget {
             // Weekday labels
             Row(
               children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-                  .map((d) => Expanded(
-                        child: Center(
-                          child: Text(d,
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF9CA3AF))),
+                  .map(
+                    (d) => Expanded(
+                      child: Center(
+                        child: Text(
+                          d,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF9CA3AF),
+                          ),
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 10),
@@ -640,10 +701,7 @@ class _CalendarCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 24),
-                _Legend(
-                  color: const Color(0xFFF3F4F6),
-                  label: 'Inactive',
-                ),
+                _Legend(color: const Color(0xFFF3F4F6), label: 'Inactive'),
               ],
             ),
           ],
@@ -686,9 +744,10 @@ class _CalendarDay extends StatelessWidget {
             boxShadow: active
                 ? [
                     BoxShadow(
-                        color: const Color(0xFFFA5C5C).withOpacity(0.35),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2))
+                      color: const Color(0xFFFA5C5C).withOpacity(0.35),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
                   ]
                 : null,
           ),
@@ -713,9 +772,7 @@ class _CalendarDay extends StatelessWidget {
               Icons.local_fire_department,
               size: 12,
               color: const Color(0xFFFBEF76),
-              shadows: const [
-                Shadow(color: Color(0x66FBEF76), blurRadius: 6)
-              ],
+              shadows: const [Shadow(color: Color(0x66FBEF76), blurRadius: 6)],
             ),
           ),
 
@@ -762,9 +819,10 @@ class _Legend extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(label,
-            style:
-                const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+        ),
       ],
     );
   }
@@ -779,12 +837,21 @@ class _StreakTips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tips = [
-      _Tip(emoji: '⏰', title: 'Set a Daily Goal',
-          body: 'Study at the same time each day to build a habit'),
-      _Tip(emoji: '🔔', title: 'Enable Notifications',
-          body: 'Get reminders so you never miss a day'),
-      _Tip(emoji: '🎯', title: 'Start Small',
-          body: 'Even 5 minutes counts toward your streak!'),
+      _Tip(
+        emoji: '⏰',
+        title: 'Set a Daily Goal',
+        body: 'Study at the same time each day to build a habit',
+      ),
+      _Tip(
+        emoji: '🔔',
+        title: 'Enable Notifications',
+        body: 'Get reminders so you never miss a day',
+      ),
+      _Tip(
+        emoji: '🎯',
+        title: 'Start Small',
+        body: 'Even 5 minutes counts toward your streak!',
+      ),
     ];
 
     return Padding(
@@ -792,11 +859,14 @@ class _StreakTips extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Streak Tips',
-              style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827))),
+          const Text(
+            'Streak Tips',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+            ),
+          ),
           const SizedBox(height: 12),
           ...tips.map((t) => _TipCard(tip: t)),
         ],
@@ -823,9 +893,10 @@ class _TipCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(16),
@@ -838,15 +909,22 @@ class _TipCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tip.title,
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827))),
+                Text(
+                  tip.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(tip.body,
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7280))),
+                Text(
+                  tip.body,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
               ],
             ),
           ),
@@ -884,18 +962,20 @@ class _CtaBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                        color: const Color(0xFFFA5C5C).withOpacity(0.4),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6))
+                      color: const Color(0xFFFA5C5C).withOpacity(0.4),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
                   ],
                 ),
                 child: const Center(
                   child: Text(
                     'Continue Learning',
                     style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),

@@ -36,6 +36,7 @@ class _Header extends StatefulWidget {
 }
 
 class _HeaderState extends State<_Header> {
+  final int _notificationCount = 2;
   String _displayName = 'Bạn';
 
   @override
@@ -57,68 +58,43 @@ class _HeaderState extends State<_Header> {
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 12,
         bottom: 16,
-        left: 24,
-        right: 24,
+        left: 16,
+        right: 16,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Xin chào, $_displayName! 👋',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Sẵn sàng học hôm nay chưa?',
-                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => context.go('/notifications'),
-                child: _IconBtn(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(
-                        Icons.notifications_outlined,
-                        size: 22,
-                        color: Color(0xFF6B7280),
-                      ),
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFA5C5C),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Text(
-                              '2',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Xin chào, $_displayName! 👋',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A1A),
                   ),
                 ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Sẵn sàng học hôm nay chưa?',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () => context.push('/notifications'),
+                child: _NotificationIconBtn(count: _notificationCount),
               ),
               const SizedBox(width: 8),
               GestureDetector(
@@ -148,7 +124,7 @@ class _HeaderState extends State<_Header> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () => context.go('/settings'),
+                onTap: () => context.push('/settings'),
                 child: _IconBtn(
                   child: const Icon(
                     Icons.settings_outlined,
@@ -179,6 +155,62 @@ class _IconBtn extends StatelessWidget {
         borderRadius: BorderRadius.circular(21),
       ),
       child: Center(child: child),
+    );
+  }
+}
+
+class _NotificationIconBtn extends StatelessWidget {
+  const _NotificationIconBtn({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeText = count > 9 ? '9+' : '$count';
+    final showBadge = count > 0;
+
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Center(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const _IconBtn(
+              child: Icon(
+                Icons.notifications_outlined,
+                size: 22,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+            if (showBadge)
+              Positioned(
+                top: -3,
+                right: -3,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 18),
+                  height: 18,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFA5C5C),
+                    borderRadius: BorderRadius.all(Radius.circular(9)),
+                  ),
+                  child: Center(
+                    child: Text(
+                      badgeText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -235,7 +267,7 @@ class _StatsBannerState extends State<_StatsBanner> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             GestureDetector(
-              onTap: () => context.go('/streak'),
+              onTap: () => context.push('/streak'),
               child: _StatItem(
                 icon: Icons.local_fire_department,
                 gradientColors: const [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
@@ -245,7 +277,7 @@ class _StatsBannerState extends State<_StatsBanner> {
             ),
             Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
             GestureDetector(
-              onTap: () => context.go('/achievements'),
+              onTap: () => context.push('/achievements'),
               child: _StatItem(
                 icon: Icons.star_rounded,
                 gradientColors: const [Color(0xFFFEC288), Color(0xFFFBEF76)],
@@ -364,7 +396,10 @@ class _NextLessonCardState extends State<_NextLessonCard> {
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
-        child: SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
+        child: SizedBox(
+          height: 200,
+          child: Center(child: CircularProgressIndicator()),
+        ),
       );
     }
     if (_lessonId == 0) {
@@ -381,8 +416,14 @@ class _NextLessonCardState extends State<_NextLessonCard> {
           ),
           padding: const EdgeInsets.all(24),
           child: const Center(
-            child: Text('🎉 Bạn đã hoàn thành tất cả bài học!',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            child: Text(
+              '🎉 Bạn đã hoàn thành tất cả bài học!',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       );
@@ -513,7 +554,7 @@ class _NextLessonCardState extends State<_NextLessonCard> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => context.go('/lesson-intro'),
+                      onPressed: () => context.push('/lesson-intro'),
                       icon: const Icon(Icons.play_arrow_rounded, size: 26),
                       label: const Text(
                         'Bắt Đầu Bài Học',

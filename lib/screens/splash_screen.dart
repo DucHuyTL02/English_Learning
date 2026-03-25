@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/services/app_services.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -43,12 +45,14 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 400),
     );
 
-    _scaleAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOut),
-    );
-    _opacityAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOut),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _entryController, curve: Curves.easeOut));
+    _opacityAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _entryController, curve: Curves.easeOut));
 
     _titleSlideAnim = Tween<double>(begin: 20.0, end: 0.0).animate(
       CurvedAnimation(
@@ -76,9 +80,10 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _dotsOpacityAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _dotsController, curve: Curves.easeIn),
-    );
+    _dotsOpacityAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _dotsController, curve: Curves.easeIn));
 
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.1).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
@@ -89,9 +94,18 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) _dotsController.forward();
     });
 
-    Timer(const Duration(milliseconds: 3000), () {
-      if (mounted) context.go('/onboarding-1');
-    });
+    Timer(const Duration(milliseconds: 3000), _navigateFromSession);
+  }
+
+  Future<void> _navigateFromSession() async {
+    final activeUser = await AppServices.userRepository.getActiveUser();
+    if (!mounted) return;
+    if (activeUser != null) {
+      final lastRoute = AppServices.routeStateService.getLastRestorableRoute();
+      context.go(lastRoute ?? '/home');
+      return;
+    }
+    context.go('/login');
   }
 
   @override
@@ -115,8 +129,11 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         child: Center(
           child: AnimatedBuilder(
-            animation: Listenable.merge(
-                [_entryController, _pulseController, _dotsController]),
+            animation: Listenable.merge([
+              _entryController,
+              _pulseController,
+              _dotsController,
+            ]),
             builder: (context, _) {
               return Opacity(
                 opacity: _opacityAnim.value,
@@ -136,15 +153,13 @@ class _SplashScreenState extends State<SplashScreen>
                             borderRadius: BorderRadius.circular(40),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFBEF76).withValues(alpha: 
-                                    0.4 +
-                                        0.4 *
-                                            (_pulseAnim.value - 1.0) /
-                                            0.1),
-                                blurRadius: 20 +
-                                    20 *
-                                        (_pulseAnim.value - 1.0) /
-                                        0.1,
+                                color: const Color(0xFFFBEF76).withValues(
+                                  alpha:
+                                      0.4 +
+                                      0.4 * (_pulseAnim.value - 1.0) / 0.1,
+                                ),
+                                blurRadius:
+                                    20 + 20 * (_pulseAnim.value - 1.0) / 0.1,
                                 spreadRadius: 4,
                               ),
                             ],
@@ -236,9 +251,10 @@ class _BouncingDotsState extends State<_BouncingDots>
     );
     _anims = _controllers
         .map(
-          (c) => Tween<double>(begin: 0, end: -15).animate(
-            CurvedAnimation(parent: c, curve: Curves.easeInOut),
-          ),
+          (c) => Tween<double>(
+            begin: 0,
+            end: -15,
+          ).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut)),
         )
         .toList();
 
@@ -273,8 +289,9 @@ class _BouncingDotsState extends State<_BouncingDots>
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: Colors.white
-                        .withValues(alpha: 0.5 + 0.5 * (_anims[i].value.abs() / 15)),
+                    color: Colors.white.withValues(
+                      alpha: 0.5 + 0.5 * (_anims[i].value.abs() / 15),
+                    ),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -304,8 +321,7 @@ class _BookLogoPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     // Book body
-    final rrect = RRect.fromLTRBR(
-        22, 20, 98, 100, const Radius.circular(8));
+    final rrect = RRect.fromLTRBR(22, 20, 98, 100, const Radius.circular(8));
     canvas.drawRRect(rrect, bookPaint);
 
     // Centre divider
@@ -313,30 +329,38 @@ class _BookLogoPainter extends CustomPainter {
 
     // Left circle (yellow)
     canvas.drawCircle(
-        const Offset(42, 50), 8, Paint()..color = const Color(0xFFFBEF76));
+      const Offset(42, 50),
+      8,
+      Paint()..color = const Color(0xFFFBEF76),
+    );
     // Right circle (peach)
     canvas.drawCircle(
-        const Offset(78, 50), 8, Paint()..color = const Color(0xFFFEC288));
+      const Offset(78, 50),
+      8,
+      Paint()..color = const Color(0xFFFEC288),
+    );
 
     // Left line
     canvas.drawLine(
-        const Offset(42, 70),
-        const Offset(50, 70),
-        Paint()
-          ..color = Colors.white
-          ..strokeWidth = 3
-          ..strokeCap = StrokeCap.round
-          ..style = PaintingStyle.stroke);
+      const Offset(42, 70),
+      const Offset(50, 70),
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
 
     // Right line
     canvas.drawLine(
-        const Offset(70, 70),
-        const Offset(78, 70),
-        Paint()
-          ..color = Colors.white
-          ..strokeWidth = 3
-          ..strokeCap = StrokeCap.round
-          ..style = PaintingStyle.stroke);
+      const Offset(70, 70),
+      const Offset(78, 70),
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
   }
 
   @override
