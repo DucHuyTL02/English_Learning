@@ -82,16 +82,18 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   late Animation<double> _levelProgress;
   late Animation<double> _goalProgress;
 
-  static const int _level = 8;
-  static const double _levelPct = 0.65;
+  int _level = 1;
+  double _levelPct = 0.0;
+  int _totalXp = 0;
+  int _streak = 0;
   static const double _goalPct = 0.75;
-  String _profileName = 'Sarah Chen';
-  int _savedWordCount = 342;
+  String _profileName = 'Bạn';
+  int _savedWordCount = 0;
 
   List<_StatData> get _stats => [
     _StatData(
       label: 'Ngày Liên Tiếp',
-      value: '15',
+      value: '$_streak',
       unit: 'ngày',
       icon: Icons.local_fire_department_rounded,
       color: Color(0xFFFA5C5C),
@@ -174,13 +176,35 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       final user = await AppServices.userRepository.getActiveUser();
       final savedWordCount = await AppServices.dictionaryRepository
           .countSavedWords();
+      int streak = 0;
+      int totalXp = 0;
+      if (user != null && user.id != null) {
+        streak = await AppServices.learningRepository.getCurrentStreak(user.id!);
+        totalXp = await AppServices.learningRepository.getTotalXp(user.id!);
+      }
       if (!mounted) return;
+      final xpPerLevel = 500;
+      final level = (totalXp ~/ xpPerLevel) + 1;
+      final xpInLevel = totalXp % xpPerLevel;
+      final pct = xpInLevel / xpPerLevel;
       setState(() {
         if (user != null) {
           _profileName = user.displayName;
         }
         _savedWordCount = savedWordCount;
+        _streak = streak;
+        _totalXp = totalXp;
+        _level = level;
+        _levelPct = pct;
       });
+      // Re-animate progress bars with real values
+      _levelProgress = Tween<double>(begin: 0, end: _levelPct).animate(
+        CurvedAnimation(
+          parent: _progressCtrl,
+          curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
+        ),
+      );
+      _progressCtrl.forward(from: 0);
     } catch (_) {
       // Keep default values if loading fails.
     }
@@ -208,6 +232,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 progressAnim: _levelProgress,
                 progressCtrl: _progressCtrl,
                 displayName: _profileName,
+                totalXp: _totalXp,
               ),
             ),
 
@@ -220,7 +245,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                   offset: const Offset(0, -36),
                   child: GestureDetector(
                     onTap: () => context.go('/streak'),
-                    child: _StreakBanner(),
+                    child: _StreakBanner(streak: _streak),
                   ),
                 ),
               ),
@@ -425,11 +450,13 @@ class _ProfileHeader extends StatelessWidget {
     required this.progressAnim,
     required this.progressCtrl,
     required this.displayName,
+    required this.totalXp,
   });
   final int level;
   final Animation<double> progressAnim;
   final AnimationController progressCtrl;
   final String displayName;
+  final int totalXp;
 
   @override
   Widget build(BuildContext context) {
@@ -658,7 +685,7 @@ class _ProfileHeader extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        '350 / 500 XP',
+                        '${totalXp % 500} / 500 XP',
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.white.withValues(alpha: 0.7),
@@ -678,6 +705,9 @@ class _ProfileHeader extends StatelessWidget {
 
 // ── Streak banner ──
 class _StreakBanner extends StatelessWidget {
+  const _StreakBanner({required this.streak});
+  final int streak;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -717,26 +747,26 @@ class _StreakBanner extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'Chuỗi 15 Ngày!',
-                  style: TextStyle(
+                  'Chuỗi $streak Ngày!',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF111827),
                   ),
                 ),
-                SizedBox(height: 2),
-                Text(
+                const SizedBox(height: 2),
+                const Text(
                   'Cố lên! Đừng phá vỡ chuỗi 🔥',
                   style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                 ),
               ],
             ),
           ),
-          const Text(
-            '15',
-            style: TextStyle(
+          Text(
+            '$streak',
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFFFA5C5C),

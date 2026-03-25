@@ -251,14 +251,14 @@ class AppDatabase {
         'lesson_id': 4, 'type': 'multiple_choice', 'sort_order': 1,
         'question': 'What color is the sky?',
         'correct_answer': 'Blue - Xanh dương',
-        'options': 'Red - Đỏ|Blue - Xanh dương|Green - Xanh lá|Yellow - Vàng',
+        'options': 'Red |Blue |Green |Yellow ',
         'illustration': '☁️',
       },
       {
         'lesson_id': 4, 'type': 'multiple_choice', 'sort_order': 2,
         'question': 'What color is a banana?',
-        'correct_answer': 'Yellow - Vàng',
-        'options': 'Red - Đỏ|Blue - Xanh dương|Green - Xanh lá|Yellow - Vàng',
+        'correct_answer': 'Yellow',
+        'options': 'Red | Blue |Green |Yellow ',
         'illustration': '🍌',
       },
       {
@@ -285,8 +285,8 @@ class AppDatabase {
       {
         'lesson_id': 4, 'type': 'multiple_choice', 'sort_order': 6,
         'question': 'What color is snow?',
-        'correct_answer': 'White - Trắng',
-        'options': 'White - Trắng|Black - Đen|Red - Đỏ|Blue - Xanh dương',
+        'correct_answer': 'White ',
+        'options': 'White |Black |Red |Blue ',
         'illustration': '❄️',
       },
       {
@@ -300,7 +300,7 @@ class AppDatabase {
         'lesson_id': 4, 'type': 'multiple_choice', 'sort_order': 8,
         'question': 'What color is an orange?',
         'correct_answer': 'Orange - Cam',
-        'options': 'Orange - Cam|Purple - Tím|Pink - Hồng|Brown - Nâu',
+        'options': 'Orange |Purple |Pink |Brown ',
         'illustration': '🍊',
       },
       {
@@ -314,7 +314,7 @@ class AppDatabase {
         'lesson_id': 4, 'type': 'multiple_choice', 'sort_order': 10,
         'question': 'What color is a strawberry?',
         'correct_answer': 'Red - Đỏ',
-        'options': 'Red - Đỏ|Blue - Xanh dương|Green - Xanh lá|Yellow - Vàng',
+        'options': 'Red |Blue |Green |Yellow ',
         'illustration': '🍓',
       },
     ];

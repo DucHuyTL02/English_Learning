@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'data/services/app_services.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
@@ -15,6 +17,7 @@ import 'widgets/bottom_navigation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppServices.initialize();
   runApp(const MainApp());
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/services/app_services.dart';
+import '../data/services/tts_service.dart';
 
 // ─── MULTIPLE CHOICE ─────────────────────────────────────────────────────────
 
@@ -21,12 +22,12 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
   late Animation<Offset> _resultSlide;
   late Animation<double> _resultOpacity;
 
-  static const _options = [
-    _OptionData(id: 0, text: 'Red - Đỏ', isCorrect: false),
-    _OptionData(id: 1, text: 'Blue - Xanh dương', isCorrect: true),
-    _OptionData(id: 2, text: 'Green - Xanh lá', isCorrect: false),
-    _OptionData(id: 3, text: 'Yellow - Vàng', isCorrect: false),
-  ];
+  // Dynamic data from session (falls back to default if no session)
+  late String _question;
+  late String _illustration;
+  late List<_OptionData> _options;
+  late int _progress;
+  late int _total;
 
   @override
   void initState() {
@@ -36,6 +37,29 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
         .animate(CurvedAnimation(parent: _resultCtrl, curve: Curves.easeOut));
     _resultOpacity = Tween<double>(begin: 0, end: 1)
         .animate(CurvedAnimation(parent: _resultCtrl, curve: Curves.easeOut));
+
+    final session = AppServices.exerciseSession;
+    final ex = session.current;
+    if (ex != null && ex.type == 'multiple_choice') {
+      _question = ex.question;
+      _illustration = ex.illustration;
+      final opts = ex.optionList;
+      _options = List.generate(opts.length, (i) =>
+          _OptionData(id: i, text: opts[i], isCorrect: opts[i] == ex.correctAnswer));
+      _progress = session.currentIndex + 1;
+      _total = session.total;
+    } else {
+      _question = 'What color is the sky?';
+      _illustration = '☁️';
+      _options = const [
+        _OptionData(id: 0, text: 'Red - Đỏ', isCorrect: false),
+        _OptionData(id: 1, text: 'Blue - Xanh dương', isCorrect: true),
+        _OptionData(id: 2, text: 'Green - Xanh lá', isCorrect: false),
+        _OptionData(id: 3, text: 'Yellow - Vàng', isCorrect: false),
+      ];
+      _progress = 1;
+      _total = 10;
+    }
   }
 
   @override
@@ -47,24 +71,44 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
     _resultCtrl.forward();
   }
 
+  void _onContinue() {
+    final session = AppServices.exerciseSession;
+    session.recordAnswer(_isCorrect);
+    final next = session.next();
+    if (next == null) {
+      context.go('/lesson-completed');
+      return;
+    }
+    final route = switch (next.type) {
+      'listening' => '/exercise/listening',
+      'speaking' => '/exercise/speaking',
+      'matching' => '/exercise/matching',
+      _ => '/exercise/multiple-choice',
+    };
+    context.go(route);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: Column(children: [
-        _ExerciseHeader(progress: 3, total: 10, onClose: () => context.go('/home')),
+        _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Expanded(child: Text('What color is the sky?',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF111827)))),
+              Expanded(child: Text(_question,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF111827)))),
               const SizedBox(width: 12),
-              Container(width: 50, height: 50,
-                decoration: BoxDecoration(color: const Color(0xFFFA5C5C),
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: const [BoxShadow(color: Color(0x40FA5C5C), blurRadius: 10, offset: Offset(0, 4))]),
-                child: const Icon(Icons.volume_up_rounded, color: Colors.white, size: 24)),
+              GestureDetector(
+                onTap: () => AppServices.tts.speak(_question),
+                child: Container(width: 50, height: 50,
+                  decoration: BoxDecoration(color: const Color(0xFFFA5C5C),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: const [BoxShadow(color: Color(0x40FA5C5C), blurRadius: 10, offset: Offset(0, 4))]),
+                  child: const Icon(Icons.volume_up_rounded, color: Colors.white, size: 24)),
+              ),
             ]),
             const SizedBox(height: 20),
             Container(width: double.infinity, height: 180,
@@ -72,7 +116,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
                 gradient: const LinearGradient(colors: [Color(0xFF87CEEB), Color(0xFF5BA3D9)],
                     begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(24)),
-              child: const Center(child: Text('☁️', style: TextStyle(fontSize: 80)))),
+              child: Center(child: Text(_illustration, style: const TextStyle(fontSize: 80)))),
             const SizedBox(height: 24),
             ...List.generate(_options.length, (i) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -87,7 +131,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
           ? SlideTransition(position: _resultSlide,
               child: FadeTransition(opacity: _resultOpacity,
                 child: _ResultPanel(isCorrect: _isCorrect,
-                    onContinue: () => context.go('/exercise/listening'))))
+                    onContinue: _onContinue)))
           : _CheckBar(enabled: _selectedAnswer != null, onCheck: _checkAnswer),
     );
   }
@@ -189,20 +233,58 @@ class ListeningScreen extends StatefulWidget {
 class _ListeningScreenState extends State<ListeningScreen> with SingleTickerProviderStateMixin {
   late AnimationController _waveCtrl;
   bool _isPlaying = false;
-  final Map<int, TextEditingController> _textCtrlMap = {0: TextEditingController(), 1: TextEditingController()};
+  Map<int, TextEditingController> _textCtrlMap = {};
   bool _isChecked = false;
-
-  static const _sentence = ['The', 'is', 'today'];
-  static const _blanks = [
-    _BlankData(id: 0, afterWordIndex: 0, correctAnswer: 'weather'),
-    _BlankData(id: 1, afterWordIndex: 1, correctAnswer: 'sunny'),
-  ];
-  static const _wordBank = ['weather', 'sunny', 'cold', 'rainy'];
+  late int _progress;
+  late int _total;
+  late String _fullSentence;
+  late List<String> _sentence;
+  late List<_BlankData> _blanks;
+  late List<String> _wordBank;
 
   @override
   void initState() {
     super.initState();
     _waveCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat();
+    final session = AppServices.exerciseSession;
+    _progress = session.total > 0 ? session.currentIndex + 1 : 5;
+    _total = session.total > 0 ? session.total : 10;
+    final ex = session.current;
+    if (ex != null && ex.type == 'listening') {
+      _fullSentence = ex.question.replaceAll('___', ex.correctAnswer);
+      // Parse question to build sentence words, blanks, and word bank
+      final tokens = ex.question.split(RegExp(r'\s+'));
+      final words = <String>[];
+      final blankEntries = <_BlankData>[];
+      int blankId = 0;
+      for (final token in tokens) {
+        if (token.contains('___')) {
+          final afterIdx = words.isEmpty ? 0 : words.length - 1;
+          blankEntries.add(_BlankData(id: blankId, afterWordIndex: afterIdx, correctAnswer: ex.correctAnswer));
+          blankId++;
+          final suffix = token.replaceAll('___', '').trim();
+          if (suffix.isNotEmpty) words.add(suffix);
+        } else {
+          words.add(token);
+        }
+      }
+      _sentence = words;
+      _blanks = blankEntries;
+      // Build word bank: correct answer + distractors
+      const distractors = ['red', 'green', 'cold', 'big', 'white', 'rainy'];
+      final others = distractors.where((d) => d != ex.correctAnswer.toLowerCase()).toList()..shuffle();
+      _wordBank = [ex.correctAnswer, ...others.take(3)]..shuffle();
+    } else {
+      _fullSentence = 'The weather is sunny today';
+      _sentence = ['The', 'is', 'today'];
+      _blanks = [
+        _BlankData(id: 0, afterWordIndex: 0, correctAnswer: 'weather'),
+        _BlankData(id: 1, afterWordIndex: 1, correctAnswer: 'sunny'),
+      ];
+      _wordBank = ['weather', 'sunny', 'cold', 'rainy'];
+    }
+    // Initialize text controllers based on number of blanks
+    _textCtrlMap = { for (final b in _blanks) b.id: TextEditingController() };
   }
 
   @override
@@ -214,10 +296,31 @@ class _ListeningScreenState extends State<ListeningScreen> with SingleTickerProv
 
   void _togglePlay() {
     setState(() => _isPlaying = !_isPlaying);
-    if (_isPlaying) { Future.delayed(const Duration(seconds: 3), () { if (mounted) setState(() => _isPlaying = false); }); }
+    if (_isPlaying) {
+      AppServices.tts.speak(_fullSentence);
+      Future.delayed(const Duration(seconds: 3), () { if (mounted) setState(() => _isPlaying = false); });
+    } else {
+      AppServices.tts.stop();
+    }
   }
 
-  bool get _allFilled => _textCtrlMap[0]!.text.trim().isNotEmpty && _textCtrlMap[1]!.text.trim().isNotEmpty;
+  void _onContinue() {
+    final session = AppServices.exerciseSession;
+    // Record whether all blanks were filled correctly
+    final allCorrect = _blanks.every((b) => _isBlankCorrect(b.id));
+    session.recordAnswer(allCorrect);
+    final next = session.next();
+    if (next == null) { context.go('/lesson-completed'); return; }
+    final route = switch (next.type) {
+      'listening' => '/exercise/listening',
+      'speaking' => '/exercise/speaking',
+      'matching' => '/exercise/matching',
+      _ => '/exercise/multiple-choice',
+    };
+    context.go(route);
+  }
+
+  bool get _allFilled => _textCtrlMap.values.every((c) => c.text.trim().isNotEmpty);
   void _checkAnswer() { if (!_allFilled) return; setState(() => _isChecked = true); }
   bool _isBlankCorrect(int id) => _textCtrlMap[id]!.text.trim().toLowerCase() == _blanks[id].correctAnswer.toLowerCase();
 
@@ -226,7 +329,7 @@ class _ListeningScreenState extends State<ListeningScreen> with SingleTickerProv
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: Column(children: [
-        _ExerciseHeader(progress: 5, total: 10, onClose: () => context.go('/home')),
+        _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 24, 24, 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Container(width: 48, height: 48, decoration: BoxDecoration(
@@ -288,7 +391,7 @@ class _ListeningScreenState extends State<ListeningScreen> with SingleTickerProv
         padding: EdgeInsets.only(left: 24, right: 24, top: 16, bottom: MediaQuery.of(context).padding.bottom + 16),
         child: SizedBox(width: double.infinity,
           child: ElevatedButton(
-            onPressed: _isChecked ? () => context.go('/exercise/speaking') : (_allFilled ? _checkAnswer : null),
+            onPressed: _isChecked ? _onContinue : (_allFilled ? _checkAnswer : null),
             style: ElevatedButton.styleFrom(
               backgroundColor: _isChecked ? const Color(0xFF22C55E) : _allFilled ? const Color(0xFFFA5C5C) : const Color(0xFFE5E7EB),
               foregroundColor: _isChecked || _allFilled ? Colors.white : const Color(0xFF9CA3AF),
@@ -349,8 +452,10 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
   bool _isRecording = false, _hasRecorded = false;
   int? _accuracy;
   late AnimationController _pulseCtrl1, _pulseCtrl2, _waveCtrl, _resultCtrl;
-  static const _targetSentence = 'The weather is sunny today';
-  static const _phonetic = '/ðə ˈweðər ɪz ˈsʌni təˈdeɪ/';
+  late String _targetSentence;
+  late String _phonetic;
+  late int _progress;
+  late int _total;
   static const _baseHeights = [28.0,45.0,32.0,60.0,22.0,55.0,38.0,50.0,26.0,64.0,30.0,48.0,36.0,58.0,24.0,52.0,40.0,44.0,34.0,62.0];
 
   @override
@@ -360,6 +465,20 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
     _pulseCtrl2 = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat();
     _waveCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600))..repeat(reverse: true);
     _resultCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+
+    final session = AppServices.exerciseSession;
+    final ex = session.current;
+    if (ex != null && ex.type == 'speaking') {
+      _targetSentence = ex.correctAnswer;
+      _phonetic = '';
+      _progress = session.currentIndex + 1;
+      _total = session.total;
+    } else {
+      _targetSentence = 'The weather is sunny today';
+      _phonetic = '/ðə ˈweðər ɪz ˈsʌni təˈdeɪ/';
+      _progress = 6;
+      _total = 10;
+    }
   }
 
   @override
@@ -381,6 +500,20 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
 
   void _handleTryAgain() { setState(() { _isRecording = false; _hasRecorded = false; _accuracy = null; }); _resultCtrl.reset(); }
 
+  void _onContinue() {
+    final session = AppServices.exerciseSession;
+    session.recordAnswer(_accuracy != null && _accuracy! >= 70);
+    final next = session.next();
+    if (next == null) { context.go('/lesson-completed'); return; }
+    final route = switch (next.type) {
+      'listening' => '/exercise/listening',
+      'speaking' => '/exercise/speaking',
+      'matching' => '/exercise/matching',
+      _ => '/exercise/multiple-choice',
+    };
+    context.go(route);
+  }
+
   @override
   Widget build(BuildContext context) {
     final acc = _accuracy;
@@ -388,7 +521,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: Column(children: [
-        _ExerciseHeader(progress: 6, total: 10, onClose: () => context.go('/home')),
+        _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 28, 24, 24), child: Column(children: [
           const Text('Say the following sentence', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF111827)), textAlign: TextAlign.center),
           const SizedBox(height: 6),
@@ -400,16 +533,19 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
                 boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 16, offset: Offset(0, 4))]),
             padding: const EdgeInsets.all(20),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(_targetSentence, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF111827), height: 1.4)),
-                SizedBox(height: 8),
-                Text(_phonetic, style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), fontFamily: 'monospace')),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(_targetSentence, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF111827), height: 1.4)),
+                const SizedBox(height: 8),
+                Text(_phonetic, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), fontFamily: 'monospace')),
               ])),
               const SizedBox(width: 12),
-              Container(width: 48, height: 48,
-                decoration: const BoxDecoration(color: Color(0xFFFA5C5C), shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Color(0x40FA5C5C), blurRadius: 10, offset: Offset(0, 4))]),
-                child: const Icon(Icons.volume_up_rounded, color: Colors.white, size: 22)),
+              GestureDetector(
+                onTap: () => AppServices.tts.speak(_targetSentence),
+                child: Container(width: 48, height: 48,
+                  decoration: const BoxDecoration(color: Color(0xFFFA5C5C), shape: BoxShape.circle,
+                      boxShadow: [BoxShadow(color: Color(0x40FA5C5C), blurRadius: 10, offset: Offset(0, 4))]),
+                  child: const Icon(Icons.volume_up_rounded, color: Colors.white, size: 22)),
+              ),
             ])),
           const SizedBox(height: 36),
           // Mic button
@@ -486,7 +622,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
       bottomNavigationBar: Container(color: Colors.white,
         padding: EdgeInsets.only(left: 24, right: 24, top: 16, bottom: MediaQuery.of(context).padding.bottom + 16),
         child: acc != null ? Column(mainAxisSize: MainAxisSize.min, children: [
-          SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => context.go('/exercise/matching'),
+          SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _onContinue,
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFA5C5C), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 18), shape: const StadiumBorder(), elevation: 4),
             child: const Text('Continue', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)))),
           if (!isExcellent) ...[const SizedBox(height: 10), SizedBox(width: double.infinity, child: OutlinedButton(onPressed: _handleTryAgain,
@@ -516,12 +652,17 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen> with Si
   final List<_WordItem> _ordered = [];
   bool _isChecked = false;
   late AnimationController _resultCtrl;
+  late int _progress;
+  late int _total;
 
   @override
   void initState() {
     super.initState();
     _available = [_WordItem(id: 0, text: 'English'), _WordItem(id: 1, text: 'love'), _WordItem(id: 2, text: 'I'), _WordItem(id: 3, text: 'learning')];
     _resultCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    final session = AppServices.exerciseSession;
+    _progress = session.total > 0 ? session.currentIndex + 1 : 7;
+    _total = session.total > 0 ? session.total : 10;
   }
 
   @override
@@ -535,13 +676,27 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen> with Si
   void _check() { setState(() => _isChecked = true); _resultCtrl.forward(); }
   void _reset() { setState(() { _available.addAll(_ordered); _ordered.clear(); _isChecked = false; }); _resultCtrl.reset(); }
 
+  void _onContinue() {
+    final session = AppServices.exerciseSession;
+    session.recordAnswer(_isCorrect);
+    final next = session.next();
+    if (next == null) { context.go('/lesson-completed'); return; }
+    final route = switch (next.type) {
+      'listening' => '/exercise/listening',
+      'speaking' => '/exercise/speaking',
+      'matching' => '/exercise/matching',
+      _ => '/exercise/multiple-choice',
+    };
+    context.go(route);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ok = _isCorrect;
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: Column(children: [
-        _ExerciseHeader(progress: 7, total: 10, onClose: () => context.go('/home')),
+        _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 24, 24, 24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: const [
             Text('🔤', style: TextStyle(fontSize: 30)), SizedBox(width: 10),
@@ -618,7 +773,7 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen> with Si
               style: ElevatedButton.styleFrom(backgroundColor: _canCheck ? const Color(0xFFFA5C5C) : const Color(0xFFE5E7EB), foregroundColor: _canCheck ? Colors.white : const Color(0xFF9CA3AF), padding: const EdgeInsets.symmetric(vertical: 18), shape: const StadiumBorder(), elevation: _canCheck ? 4 : 0),
               child: const Text('Check Answer', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold))))
           : Column(mainAxisSize: MainAxisSize.min, children: [
-              SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => context.go('/exercise/flashcard'),
+              SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _onContinue,
                 style: ElevatedButton.styleFrom(backgroundColor: ok ? const Color(0xFF22C55E) : const Color(0xFFFA5C5C), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 18), shape: const StadiumBorder(), elevation: 4),
                 child: const Text('Continue', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)))),
               if (!ok) ...[const SizedBox(height: 10), SizedBox(width: double.infinity, child: OutlinedButton(onPressed: _reset,
@@ -781,10 +936,19 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
   late Animation<int> _scoreAnim;
   late List<_ConfettiPiece> _confettiPieces;
   bool _showConfetti = true;
+  late int _score;
+  late int _xp;
+  late int _correctCount;
+  late int _totalCount;
 
   @override
   void initState() {
     super.initState();
+    final session = AppServices.exerciseSession;
+    _score = session.scorePercent;
+    _xp = session.xpEarned;
+    _correctCount = session.correctCount;
+    _totalCount = session.total;
     _saveProgress();
     final rng = math.Random(42);
     final colors = [const Color(0xFFFA5C5C), const Color(0xFFFD8A6B), const Color(0xFFFEC288), const Color(0xFFFBEF76)];
@@ -804,7 +968,7 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
     _starsCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
     _contentCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _scoreCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _scoreAnim = IntTween(begin: 0, end: 92).animate(CurvedAnimation(parent: _scoreCtrl, curve: Curves.easeOut));
+    _scoreAnim = IntTween(begin: 0, end: _score).animate(CurvedAnimation(parent: _scoreCtrl, curve: Curves.easeOut));
 
     Future.delayed(const Duration(milliseconds: 200), () { if (mounted) _trophyCtrl.forward(); });
     Future.delayed(const Duration(milliseconds: 700), () { if (mounted) _starsCtrl.forward(); });
@@ -816,12 +980,12 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
   Future<void> _saveProgress() async {
     final user = await AppServices.userRepository.getActiveUser();
     if (user?.id == null) return;
-    // Save completion for lesson 4 (Màu Sắc) with score 92 and 50 XP
+    final lessonId = AppServices.exerciseSession.lessonId;
     await AppServices.learningRepository.completeLesson(
       userId: user!.id!,
-      lessonId: 4,
-      score: 92,
-      xpEarned: 50,
+      lessonId: lessonId > 0 ? lessonId : 4,
+      score: _score,
+      xpEarned: _xp,
     );
   }
 
@@ -879,21 +1043,24 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
                 // Stars
                 AnimatedBuilder(
                   animation: _starsCtrl,
-                  builder: (context, _) => Row(
+                  builder: (context, _) {
+                    final earnedStars = _score >= 90 ? 3 : _score >= 70 ? 2 : _score >= 50 ? 1 : 0;
+                    return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(3, (i) {
                       final t = ((_starsCtrl.value - i * 0.22) / 0.56).clamp(0.0, 1.0);
-                      final scale = i < 3 ? Curves.elasticOut.transform(t) : t * 0.6;
+                      final scale = i < earnedStars ? Curves.elasticOut.transform(t) : t * 0.6;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Transform.scale(
                           scale: scale,
                           child: Icon(Icons.star_rounded, size: 60,
-                              color: i < 3 ? const Color(0xFFFBEF76) : const Color(0xFFD1D5DB)),
+                              color: i < earnedStars ? const Color(0xFFFBEF76) : const Color(0xFFD1D5DB)),
                         ),
                       );
                     }),
-                  ),
+                  );
+                  },
                 ),
                 const SizedBox(height: 22),
                 // Score Card
@@ -923,10 +1090,10 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
                           ])),
                         ),
                         const SizedBox(height: 8),
-                        const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Icon(Icons.emoji_events_rounded, color: Colors.white, size: 20),
-                          SizedBox(width: 6),
-                          Text('+50 XP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 6),
+                          Text('+$_xp XP', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                         ]),
                       ]),
                     ]),
@@ -936,12 +1103,12 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
                 // Stats
                 FadeTransition(
                   opacity: _contentCtrl,
-                  child: const Row(children: [
-                    _StatTile(bgColor: Color(0xFFDCFCE7), icon: Icons.trending_up_rounded, iconColor: Color(0xFF16A34A), value: '92%', label: 'Độ Chính Xác'),
-                    SizedBox(width: 10),
-                    _StatTile(bgColor: Color(0xFFDBEAFE), icon: Icons.access_time_rounded, iconColor: Color(0xFF2563EB), value: '8:32', label: 'Thời Gian'),
-                    SizedBox(width: 10),
-                    _StatTile(bgColor: Color(0xFFF3E8FF), icon: Icons.star_rounded, iconColor: Color(0xFF7C3AED), value: '9/10', label: 'Đúng'),
+                  child: Row(children: [
+                    _StatTile(bgColor: const Color(0xFFDCFCE7), icon: Icons.trending_up_rounded, iconColor: const Color(0xFF16A34A), value: '$_score%', label: 'Độ Chính Xác'),
+                    const SizedBox(width: 10),
+                    const _StatTile(bgColor: Color(0xFFDBEAFE), icon: Icons.access_time_rounded, iconColor: Color(0xFF2563EB), value: '--:--', label: 'Thời Gian'),
+                    const SizedBox(width: 10),
+                    _StatTile(bgColor: const Color(0xFFF3E8FF), icon: Icons.star_rounded, iconColor: const Color(0xFF7C3AED), value: '$_correctCount/$_totalCount', label: 'Đúng'),
                   ]),
                 ),
                 const SizedBox(height: 18),
@@ -1126,18 +1293,21 @@ class _FlashcardScreenState extends State<FlashcardScreen> with SingleTickerProv
               Text(card.phonetic,
                   style: TextStyle(fontSize: 18, fontFamily: 'monospace', color: Colors.white.withValues(alpha: 0.9))),
               const SizedBox(height: 26),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(50),
+              GestureDetector(
+                onTap: () => AppServices.tts.speak(card.word),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.volume_up_rounded, color: Colors.white, size: 22),
+                    const SizedBox(width: 8),
+                    Text('Phát Âm',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.95), fontWeight: FontWeight.w600)),
+                  ]),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.volume_up_rounded, color: Colors.white, size: 22),
-                  const SizedBox(width: 8),
-                  Text('Phát Âm',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.95), fontWeight: FontWeight.w600)),
-                ]),
               ),
               const SizedBox(height: 22),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [

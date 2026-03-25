@@ -703,8 +703,14 @@ class _LessonCard extends StatelessWidget {
 // LESSON INTRO SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-class LessonIntroScreen extends StatelessWidget {
+class LessonIntroScreen extends StatefulWidget {
   const LessonIntroScreen({super.key});
+
+  @override
+  State<LessonIntroScreen> createState() => _LessonIntroScreenState();
+}
+
+class _LessonIntroScreenState extends State<LessonIntroScreen> {
 
   static const _vocab = [
     _VocabData(
@@ -1015,8 +1021,24 @@ class LessonIntroScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () =>
-                    context.go('/exercise/multiple-choice'),
+                onPressed: () async {
+                  // Load exercises for lesson 4 (Màu Sắc) into session
+                  final exercises = await AppServices.learningRepository
+                      .getExercisesByLesson(4);
+                  AppServices.exerciseSession.load(4, exercises);
+                  if (!mounted) return;
+                  if (exercises.isNotEmpty) {
+                    final firstType = exercises.first.type;
+                    final route = switch (firstType) {
+                      'listening' => '/exercise/listening',
+                      'speaking' => '/exercise/speaking',
+                      _ => '/exercise/multiple-choice',
+                    };
+                    context.go(route);
+                  } else {
+                    context.go('/exercise/multiple-choice');
+                  }
+                },
                 icon: const Icon(Icons.play_arrow_rounded, size: 24),
                 label: const Text('Bắt Đầu Bài Học',
                     style: TextStyle(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../data/models/dictionary_word_model.dart';
 import '../data/repositories/dictionary_repository.dart';
 import '../data/services/app_services.dart';
+import '../data/services/tts_service.dart';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Data Model
@@ -219,6 +220,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                     word: _filteredWords[i],
                     index: i,
                     onToggleBookmark: _toggleBookmark,
+                    tts: AppServices.tts,
                   ),
                   childCount: _filteredWords.length,
                 ),
@@ -493,11 +495,13 @@ class _WordCard extends StatefulWidget {
   final DictionaryWordModel word;
   final int index;
   final ValueChanged<int> onToggleBookmark;
+  final TtsService tts;
 
   const _WordCard({
     required this.word,
     required this.index,
     required this.onToggleBookmark,
+    required this.tts,
   });
 
   @override
@@ -567,26 +571,32 @@ class _WordCardState extends State<_WordCard>
                     // Word title + speaker
                     Row(
                       children: [
-                        Text(
-                          w.word,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF111827),
+                        Flexible(
+                          child: Text(
+                            w.word,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFA5C5C),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.volume_up,
-                            size: 18,
-                            color: Colors.white,
+                        GestureDetector(
+                          onTap: () => widget.tts.speak(w.word),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFA5C5C),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.volume_up,
+                              size: 18,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ],
@@ -639,6 +649,7 @@ class _WordCardState extends State<_WordCard>
 
                     // Example sentence
                     Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF9F9F9),

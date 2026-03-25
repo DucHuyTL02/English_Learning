@@ -5,6 +5,8 @@ import '../datasources/user_local_datasource.dart';
 import '../repositories/dictionary_repository.dart';
 import '../repositories/learning_repository.dart';
 import '../repositories/user_repository.dart';
+import 'exercise_session.dart';
+import 'tts_service.dart';
 
 class AppServices {
   AppServices._();
@@ -19,8 +21,11 @@ class AppServices {
   static final LearningRepository learningRepository = LearningRepository(
     LearningLocalDataSource(database),
   );
+  static final TtsService tts = TtsService.instance;
+  static final ExerciseSession exerciseSession = ExerciseSession.instance;
 
   static Future<void> initialize() async {
     await database.database;
+    await tts.init();
   }
 }

@@ -15,6 +15,7 @@ dependencies:
   sqflite_common_ffi: ^2.3.6
   firebase_core: ^3.15.1
   cloud_firestore: ^5.6.11
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:
