@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/providers/app_providers.dart';
 import '../data/repositories/user_repository.dart';
 import '../data/services/app_services.dart';
 
@@ -1731,14 +1733,14 @@ class _AccountActionBtn extends StatelessWidget {
 // SETTINGS SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _notifications = true;
   bool _sound = true;
   bool _darkMode = false;
@@ -1794,6 +1796,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  void _showLanguageDialog() {
+    final currentLocale = ref.read(localeNotifierProvider);
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Chọn ngôn ngữ'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _LangOption(
+              label: 'Tiếng Việt',
+              selected: currentLocale.languageCode == 'vi',
+              onTap: () {
+                ref
+                    .read(localeNotifierProvider.notifier)
+                    .setLocale(const Locale('vi'));
+                Navigator.of(ctx).pop();
+              },
+            ),
+            _LangOption(
+              label: 'English',
+              selected: currentLocale.languageCode == 'en',
+              onTap: () {
+                ref
+                    .read(localeNotifierProvider.notifier)
+                    .setLocale(const Locale('en'));
+                Navigator.of(ctx).pop();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final groups = [
@@ -1836,9 +1873,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsItem(
             icon: Icons.language_rounded,
             label: 'Ngôn Ngữ',
-            desc: 'Tiếng Việt',
+            desc: ref.watch(localeNotifierProvider).languageCode == 'vi'
+                ? 'Tiếng Việt'
+                : 'English',
             type: _ItemType.navigate,
-            onTap: () {},
+            onTap: _showLanguageDialog,
           ),
           _SettingsItem(
             icon: Icons.volume_up_rounded,
@@ -1869,7 +1908,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             type: _ItemType.toggle,
             toggleValue: _darkMode,
             onTap: () {
-              setState(() => _darkMode = !_darkMode);
+              final newDark = !_darkMode;
+              setState(() => _darkMode = newDark);
+              ref.read(themeNotifierProvider.notifier).setDark(newDark);
               _persistSettings();
             },
           ),
@@ -2127,6 +2168,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 // ── Settings models ──
 enum _ItemType { navigate, toggle }
+
+// Simple language option tile used inside the language picker dialog.
+class _LangOption extends StatelessWidget {
+  const _LangOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(label),
+      trailing: selected
+          ? const Icon(Icons.check_rounded, color: Color(0xFFFA5C5C))
+          : null,
+      onTap: onTap,
+    );
+  }
+}
 
 class _SettingsItem {
   const _SettingsItem({

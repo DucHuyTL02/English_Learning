@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'data/services/app_services.dart';
+import 'data/providers/app_providers.dart';
+import 'theme/app_theme.dart';
+import 'l10n/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -20,7 +25,17 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppServices.initialize();
-  runApp(const MainApp());
+
+  // Pre-seed ThemeMode from persisted user preference before first frame.
+  final container = ProviderContainer();
+  final initialUser = await AppServices.userRepository.getActiveUser();
+  if (initialUser != null) {
+    container
+        .read(themeNotifierProvider.notifier)
+        .setDark(initialUser.darkModeEnabled);
+  }
+
+  runApp(UncontrolledProviderScope(container: container, child: const MainApp()));
 }
 
 /// Shell scaffold — dùng Stack để đặt BottomNavigation lên trên màn hình con.
@@ -178,19 +193,27 @@ final _router = GoRouter(
   ],
 );
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeNotifierProvider);
+    final locale = ref.watch(localeNotifierProvider);
     return MaterialApp.router(
-      title: 'LinguaJoy',
+      title: 'English Learning',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFA5C5C)),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: themeMode,
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,
     );
   }
