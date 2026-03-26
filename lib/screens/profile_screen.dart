@@ -117,6 +117,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   static const double _goalPct = 0.75;
   String _profileName = 'Bạn';
   int _savedWordCount = 0;
+  int _completedLessonCount = 0;
+  int _achievementCount = 0;
 
   List<_StatData> get _stats => [
     _StatData(
@@ -136,16 +138,16 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       route: '/dictionary',
     ),
     _StatData(
-      label: 'Tổng Thời Gian',
-      value: '24',
-      unit: 'giờ',
+      label: 'Bài Đã Học',
+      value: '$_completedLessonCount',
+      unit: 'bài',
       icon: Icons.access_time_rounded,
       color: Color(0xFFFEC288),
-      route: null,
+      route: '/course-map',
     ),
     _StatData(
       label: 'Thành Tích',
-      value: '12',
+      value: '$_achievementCount',
       unit: 'huy hiệu',
       icon: Icons.emoji_events_rounded,
       color: Color(0xFFFBEF76),
@@ -153,26 +155,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     ),
   ];
 
-  final _achievements = const [
-    _AchievData(
-      title: 'Bước Đầu Tiên',
-      desc: 'Hoàn thành bài học đầu tiên',
-      emoji: '🎯',
-      date: '2 ngày trước',
-    ),
-    _AchievData(
-      title: 'Bậc Thầy Từ Vựng',
-      desc: 'Học 100 từ mới',
-      emoji: '📚',
-      date: '1 tuần trước',
-    ),
-    _AchievData(
-      title: 'Người Học Kiên Trì',
-      desc: 'Chuỗi học 7 ngày',
-      emoji: '🔥',
-      date: '2 tuần trước',
-    ),
-  ];
+  List<_AchievData> _achievements = [];
 
   @override
   void initState() {
@@ -206,17 +189,47 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           .countSavedWords();
       int streak = 0;
       int totalXp = 0;
+      int completedLessons = 0;
+      int longestStreak = 0;
       if (user != null && user.id != null) {
         streak = await AppServices.learningRepository.getCurrentStreak(
           user.id!,
         );
         totalXp = await AppServices.learningRepository.getTotalXp(user.id!);
+        longestStreak = await AppServices.learningRepository.getLongestStreak(user.id!);
+        final completedIds = await AppServices.learningRepository.getCompletedLessonIds(user.id!);
+        completedLessons = completedIds.length;
       }
       if (!mounted) return;
       final xpPerLevel = 500;
       final level = (totalXp ~/ xpPerLevel) + 1;
       final xpInLevel = totalXp % xpPerLevel;
       final pct = xpInLevel / xpPerLevel;
+
+      // Compute achievements
+      final maxStreak = longestStreak > streak ? longestStreak : streak;
+      final achievList = <_AchievData>[];
+      if (completedLessons >= 1) achievList.add(const _AchievData(title: 'Bước Đầu Tiên', desc: 'Hoàn thành bài học đầu tiên', emoji: '🎯'));
+      if (maxStreak >= 7) achievList.add(const _AchievData(title: 'Chiến Binh Tuần', desc: 'Chuỗi 7 ngày', emoji: '🔥'));
+      if (savedWordCount >= 10) achievList.add(const _AchievData(title: 'Người Sưu Tầm', desc: 'Lưu 10 từ vào từ điển', emoji: '📚'));
+      if (completedLessons >= 5) achievList.add(const _AchievData(title: 'Học Viên Chăm Chỉ', desc: 'Hoàn thành 5 bài học', emoji: '⚡'));
+      if (totalXp >= 500) achievList.add(const _AchievData(title: 'Nhà Vô Địch XP', desc: 'Đạt 500 XP', emoji: '⭐'));
+      if (completedLessons >= 12) achievList.add(const _AchievData(title: 'Huyền Thoại', desc: 'Hoàn thành tất cả bài học', emoji: '👑'));
+
+      int achCount = 0;
+      if (completedLessons >= 1) achCount++;
+      if (maxStreak >= 7) achCount++;
+      if (savedWordCount >= 10) achCount++;
+      if (completedLessons >= 5) achCount++;
+      if (savedWordCount >= 50) achCount++;
+      if (totalXp >= 500) achCount++;
+      if (maxStreak >= 30) achCount++;
+      if (completedLessons >= 10) achCount++;
+      if (totalXp >= 1000) achCount++;
+      if (completedLessons >= 6) achCount++;
+      if (completedLessons >= 12) achCount++;
+      if (maxStreak >= 14) achCount++;
+
       setState(() {
         if (user != null) {
           _profileName = user.displayName;
@@ -226,6 +239,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         _totalXp = totalXp;
         _level = level;
         _levelPct = pct;
+        _completedLessonCount = completedLessons;
+        _achievementCount = achCount;
+        _achievements = achievList.length > 3 ? achievList.sublist(0, 3) : achievList;
       });
       // Re-animate progress bars with real values
       _levelProgress = Tween<double>(begin: 0, end: _levelPct).animate(
@@ -895,12 +911,10 @@ class _AchievData {
     required this.title,
     required this.desc,
     required this.emoji,
-    required this.date,
   });
   final String title;
   final String desc;
   final String emoji;
-  final String date;
 }
 
 // ── Achievement card ──
@@ -964,10 +978,7 @@ class _AchievCard extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            data.date,
-            style: const TextStyle(fontSize: 11, color: Color(0xFFD1D5DB)),
-          ),
+          const Icon(Icons.check_circle, color: Color(0xFF22C55E), size: 20),
         ],
       ),
     );

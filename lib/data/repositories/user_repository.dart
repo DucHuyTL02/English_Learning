@@ -1,8 +1,7 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 import '../datasources/user_local_datasource.dart';
 import '../models/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserRepositoryException implements Exception {
   UserRepositoryException(this.message);
@@ -14,36 +13,18 @@ class UserRepositoryException implements Exception {
 }
 
 class UserRepository {
-  UserRepository(
-    this._localDataSource, {
-    FirebaseAuth? auth,
-    FirebaseFirestore? firestore,
-  }) : _auth = auth ?? FirebaseAuth.instance,
-       _firestore = firestore ?? FirebaseFirestore.instance;
+  UserRepository(this._localDataSource);
 
   final UserLocalDataSource _localDataSource;
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
-
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final RegExp _emailRegex = RegExp(
     r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
     caseSensitive: false,
   );
-  static const String _firebaseUsersCollection = 'users';
-  static const String _localPasswordPlaceholder = '__firebase_auth__';
 
-  Future<UserModel?> getActiveUser() async {
-    final firebaseUser = _auth.currentUser;
-    if (firebaseUser == null) {
-      await _localDataSource.deactivateAllUsers();
-      return null;
-    }
-
-    try {
-      return await _syncLocalUser(firebaseUser: firebaseUser);
-    } catch (_) {
-      return _localDataSource.getActiveUser();
-    }
+  Future<UserModel?> getActiveUser() {
+    return _localDataSource.getActiveUser();
   }
 
   Future<UserModel> login({
@@ -51,25 +32,41 @@ class UserRepository {
     required String password,
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
-    if (normalizedEmail.isEmpty || password.trim().isEmpty) {
-      throw UserRepositoryException('Vui lòng đăng nhập Email và mật khẩu.');
-    }
-    if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException('Email không đúng định dạng.');
-    }
-
     try {
-      final credential = await _auth.signInWithEmailAndPassword(
+      if (normalizedEmail.isEmpty || password.trim().isEmpty) {
+        throw UserRepositoryException(
+          'Vui lòng nhập đầy đủ email và mật khẩu.',
+        );
+      }
+
+      final credential = await _firebaseAuth.signInWithEmailAndPassword(
         email: normalizedEmail,
         password: password,
       );
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
-        throw UserRepositoryException('Không thể tạo phiên đăng nhập.');
+        throw UserRepositoryException('Không thể tải phiên đăng nhập.');
       }
-      return await _syncLocalUser(firebaseUser: firebaseUser);
+
+      final activeUser = await _upsertLocalUserFromFirebase(
+        firebaseUser: firebaseUser,
+        password: password,
+      );
+      await _syncUserProfileToFirestore(activeUser);
+      return activeUser;
     } on FirebaseAuthException catch (e) {
-      throw UserRepositoryException(_mapFirebaseAuthException(e));
+      if (e.code == 'user-not-found' ||
+          e.code == 'invalid-credential' ||
+          e.code == 'wrong-password') {
+        final migrated = await _tryMigrateLegacyLocalAccount(
+          email: normalizedEmail,
+          password: password,
+        );
+        if (migrated != null) {
+          return migrated;
+        }
+      }
+      throw UserRepositoryException(_mapFirebaseAuthError(e));
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
@@ -82,21 +79,22 @@ class UserRepository {
     required String email,
     required String password,
   }) async {
-    final trimmedName = fullName.trim();
-    final normalizedEmail = email.trim().toLowerCase();
-    if (trimmedName.isEmpty || normalizedEmail.isEmpty || password.isEmpty) {
-      throw UserRepositoryException('Vui lòng điền đầy đủ thông tin đăng ký.');
-    }
-    if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException('Email không đúng định dạng.');
-    }
-    if (password.length < 6) {
-      throw UserRepositoryException('Mật khẩu phải có ít nhất 6 ký tự.');
-    }
-
-    User? createdAuthUser;
     try {
-      final credential = await _auth.createUserWithEmailAndPassword(
+      final trimmedName = fullName.trim();
+      final normalizedEmail = email.trim().toLowerCase();
+      if (trimmedName.isEmpty || normalizedEmail.isEmpty || password.isEmpty) {
+        throw UserRepositoryException(
+          'Vui lòng điền đầy đủ thông tin đăng ký.',
+        );
+      }
+      if (!_emailRegex.hasMatch(normalizedEmail)) {
+        throw UserRepositoryException('Email không đúng định dạng.');
+      }
+      if (password.length < 6) {
+        throw UserRepositoryException('Mật khẩu phải có ít nhất 6 ký tự.');
+      }
+
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: normalizedEmail,
         password: password,
       );
@@ -104,25 +102,20 @@ class UserRepository {
       if (firebaseUser == null) {
         throw UserRepositoryException('Không thể tạo tài khoản.');
       }
-      createdAuthUser = firebaseUser;
 
-      await firebaseUser.updateDisplayName(trimmedName);
-      await _createRemoteProfileForRegistration(
-        firebaseUid: firebaseUser.uid,
-        fullName: trimmedName,
-        email: normalizedEmail,
-      );
+      if (trimmedName.isNotEmpty) {
+        await firebaseUser.updateDisplayName(trimmedName);
+      }
 
-      final user = await _syncLocalUser(
+      final created = await _upsertLocalUserFromFirebase(
         firebaseUser: firebaseUser,
+        password: password,
         preferredFullName: trimmedName,
       );
-      return user;
+      await _syncUserProfileToFirestore(created);
+      return created;
     } on FirebaseAuthException catch (e) {
-      throw UserRepositoryException(_mapFirebaseAuthException(e));
-    } on FirebaseException catch (e) {
-      await _rollbackPartialRegistration(createdAuthUser);
-      throw UserRepositoryException(_mapFirestoreException(e));
+      throw UserRepositoryException(_mapFirebaseAuthError(e));
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
@@ -138,80 +131,59 @@ class UserRepository {
     required String location,
     required String birthDate,
   }) async {
-    final user = await _localDataSource.getUserById(userId);
-    if (user == null) {
-      throw UserRepositoryException('Không tìm thấy tài khoản để cập nhật.');
-    }
-
-    final authUser = _auth.currentUser;
-    if (authUser == null) {
-      throw UserRepositoryException('Phiên đăng nhập đã hết hạn.');
-    }
-    if (!_isSameSignedInUser(localUser: user, authUser: authUser)) {
-      throw UserRepositoryException(
-        'Bạn không có quyền cập nhật tài khoản này.',
-      );
-    }
-
-    final trimmedName = fullName.trim();
-    final normalizedEmail = email.trim().toLowerCase();
-    if (trimmedName.isEmpty || normalizedEmail.isEmpty) {
-      throw UserRepositoryException('Họ tên và email không được để trống.');
-    }
-    if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException('Email không đúng định dạng.');
-    }
-
-    final duplicatedEmailUser = await _localDataSource.getUserByEmail(
-      normalizedEmail,
-    );
-    if (duplicatedEmailUser != null && duplicatedEmailUser.id != userId) {
-      throw UserRepositoryException(
-        'Email này đang được dùng bởi tài khoản khác.',
-      );
-    }
-
     try {
-      if (normalizedEmail != (authUser.email ?? '').trim().toLowerCase()) {
-        // ignore: deprecated_member_use
-        await authUser.updateEmail(normalizedEmail);
+      final user = await _localDataSource.getUserById(userId);
+      if (user == null) {
+        throw UserRepositoryException('Không tìm thấy tài khoản để cập nhật.');
       }
-      await authUser.updateDisplayName(trimmedName);
 
-      await _updateRemoteProfile(
-        firebaseUid: authUser.uid,
-        data: {
-          'hoTen': trimmedName,
-          'fullName': trimmedName,
-          'email': normalizedEmail,
-          'bio': bio.trim(),
-          'location': location.trim(),
-          'birthDate': birthDate.trim(),
-        },
+      final trimmedName = fullName.trim();
+      final normalizedEmail = email.trim().toLowerCase();
+      if (trimmedName.isEmpty || normalizedEmail.isEmpty) {
+        throw UserRepositoryException('Họ tên và email không được để trống.');
+      }
+      if (!_emailRegex.hasMatch(normalizedEmail)) {
+        throw UserRepositoryException('Email không đúng định dạng.');
+      }
+
+      final duplicatedEmailUser = await _localDataSource.getUserByEmail(
+        normalizedEmail,
       );
+      if (duplicatedEmailUser != null && duplicatedEmailUser.id != userId) {
+        throw UserRepositoryException(
+          'Email này đang được dùng bởi tài khoản khác.',
+        );
+      }
 
       final updated = user.copyWith(
-        firebaseUid: authUser.uid,
         fullName: trimmedName,
         email: normalizedEmail,
         bio: bio.trim(),
         location: location.trim(),
         birthDate: birthDate.trim(),
-        password: _localPasswordPlaceholder,
         updatedAt: DateTime.now(),
       );
-      await _localDataSource.updateUser(updated);
-      await _localDataSource.setOnlyActiveUser(userId);
 
+      final currentFirebaseUser = _firebaseAuth.currentUser;
+      if (currentFirebaseUser != null && currentFirebaseUser.uid == user.firebaseUid) {
+        if ((currentFirebaseUser.displayName ?? '').trim() != trimmedName) {
+          await currentFirebaseUser.updateDisplayName(trimmedName);
+        }
+        final currentEmail = (currentFirebaseUser.email ?? '').trim().toLowerCase();
+        if (currentEmail != normalizedEmail) {
+          await currentFirebaseUser.verifyBeforeUpdateEmail(normalizedEmail);
+        }
+      }
+
+      await _localDataSource.updateUser(updated);
       final refreshed = await _localDataSource.getUserById(userId);
       if (refreshed == null) {
         throw UserRepositoryException('Không thể tải hồ sơ sau khi cập nhật.');
       }
+      await _syncUserProfileToFirestore(refreshed);
       return refreshed;
     } on FirebaseAuthException catch (e) {
-      throw UserRepositoryException(_mapFirebaseAuthException(e));
-    } on FirebaseException catch (_) {
-      throw UserRepositoryException('Không thể cập nhật hồ sơ trên Firebase.');
+      throw UserRepositoryException(_mapFirebaseAuthError(e));
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
@@ -225,41 +197,20 @@ class UserRepository {
     required bool soundEnabled,
     required bool darkModeEnabled,
   }) async {
-    final user = await _localDataSource.getUserById(userId);
-    if (user == null) {
-      throw UserRepositoryException(
-        'Không tìm thấy tài khoản để cập nhật cài đặt.',
-      );
-    }
-
-    final authUser = _auth.currentUser;
-    if (authUser == null) {
-      throw UserRepositoryException('Phiên đăng nhập đã hết hạn.');
-    }
-    if (!_isSameSignedInUser(localUser: user, authUser: authUser)) {
-      throw UserRepositoryException('Bạn không có quyền cập nhật cài đặt này.');
-    }
-
     try {
-      await _updateRemoteProfile(
-        firebaseUid: authUser.uid,
-        data: {
-          'notificationsEnabled': notificationsEnabled,
-          'soundEnabled': soundEnabled,
-          'darkModeEnabled': darkModeEnabled,
-        },
-      );
-
+      final user = await _localDataSource.getUserById(userId);
+      if (user == null) {
+        throw UserRepositoryException(
+          'Không tìm thấy tài khoản để cập nhật cài đặt.',
+        );
+      }
       final updated = user.copyWith(
-        firebaseUid: authUser.uid,
         notificationsEnabled: notificationsEnabled,
         soundEnabled: soundEnabled,
         darkModeEnabled: darkModeEnabled,
         updatedAt: DateTime.now(),
       );
       await _localDataSource.updateUser(updated);
-      await _localDataSource.setOnlyActiveUser(userId);
-
       final refreshed = await _localDataSource.getUserById(userId);
       if (refreshed == null) {
         throw UserRepositoryException(
@@ -267,10 +218,6 @@ class UserRepository {
         );
       }
       return refreshed;
-    } on FirebaseException catch (_) {
-      throw UserRepositoryException(
-        'Không thể cập nhật cài đặt trên Firebase.',
-      );
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
@@ -279,432 +226,248 @@ class UserRepository {
   }
 
   Future<void> deleteUser(int userId) async {
-    final user = await _localDataSource.getUserById(userId);
-    if (user == null) return;
+    try {
+      final user = await _localDataSource.getUserById(userId);
+      if (user == null) return;
 
-    final authUser = _auth.currentUser;
-    if (authUser == null) {
       await _localDataSource.deleteUserById(userId);
-      return;
-    }
 
-    if (!_isSameSignedInUser(localUser: user, authUser: authUser)) {
-      throw UserRepositoryException('Bạn không có quyền xóa tài khoản này.');
-    }
-
-    try {
-      await _firestore
-          .collection(_firebaseUsersCollection)
-          .doc(authUser.uid)
-          .delete();
-    } catch (_) {
-      // Keep account deletion flow resilient even if profile doc is missing.
-    }
-
-    try {
-      await authUser.delete();
-    } on FirebaseAuthException catch (e) {
-      throw UserRepositoryException(_mapFirebaseAuthException(e));
+      if (!user.isActive) return;
+      final remainingUsers = await _localDataSource.getAllUsers();
+      if (remainingUsers.isEmpty) return;
+      final nextUser = remainingUsers.firstWhere(
+        (item) => item.id != null,
+        orElse: () => remainingUsers.first,
+      );
+      if (nextUser.id != null) {
+        await _localDataSource.setOnlyActiveUser(nextUser.id!);
+      }
     } catch (_) {
       throw UserRepositoryException('Không thể xóa tài khoản.');
     }
-
-    await _localDataSource.deleteUserById(userId);
-    await _localDataSource.deactivateAllUsers();
   }
 
   Future<void> deleteActiveUser() async {
-    final active = await _localDataSource.getActiveUser();
-    if (active?.id == null) return;
-    await deleteUser(active!.id!);
+    try {
+      final active = await _localDataSource.getActiveUser();
+      if (active?.id == null) return;
+      await deleteUser(active!.id!);
+    } on UserRepositoryException {
+      rethrow;
+    } catch (_) {
+      throw UserRepositoryException('Không thể xóa tài khoản hiện tại.');
+    }
   }
 
   Future<void> logoutActiveUser() async {
     try {
-      await _auth.signOut();
+      await _firebaseAuth.signOut();
       await _localDataSource.deactivateAllUsers();
     } catch (_) {
       throw UserRepositoryException('Đăng xuất thất bại.');
     }
   }
 
-  Future<UserModel> _syncLocalUser({
+  Future<bool> verifyPassword(int userId, String password) async {
+    try {
+      final user = await _localDataSource.getUserById(userId);
+      if (user == null) return false;
+      return user.password == password;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> updatePassword(int userId, String newPassword) async {
+    try {
+      final user = await _localDataSource.getUserById(userId);
+      if (user == null) {
+        throw UserRepositoryException('Không tìm thấy tài khoản.');
+      }
+      final currentFirebaseUser = _firebaseAuth.currentUser;
+      if (currentFirebaseUser != null && currentFirebaseUser.uid == user.firebaseUid) {
+        await currentFirebaseUser.updatePassword(newPassword);
+      }
+      final updated = user.copyWith(password: newPassword, updatedAt: DateTime.now());
+      await _localDataSource.updateUser(updated);
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        throw UserRepositoryException(_mapFirebaseAuthError(e));
+      }
+      if (e is UserRepositoryException) rethrow;
+      throw UserRepositoryException('Không thể đổi mật khẩu.');
+    }
+  }
+
+  Future<List<UserModel>> getAllLocalUsers() {
+    return _localDataSource.getAllUsers();
+  }
+
+  Future<UserModel> _upsertLocalUserFromFirebase({
     required User firebaseUser,
+    required String password,
     String? preferredFullName,
   }) async {
-    final normalizedEmail = (firebaseUser.email ?? '').trim().toLowerCase();
-    if (normalizedEmail.isEmpty) {
-      throw UserRepositoryException('Tài khoản Firebase chưa có email hợp lệ.');
-    }
-
-    final remoteProfile = await _fetchRemoteProfile(firebaseUser.uid);
-
-    UserModel? user = await _localDataSource.getUserByFirebaseUid(
-      firebaseUser.uid,
-    );
-    user ??= await _localDataSource.getUserByEmail(normalizedEmail);
-
     final now = DateTime.now();
-    final remoteName = _readString(
-      remoteProfile,
-      'hoTen',
-      fallback: _readString(remoteProfile, 'fullName'),
-    );
-    final name = remoteName.isNotEmpty
-        ? remoteName
-        : (preferredFullName?.trim().isNotEmpty ?? false)
+    final normalizedEmail = (firebaseUser.email ?? '').trim().toLowerCase();
+
+    final byUid = await _localDataSource.getUserByFirebaseUid(firebaseUser.uid);
+    final byEmail = byUid == null && normalizedEmail.isNotEmpty
+        ? await _localDataSource.getUserByEmail(normalizedEmail)
+        : null;
+    final existing = byUid ?? byEmail;
+
+    final displayName = preferredFullName?.trim().isNotEmpty == true
         ? preferredFullName!.trim()
         : ((firebaseUser.displayName ?? '').trim().isNotEmpty
               ? firebaseUser.displayName!.trim()
-              : _fallbackNameFromEmail(normalizedEmail));
+              : (existing?.fullName.isNotEmpty == true
+                    ? existing!.fullName
+                    : _nameFromEmail(normalizedEmail)));
 
-    if (user == null) {
+    if (existing == null) {
       final created = UserModel(
         firebaseUid: firebaseUser.uid,
-        fullName: name,
+        fullName: displayName,
         email: normalizedEmail,
-        password: _localPasswordPlaceholder,
-        bio: _readString(remoteProfile, 'bio'),
-        location: _readString(remoteProfile, 'location'),
-        birthDate: _readString(remoteProfile, 'birthDate'),
-        avatarEmoji: _readString(
-          remoteProfile,
-          'avatarEmoji',
-          fallback: 'ðŸ‘¤',
-        ),
-        notificationsEnabled: _readBool(
-          remoteProfile,
-          'notificationsEnabled',
-          fallback: true,
-        ),
-        soundEnabled: _readBool(remoteProfile, 'soundEnabled', fallback: true),
-        darkModeEnabled: _readBool(
-          remoteProfile,
-          'darkModeEnabled',
-          fallback: false,
-        ),
-        totalXp: _readInt(
-          remoteProfile,
-          'xp',
-          fallback: _readInt(remoteProfile, 'totalXp'),
-        ),
+        password: password,
+        bio: '',
+        location: '',
+        birthDate: '',
+        avatarEmoji: '👤',
+        notificationsEnabled: true,
+        soundEnabled: true,
+        darkModeEnabled: false,
         isActive: true,
-        createdAt: _readDate(remoteProfile, 'createdAt') ?? now,
+        createdAt: now,
         updatedAt: now,
       );
       final insertedId = await _localDataSource.insertUser(created);
       await _localDataSource.setOnlyActiveUser(insertedId);
-      final persisted = await _localDataSource.getUserById(insertedId);
-      if (persisted == null) {
+      final localCreated = await _localDataSource.getUserById(insertedId);
+      if (localCreated == null) {
         throw UserRepositoryException('Không thể tạo hồ sơ người dùng.');
       }
-      if (remoteProfile == null) {
-        await _tryCreateRemoteProfile(
-          user: persisted,
-          firebaseUid: firebaseUser.uid,
-        );
-      }
-      return persisted;
+      return localCreated;
     }
 
-    final merged = user.copyWith(
+    final updated = existing.copyWith(
       firebaseUid: firebaseUser.uid,
-      fullName: name,
-      email: normalizedEmail,
-      password: _localPasswordPlaceholder,
-      bio: _readString(remoteProfile, 'bio', fallback: user.bio),
-      location: _readString(remoteProfile, 'location', fallback: user.location),
-      birthDate: _readString(
-        remoteProfile,
-        'birthDate',
-        fallback: user.birthDate,
-      ),
-      avatarEmoji: _readString(
-        remoteProfile,
-        'avatarEmoji',
-        fallback: user.avatarEmoji,
-      ),
-      notificationsEnabled: _readBool(
-        remoteProfile,
-        'notificationsEnabled',
-        fallback: user.notificationsEnabled,
-      ),
-      soundEnabled: _readBool(
-        remoteProfile,
-        'soundEnabled',
-        fallback: user.soundEnabled,
-      ),
-      darkModeEnabled: _readBool(
-        remoteProfile,
-        'darkModeEnabled',
-        fallback: user.darkModeEnabled,
-      ),
-      totalXp: _readInt(
-        remoteProfile,
-        'xp',
-        fallback: _readInt(remoteProfile, 'totalXp', fallback: user.totalXp),
-      ),
+      fullName: displayName,
+      email: normalizedEmail.isEmpty ? existing.email : normalizedEmail,
+      password: password,
       isActive: true,
       updatedAt: now,
     );
-
-    await _localDataSource.updateUser(merged);
-    await _localDataSource.setOnlyActiveUser(user.id!);
-    final persisted = await _localDataSource.getUserById(user.id!);
-    if (persisted == null) {
+    await _localDataSource.updateUser(updated);
+    if (updated.id == null) {
       throw UserRepositoryException('Không thể tải phiên đăng nhập.');
     }
-    if (remoteProfile == null) {
-      await _tryCreateRemoteProfile(
-        user: persisted,
-        firebaseUid: firebaseUser.uid,
-      );
+    await _localDataSource.setOnlyActiveUser(updated.id!);
+    final activeUser = await _localDataSource.getUserById(updated.id!);
+    if (activeUser == null) {
+      throw UserRepositoryException('Không thể tải phiên đăng nhập.');
     }
-    return persisted;
+    return activeUser;
   }
 
-  Future<Map<String, dynamic>?> _fetchRemoteProfile(String firebaseUid) async {
+  Future<void> _syncUserProfileToFirestore(UserModel user) async {
+    if (user.firebaseUid == null || user.firebaseUid!.isEmpty) return;
     try {
-      final doc = await _firestore
-          .collection(_firebaseUsersCollection)
-          .doc(firebaseUid)
-          .get();
-      if (!doc.exists) return null;
-      return doc.data();
+      await _firestore.collection('users').doc(user.firebaseUid).set({
+        'id': user.firebaseUid,
+        'email': user.email,
+        'fullName': user.fullName,
+        'avatarEmoji': user.avatarEmoji,
+        'bio': user.bio,
+        'location': user.location,
+        'birthDate': user.birthDate,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'createdAt': user.createdAt.toIso8601String(),
+      }, SetOptions(merge: true));
     } catch (_) {
-      return null;
+      // Firestore sync is best-effort; auth/local session should still work.
     }
   }
 
-  Future<void> _createRemoteProfileForRegistration({
-    required String firebaseUid,
-    required String fullName,
-    required String email,
-  }) async {
-    final normalizedEmail = email.trim().toLowerCase();
-    final resolvedName = fullName.trim().isNotEmpty
-        ? fullName.trim()
-        : _fallbackNameFromEmail(normalizedEmail);
-
-    await _firestore.collection(_firebaseUsersCollection).doc(firebaseUid).set({
-      'id': firebaseUid,
-      'uid': firebaseUid,
-      'hoTen': resolvedName,
-      'fullName': resolvedName,
-      'email': normalizedEmail,
-      'bio': '',
-      'location': '',
-      'birthDate': '',
-      'avatarEmoji': '👤',
-      'notificationsEnabled': true,
-      'soundEnabled': true,
-      'darkModeEnabled': false,
-      'xp': 0,
-      'totalXp': 0,
-      'level': _levelFromXp(0),
-      'streak': 0,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
-
-  Future<void> _tryCreateRemoteProfile({
-    required UserModel user,
-    required String firebaseUid,
-  }) async {
-    try {
-      await _createRemoteProfile(user: user, firebaseUid: firebaseUid);
-    } on FirebaseException {
-      // Keep register/login resilient even when Firestore write is unavailable.
-    }
-  }
-
-  Future<void> _createRemoteProfile({
-    required UserModel user,
-    required String firebaseUid,
-  }) {
-    return _firestore
-        .collection(_firebaseUsersCollection)
-        .doc(firebaseUid)
-        .set({
-          'id': firebaseUid,
-          'uid': firebaseUid,
-          'hoTen': user.fullName,
-          'fullName': user.fullName,
-          'email': user.email,
-          'bio': user.bio,
-          'location': user.location,
-          'birthDate': user.birthDate,
-          'avatarEmoji': user.avatarEmoji,
-          'notificationsEnabled': user.notificationsEnabled,
-          'soundEnabled': user.soundEnabled,
-          'darkModeEnabled': user.darkModeEnabled,
-          'xp': user.totalXp,
-          'totalXp': user.totalXp,
-          'level': _levelFromXp(user.totalXp),
-          'streak': 0,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-  }
-
-  Future<void> _updateRemoteProfile({
-    required String firebaseUid,
-    required Map<String, Object?> data,
-  }) {
-    final payload = <String, Object?>{...data};
-
-    final normalizedName = _readString(
-      payload,
-      'hoTen',
-      fallback: _readString(payload, 'fullName'),
-    );
-    if (normalizedName.isNotEmpty) {
-      payload['hoTen'] = normalizedName;
-      payload['fullName'] = normalizedName;
-    }
-
-    final syncedXp = _readInt(
-      payload,
-      'xp',
-      fallback: _readInt(payload, 'totalXp', fallback: -1),
-    );
-    if (syncedXp >= 0) {
-      payload['xp'] = syncedXp;
-      payload['totalXp'] = syncedXp;
-      payload['level'] = _levelFromXp(syncedXp);
-    }
-
-    payload['id'] = firebaseUid;
-    payload['uid'] = firebaseUid;
-    payload['updatedAt'] = FieldValue.serverTimestamp();
-
-    return _firestore
-        .collection(_firebaseUsersCollection)
-        .doc(firebaseUid)
-        .set(payload, SetOptions(merge: true));
-  }
-
-  String _readString(
-    Map<String, dynamic>? data,
-    String key, {
-    String fallback = '',
-  }) {
-    if (data == null) return fallback;
-    final value = data[key];
-    if (value is String && value.trim().isNotEmpty) {
-      return value.trim();
-    }
-    return fallback;
-  }
-
-  bool _readBool(
-    Map<String, dynamic>? data,
-    String key, {
-    required bool fallback,
-  }) {
-    if (data == null) return fallback;
-    final value = data[key];
-    if (value is bool) return value;
-    if (value is num) return value != 0;
-    if (value is String) return value.toLowerCase() == 'true' || value == '1';
-    return fallback;
-  }
-
-  int _readInt(Map<String, dynamic>? data, String key, {int fallback = 0}) {
-    if (data == null) return fallback;
-    final value = data[key];
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? fallback;
-    return fallback;
-  }
-
-  DateTime? _readDate(Map<String, dynamic>? data, String key) {
-    if (data == null) return null;
-    final value = data[key];
-    if (value is Timestamp) return value.toDate();
-    if (value is String) return DateTime.tryParse(value);
-    if (value is DateTime) return value;
-    return null;
-  }
-
-  String _fallbackNameFromEmail(String email) {
-    final at = email.indexOf('@');
-    if (at <= 0) return 'Báº¡n';
-    return email.substring(0, at);
-  }
-
-  int _levelFromXp(int xp) {
-    if (xp <= 0) return 1;
-    return (xp ~/ 500) + 1;
-  }
-
-  Future<void> _rollbackPartialRegistration(User? createdAuthUser) async {
-    if (createdAuthUser == null) return;
-    try {
-      await createdAuthUser.delete();
-    } catch (_) {
-      // Best-effort rollback.
-    }
-
-    try {
-      if (_auth.currentUser?.uid == createdAuthUser.uid) {
-        await _auth.signOut();
-      }
-    } catch (_) {
-      // Best-effort rollback.
-    }
-  }
-
-  String _mapFirestoreException(FirebaseException e) {
-    switch (e.code) {
-      case 'permission-denied':
-        return 'Không có quyền ghi dữ liệu Firestore. Hãy kiểm tra Firestore Rules.';
-      case 'unavailable':
-        return 'Firestore tạm thời không khả dụng. Vui lòng thử lại.';
-      case 'deadline-exceeded':
-        return 'Hết thời gian kết nối Firestore. Vui lòng thử lại.';
-      default:
-        return e.message ?? 'Không thể tạo hồ sơ người dùng trên Firestore.';
-    }
-  }
-
-  String _mapFirebaseAuthException(FirebaseAuthException e) {
+  String _mapFirebaseAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-email':
         return 'Email không đúng định dạng.';
-      case 'invalid-credential':
+      case 'user-disabled':
+        return 'Tài khoản đã bị vô hiệu hóa.';
       case 'user-not-found':
       case 'wrong-password':
+      case 'invalid-credential':
         return 'Email hoặc mật khẩu không chính xác.';
       case 'email-already-in-use':
         return 'Email này đã được đăng ký.';
       case 'weak-password':
-        return 'Mật khẩu phải có ít nhất 6 ký tự.';
-      case 'operation-not-allowed':
-        return 'Email/Password chưa được bật trong Firebase Authentication.';
-      case 'network-request-failed':
-        return 'Không có kết nối mạng. Vui lòng thử lại.';
+        return 'Mật khẩu quá yếu, vui lòng chọn mật khẩu mạnh hơn.';
       case 'too-many-requests':
-        return 'Bạn thử quá nhiều lần. Vui lòng thử lại sau.';
-      case 'user-disabled':
-        return 'Tài khoản đã bị vô hiệu hóa.';
+        return 'Bạn thử quá nhiều lần. Vui lòng đợi rồi thử lại.';
       case 'requires-recent-login':
         return 'Vui lòng đăng nhập lại để thực hiện thao tác này.';
+      case 'network-request-failed':
+        return 'Lỗi kết nối mạng. Vui lòng kiểm tra Internet.';
       default:
-        return e.message ?? 'Xác thực Firebase thất bại.';
+        return 'Xác thực thất bại. Vui lòng thử lại.';
     }
   }
 
-  bool _isSameSignedInUser({
-    required UserModel localUser,
-    required User authUser,
-  }) {
-    if (localUser.firebaseUid != null) {
-      return localUser.firebaseUid == authUser.uid;
+  String _nameFromEmail(String email) {
+    if (email.isEmpty) return 'Người dùng mới';
+    final localPart = email.split('@').first.trim();
+    if (localPart.isEmpty) return 'Người dùng mới';
+    return localPart;
+  }
+
+  Future<UserModel?> _tryMigrateLegacyLocalAccount({
+    required String email,
+    required String password,
+  }) async {
+    final local = await _localDataSource.getUserByEmail(email);
+    if (local == null || local.password != password) {
+      return null;
     }
-    return localUser.email.trim().toLowerCase() ==
-        (authUser.email ?? '').trim().toLowerCase();
+
+    try {
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final firebaseUser = credential.user;
+      if (firebaseUser == null) {
+        return null;
+      }
+
+      if (local.fullName.trim().isNotEmpty) {
+        await firebaseUser.updateDisplayName(local.fullName.trim());
+      }
+
+      final synced = await _upsertLocalUserFromFirebase(
+        firebaseUser: firebaseUser,
+        password: password,
+        preferredFullName: local.fullName,
+      );
+
+      final merged = synced.copyWith(
+        bio: local.bio,
+        location: local.location,
+        birthDate: local.birthDate,
+        avatarEmoji: local.avatarEmoji,
+        notificationsEnabled: local.notificationsEnabled,
+        soundEnabled: local.soundEnabled,
+        darkModeEnabled: local.darkModeEnabled,
+        totalXp: local.totalXp,
+        updatedAt: DateTime.now(),
+      );
+
+      await _localDataSource.updateUser(merged);
+      await _syncUserProfileToFirestore(merged);
+      return merged;
+    } on FirebaseAuthException {
+      return null;
+    }
   }
 }

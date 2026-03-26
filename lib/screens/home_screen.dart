@@ -36,7 +36,6 @@ class _Header extends StatefulWidget {
 }
 
 class _HeaderState extends State<_Header> {
-  final int _notificationCount = 2;
   String _displayName = 'Bạn';
 
   @override
@@ -58,43 +57,68 @@ class _HeaderState extends State<_Header> {
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 12,
         bottom: 16,
-        left: 16,
-        right: 16,
+        left: 24,
+        right: 24,
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Xin chào, $_displayName! 👋',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A1A),
-                  ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Xin chào, $_displayName! 👋',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Sẵn sàng học hôm nay chưa?',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Sẵn sàng học hôm nay chưa?',
+                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
-                onTap: () => context.push('/notifications'),
-                child: _NotificationIconBtn(count: _notificationCount),
+                onTap: () => context.go('/notifications'),
+                child: _IconBtn(
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(
+                        Icons.notifications_outlined,
+                        size: 22,
+                        color: Color(0xFF6B7280),
+                      ),
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFA5C5C),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '2',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               GestureDetector(
@@ -124,7 +148,7 @@ class _HeaderState extends State<_Header> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () => context.push('/settings'),
+                onTap: () => context.go('/settings'),
                 child: _IconBtn(
                   child: const Icon(
                     Icons.settings_outlined,
@@ -155,62 +179,6 @@ class _IconBtn extends StatelessWidget {
         borderRadius: BorderRadius.circular(21),
       ),
       child: Center(child: child),
-    );
-  }
-}
-
-class _NotificationIconBtn extends StatelessWidget {
-  const _NotificationIconBtn({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final badgeText = count > 9 ? '9+' : '$count';
-    final showBadge = count > 0;
-
-    return SizedBox(
-      width: 48,
-      height: 48,
-      child: Center(
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            const _IconBtn(
-              child: Icon(
-                Icons.notifications_outlined,
-                size: 22,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-            if (showBadge)
-              Positioned(
-                top: -3,
-                right: -3,
-                child: Container(
-                  constraints: const BoxConstraints(minWidth: 18),
-                  height: 18,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFA5C5C),
-                    borderRadius: BorderRadius.all(Radius.circular(9)),
-                  ),
-                  child: Center(
-                    child: Text(
-                      badgeText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -267,7 +235,7 @@ class _StatsBannerState extends State<_StatsBanner> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             GestureDetector(
-              onTap: () => context.push('/streak'),
+              onTap: () => context.go('/streak'),
               child: _StatItem(
                 icon: Icons.local_fire_department,
                 gradientColors: const [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
@@ -277,7 +245,7 @@ class _StatsBannerState extends State<_StatsBanner> {
             ),
             Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
             GestureDetector(
-              onTap: () => context.push('/achievements'),
+              onTap: () => context.go('/achievements'),
               child: _StatItem(
                 icon: Icons.star_rounded,
                 gradientColors: const [Color(0xFFFEC288), Color(0xFFFBEF76)],
@@ -396,10 +364,7 @@ class _NextLessonCardState extends State<_NextLessonCard> {
     if (_loading) {
       return const Padding(
         padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
-        child: SizedBox(
-          height: 200,
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        child: SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
       );
     }
     if (_lessonId == 0) {
@@ -416,14 +381,8 @@ class _NextLessonCardState extends State<_NextLessonCard> {
           ),
           padding: const EdgeInsets.all(24),
           child: const Center(
-            child: Text(
-              '🎉 Bạn đã hoàn thành tất cả bài học!',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            child: Text('🎉 Bạn đã hoàn thành tất cả bài học!',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
           ),
         ),
       );
@@ -554,7 +513,7 @@ class _NextLessonCardState extends State<_NextLessonCard> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => context.push('/lesson-intro'),
+                      onPressed: () => context.go('/lesson-intro/$_lessonId'),
                       icon: const Icon(Icons.play_arrow_rounded, size: 26),
                       label: const Text(
                         'Bắt Đầu Bài Học',
@@ -608,67 +567,87 @@ class _PathNode {
   final double yPercent;
 }
 
-const _pathNodes = [
-  _PathNode(
-    id: 1,
-    title: 'Greetings',
-    emoji: '👋',
-    completed: true,
-    locked: false,
-    xPercent: 0.30,
-    yPercent: 0.08,
-  ),
-  _PathNode(
-    id: 2,
-    title: 'Family',
-    emoji: '👨‍👩‍👧',
-    completed: true,
-    locked: false,
-    xPercent: 0.72,
-    yPercent: 0.22,
-  ),
-  _PathNode(
-    id: 3,
-    title: 'Food',
-    emoji: '🍕',
-    completed: true,
-    locked: false,
-    xPercent: 0.38,
-    yPercent: 0.38,
-  ),
-  _PathNode(
-    id: 4,
-    title: 'Colors',
-    emoji: '🎨',
-    completed: false,
-    locked: false,
-    current: true,
-    xPercent: 0.65,
-    yPercent: 0.55,
-  ),
-  _PathNode(
-    id: 5,
-    title: 'Animals',
-    emoji: '🐶',
-    completed: false,
-    locked: true,
-    xPercent: 0.30,
-    yPercent: 0.72,
-  ),
-  _PathNode(
-    id: 6,
-    title: 'Weather',
-    emoji: '🌤',
-    completed: false,
-    locked: true,
-    xPercent: 0.68,
-    yPercent: 0.88,
-  ),
+// Zigzag positions – evenly distributed so all 6 visible nodes
+// span the full card height (y: 0.10 → 0.87) with no clipping or blank space.
+// Same-column gap ≈ 150 px > max node height ≈ 98 px: no overlap.
+const _nodePositions = [
+  [0.28, 0.10], // node 1 – left
+  [0.72, 0.25], // node 2 – right
+  [0.28, 0.41], // node 3 – left
+  [0.72, 0.57], // node 4 – right
+  [0.28, 0.72], // node 5 – left
+  [0.72, 0.87], // node 6 – right
+  // Placeholders for future expansion (not rendered in current UI)
+  [0.28, 0.10],
+  [0.72, 0.25],
+  [0.28, 0.41],
+  [0.72, 0.57],
+  [0.28, 0.72],
+  [0.72, 0.87],
 ];
 
-class _LearningPathMap extends StatelessWidget {
+class _LearningPathMap extends StatefulWidget {
+  @override
+  State<_LearningPathMap> createState() => _LearningPathMapState();
+}
+
+class _LearningPathMapState extends State<_LearningPathMap> {
+  List<_PathNode> _pathNodes = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPathNodes();
+  }
+
+  Future<void> _loadPathNodes() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (!mounted || user?.id == null) {
+      setState(() => _loading = false);
+      return;
+    }
+    final repo = AppServices.learningRepository;
+    final completedIds = await repo.getCompletedLessonIds(user!.id!);
+    final allLessons = await repo.getAllLessons();
+
+    // Show first 6 lessons on the path map (rest visible in course-map)
+    final displayCount = allLessons.length > 6 ? 6 : allLessons.length;
+    bool foundCurrent = false;
+    final nodes = <_PathNode>[];
+    for (int i = 0; i < displayCount; i++) {
+      final lesson = allLessons[i];
+      final isCompleted = completedIds.contains(lesson.id);
+      final isCurrent = !isCompleted && !foundCurrent;
+      final isLocked = !isCompleted && !isCurrent;
+      if (isCurrent) foundCurrent = true;
+      nodes.add(_PathNode(
+        id: lesson.id!,
+        title: lesson.title,
+        emoji: lesson.icon,
+        completed: isCompleted,
+        locked: isLocked,
+        current: isCurrent,
+        xPercent: _nodePositions[i][0],
+        yPercent: _nodePositions[i][1],
+      ));
+    }
+    if (!mounted) return;
+    setState(() {
+      _pathNodes = nodes;
+      _loading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
+        child: SizedBox(height: 480, child: Center(child: CircularProgressIndicator())),
+      );
+    }
+    if (_pathNodes.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       child: Column(
@@ -719,25 +698,41 @@ class _LearningPathMap extends StatelessWidget {
                   final h = constraints.maxHeight;
                   return Stack(
                     children: [
-                      // Path lines
                       CustomPaint(
                         size: Size(w, h),
-                        painter: _PathLinePainter(w, h),
+                        painter: _PathLinePainter(w, h, _pathNodes),
                       ),
-                      // Nodes
-                      ..._pathNodes.map((node) {
+                      // Non-locked nodes render first (behind), locked nodes
+                      // render last (on top) so the gray box fully covers any
+                      // adjacent completed/active node's colour.
+                      ...[  
+                        ..._pathNodes.where((n) => !n.locked),
+                        ..._pathNodes.where((n) => n.locked),
+                      ].map((node) {
                         return Positioned(
-                          left: node.xPercent * w - 40,
+                          // Centre the 88 px-wide SizedBox on xPercent.
+                          left: node.xPercent * w - 44,
                           top: node.yPercent * h - 40,
-                          child: GestureDetector(
-                            onTap: node.locked
-                                ? null
-                                : () => context.go(
-                                    node.current
-                                        ? '/lesson-intro'
-                                        : '/course-map',
-                                  ),
-                            child: _NodeWidget(node: node),
+                          child: SizedBox(
+                            width: 88,
+                            child: GestureDetector(
+                              onTap: node.locked
+                                  ? null
+                                  : () => context.go(
+                                      node.current
+                                          ? '/lesson-intro/${node.id}'
+                                          : '/course-map',
+                                    ),
+                              // White opaque fill behind locked nodes so
+                              // rounded-corner cut-outs don't reveal colours
+                              // of underlying active/completed nodes.
+                              child: node.locked
+                                  ? ColoredBox(
+                                      color: Colors.white,
+                                      child: _NodeWidget(node: node),
+                                    )
+                                  : _NodeWidget(node: node),
+                            ),
                           ),
                         );
                       }),
@@ -754,15 +749,16 @@ class _LearningPathMap extends StatelessWidget {
 }
 
 class _PathLinePainter extends CustomPainter {
-  const _PathLinePainter(this.w, this.h);
+  const _PathLinePainter(this.w, this.h, this.nodes);
   final double w;
   final double h;
+  final List<_PathNode> nodes;
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < _pathNodes.length - 1; i++) {
-      final a = _pathNodes[i];
-      final b = _pathNodes[i + 1];
+    for (int i = 0; i < nodes.length - 1; i++) {
+      final a = nodes[i];
+      final b = nodes[i + 1];
       final isDashed = !(a.completed && b.completed);
 
       final paint = Paint()
@@ -919,6 +915,8 @@ class _NodeWidget extends StatelessWidget {
           ),
           child: Text(
             node.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,

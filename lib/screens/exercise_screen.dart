@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/services/app_services.dart';
-import '../data/services/tts_service.dart';
 
 // ─── MULTIPLE CHOICE ─────────────────────────────────────────────────────────
 
@@ -988,6 +987,12 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
       score: _score,
       xpEarned: _xp,
     );
+    await AppServices.notificationService.addEvent(
+      title: 'Hoàn thành bài học',
+      body: 'Bạn vừa nhận +$_xp XP từ bài học này.',
+      type: 'lesson',
+    );
+    await AppServices.syncGamificationForUser(user.id!);
   }
 
   @override

@@ -57,11 +57,8 @@ class _GrammarData {
 }
 
 class _ActivityData {
-  const _ActivityData({
-    required this.emoji,
-    required this.title,
-    required this.count,
-  });
+  const _ActivityData(
+      {required this.emoji, required this.title, required this.count});
   final String emoji;
   final String title;
   final int count;
@@ -90,14 +87,11 @@ class _CourseMapScreenState extends State<CourseMapScreen>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
+        vsync: this, duration: const Duration(milliseconds: 1400));
     _overallProgress = Tween<double>(begin: 0, end: 0.0).animate(
       CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
+          parent: _ctrl,
+          curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
     );
     _loadData();
   }
@@ -123,16 +117,14 @@ class _CourseMapScreenState extends State<CourseMapScreen>
         final current = !completed && !foundCurrent;
         if (current) foundCurrent = true;
 
-        lessonItems.add(
-          _LessonItem(
-            id: lesson.id!,
-            title: lesson.title,
-            icon: lesson.icon,
-            completed: completed,
-            locked: locked,
-            current: current,
-          ),
-        );
+        lessonItems.add(_LessonItem(
+          id: lesson.id!,
+          title: lesson.title,
+          icon: lesson.icon,
+          completed: completed,
+          locked: locked,
+          current: current,
+        ));
       }
 
       final completedCount = lessonItems.where((l) => l.completed).length;
@@ -140,33 +132,25 @@ class _CourseMapScreenState extends State<CourseMapScreen>
           ? 0
           : ((completedCount / lessonItems.length) * 100).round();
 
-      builtUnits.add(
-        _UnitData(
-          id: unit.id!,
-          title: 'Đơn Vị ${unit.id}: ${unit.title}',
-          progress: progress,
-          lessons: lessonItems,
-        ),
-      );
+      builtUnits.add(_UnitData(
+        id: unit.id!,
+        title: 'Đơn Vị ${unit.id}: ${unit.title}',
+        progress: progress,
+        lessons: lessonItems,
+      ));
     }
 
     if (!mounted) return;
 
-    final totalLessons = builtUnits.fold<int>(
-      0,
-      (s, u) => s + u.lessons.length,
-    );
+    final totalLessons = builtUnits.fold<int>(0, (s, u) => s + u.lessons.length);
     final totalCompleted = builtUnits.fold<int>(
-      0,
-      (s, u) => s + u.lessons.where((l) => l.completed).length,
-    );
+        0, (s, u) => s + u.lessons.where((l) => l.completed).length);
     final overall = totalLessons == 0 ? 0.0 : totalCompleted / totalLessons;
 
     _overallProgress = Tween<double>(begin: 0, end: overall).animate(
       CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
+          parent: _ctrl,
+          curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
     );
 
     setState(() {
@@ -205,12 +189,10 @@ class _CourseMapScreenState extends State<CourseMapScreen>
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
               child: Column(
                 children: [
-                  ..._units.map(
-                    (unit) => Padding(
-                      padding: const EdgeInsets.only(bottom: 32),
-                      child: _UnitSection(unit: unit),
-                    ),
-                  ),
+                  ..._units.map((unit) => Padding(
+                        padding: const EdgeInsets.only(bottom: 32),
+                        child: _UnitSection(unit: unit),
+                      )),
                   // Coming soon card
                   Container(
                     decoration: BoxDecoration(
@@ -218,10 +200,9 @@ class _CourseMapScreenState extends State<CourseMapScreen>
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x0F000000),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
+                            color: Color(0x0F000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2))
                       ],
                     ),
                     padding: const EdgeInsets.all(32),
@@ -231,32 +212,25 @@ class _CourseMapScreenState extends State<CourseMapScreen>
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFFFEC288,
-                            ).withValues(alpha: 0.2),
+                            color: const Color(0xFFFEC288).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(24),
                           ),
                           child: const Center(
-                            child: Text('🚀', style: TextStyle(fontSize: 40)),
-                          ),
+                              child:
+                                  Text('🚀', style: TextStyle(fontSize: 40))),
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Sắp Ra Mắt!',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
+                        const Text('Sắp Ra Mắt!',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF111827))),
                         const SizedBox(height: 6),
                         const Text(
                           'Hoàn thành các đơn vị hiện tại để mở khóa bài học nâng cao',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF9CA3AF),
-                          ),
+                              fontSize: 13, color: Color(0xFF9CA3AF)),
                         ),
                       ],
                     ),
@@ -298,29 +272,22 @@ class _CourseMapHeader extends StatelessWidget {
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: Color(0xFF374151),
-                    size: 20,
-                  ),
+                  child: const Icon(Icons.arrow_back_rounded,
+                      color: Color(0xFF374151), size: 20),
                 ),
               ),
               const SizedBox(width: 12),
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Bản Đồ Khóa Học',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                  Text(
-                    'Theo dõi hành trình học tập của bạn',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                  ),
+                  Text('Bản Đồ Khóa Học',
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827))),
+                  Text('Theo dõi hành trình học tập của bạn',
+                      style:
+                          TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
                 ],
               ),
             ],
@@ -329,10 +296,9 @@ class _CourseMapHeader extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+                  colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.all(16),
@@ -342,23 +308,19 @@ class _CourseMapHeader extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Tiến Độ Tổng Thể',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                    const Text('Tiến Độ Tổng Thể',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white)),
                     AnimatedBuilder(
                       animation: progressAnim,
                       builder: (context, _) => Text(
                         '${(progressAnim.value * 100).toInt()}%',
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
                       ),
                     ),
                   ],
@@ -371,10 +333,10 @@ class _CourseMapHeader extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progressAnim.value,
                       minHeight: 10,
-                      backgroundColor: Colors.white.withValues(alpha: 0.3),
+                      backgroundColor:
+                          Colors.white.withValues(alpha: 0.3),
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
+                          Colors.white),
                     ),
                   ),
                 ),
@@ -382,9 +344,8 @@ class _CourseMapHeader extends StatelessWidget {
                 Text(
                   '3 trong 12 bài học đã hoàn thành',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.8)),
                 ),
               ],
             ),
@@ -412,43 +373,34 @@ class _UnitSection extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFEC288), Color(0xFFFBEF76)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                    colors: [Color(0xFFFEC288), Color(0xFFFBEF76)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x20000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
+                      color: Color(0x20000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 3))
                 ],
               ),
               child: Center(
-                child: Text(
-                  '${unit.id}',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+                  child: Text('${unit.id}',
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white))),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    unit.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
+                  Text(unit.title,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827))),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -458,22 +410,20 @@ class _UnitSection extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: unit.progress / 100,
                             minHeight: 6,
-                            backgroundColor: const Color(0xFFE5E7EB),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFFFA5C5C),
-                            ),
+                            backgroundColor:
+                                const Color(0xFFE5E7EB),
+                            valueColor:
+                                const AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFFA5C5C)),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '${unit.progress}%',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                      ),
+                      Text('${unit.progress}%',
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF9CA3AF))),
                     ],
                   ),
                 ],
@@ -500,7 +450,10 @@ class _UnitSection extends StatelessWidget {
                           width: 2,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFFA5C5C), Color(0xFFE5E7EB)],
+                              colors: [
+                                Color(0xFFFA5C5C),
+                                Color(0xFFE5E7EB)
+                              ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
@@ -544,7 +497,7 @@ class _LessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: lesson.locked ? null : () => context.push('/lesson-intro'),
+      onTap: lesson.locked ? null : () => context.go('/lesson-intro/${lesson.id}'),
       child: Opacity(
         opacity: lesson.locked ? 0.6 : 1.0,
         child: Container(
@@ -556,10 +509,9 @@ class _LessonCard extends StatelessWidget {
                 : null,
             boxShadow: const [
               BoxShadow(
-                color: Color(0x0F000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
+                  color: Color(0x0F000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2))
             ],
           ),
           padding: const EdgeInsets.all(14),
@@ -577,19 +529,26 @@ class _LessonCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: lesson.completed
-                                ? const [Color(0xFFFBEF76), Color(0xFFFEC288)]
+                                ? const [
+                                    Color(0xFFFBEF76),
+                                    Color(0xFFFEC288)
+                                  ]
                                 : lesson.current
-                                ? const [Color(0xFFFA5C5C), Color(0xFFFD8A6B)]
-                                : lesson.locked
-                                ? const [Color(0xFFE5E7EB), Color(0xFFE5E7EB)]
-                                : [
-                                    const Color(
-                                      0xFFFEC288,
-                                    ).withValues(alpha: 0.3),
-                                    const Color(
-                                      0xFFFBEF76,
-                                    ).withValues(alpha: 0.3),
-                                  ],
+                                    ? const [
+                                        Color(0xFFFA5C5C),
+                                        Color(0xFFFD8A6B)
+                                      ]
+                                    : lesson.locked
+                                        ? const [
+                                            Color(0xFFE5E7EB),
+                                            Color(0xFFE5E7EB)
+                                          ]
+                                        : [
+                                            const Color(0xFFFEC288)
+                                                .withValues(alpha: 0.3),
+                                            const Color(0xFFFBEF76)
+                                                .withValues(alpha: 0.3),
+                                          ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -597,15 +556,11 @@ class _LessonCard extends StatelessWidget {
                         ),
                         child: Center(
                           child: lesson.locked
-                              ? const Icon(
-                                  Icons.lock_rounded,
-                                  color: Color(0xFF9CA3AF),
-                                  size: 26,
-                                )
-                              : Text(
-                                  lesson.icon,
-                                  style: const TextStyle(fontSize: 26),
-                                ),
+                              ? const Icon(Icons.lock_rounded,
+                                  color: Color(0xFF9CA3AF), size: 26)
+                              : Text(lesson.icon,
+                                  style:
+                                      const TextStyle(fontSize: 26)),
                         ),
                       ),
                       if (lesson.completed)
@@ -619,11 +574,8 @@ class _LessonCard extends StatelessWidget {
                               color: Color(0xFF22C55E),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              Icons.check_rounded,
-                              color: Colors.white,
-                              size: 13,
-                            ),
+                            child: const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 13),
                           ),
                         ),
                     ],
@@ -638,33 +590,27 @@ class _LessonCard extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: Text(
-                                lesson.title,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
+                              child: Text(lesson.title,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF111827))),
                             ),
                             if (lesson.current)
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 2,
-                                ),
+                                    horizontal: 7, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFA5C5C),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius:
+                                      BorderRadius.circular(8),
                                 ),
-                                child: const Text(
-                                  'Hiện Tại',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                                child: const Text('Hiện Tại',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white,
+                                        fontWeight:
+                                            FontWeight.w600)),
                               ),
                           ],
                         ),
@@ -673,12 +619,10 @@ class _LessonCard extends StatelessWidget {
                           lesson.completed
                               ? 'Đã hoàn thành'
                               : lesson.locked
-                              ? 'Đã khóa'
-                              : 'Sẵn sàng bắt đầu',
+                                  ? 'Đã khóa'
+                                  : 'Sẵn sàng bắt đầu',
                           style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9CA3AF),
-                          ),
+                              fontSize: 12, color: Color(0xFF9CA3AF)),
                         ),
                       ],
                     ),
@@ -693,11 +637,8 @@ class _LessonCard extends StatelessWidget {
                         color: const Color(0xFFF0FDF4),
                         borderRadius: BorderRadius.circular(17),
                       ),
-                      child: const Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFF22C55E),
-                        size: 18,
-                      ),
+                      child: const Icon(Icons.star_rounded,
+                          color: Color(0xFF22C55E), size: 18),
                     )
                   else if (lesson.current)
                     Container(
@@ -707,11 +648,8 @@ class _LessonCard extends StatelessWidget {
                         color: Color(0xFFFA5C5C),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.play_arrow_rounded,
+                          color: Colors.white, size: 20),
                     )
                   else if (!lesson.locked)
                     Container(
@@ -721,11 +659,8 @@ class _LessonCard extends StatelessWidget {
                         color: const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(17),
                       ),
-                      child: const Icon(
-                        Icons.play_arrow_rounded,
-                        color: Color(0xFF9CA3AF),
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.play_arrow_rounded,
+                          color: Color(0xFF9CA3AF), size: 20),
                     ),
                 ],
               ),
@@ -738,26 +673,19 @@ class _LessonCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    Text(
-                      'Phần thưởng bài học',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                    ),
+                    Text('Phần thưởng bài học',
+                        style: TextStyle(
+                            fontSize: 12, color: Color(0xFF9CA3AF))),
                     Row(
                       children: [
-                        Icon(
-                          Icons.star_rounded,
-                          color: Color(0xFFFBEF76),
-                          size: 14,
-                        ),
+                        Icon(Icons.star_rounded,
+                            color: Color(0xFFFBEF76), size: 14),
                         SizedBox(width: 4),
-                        Text(
-                          '+50 XP',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF374151),
-                          ),
-                        ),
+                        Text('+50 XP',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF374151))),
                       ],
                     ),
                   ],
@@ -776,69 +704,121 @@ class _LessonCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class LessonIntroScreen extends StatefulWidget {
-  const LessonIntroScreen({super.key});
+  const LessonIntroScreen({super.key, required this.lessonId});
+  final int lessonId;
 
   @override
   State<LessonIntroScreen> createState() => _LessonIntroScreenState();
 }
 
 class _LessonIntroScreenState extends State<LessonIntroScreen> {
-  static const _vocab = [
-    _VocabData(
-      word: 'Red',
-      translation: 'Đỏ',
-      example: 'Quả táo màu đỏ',
-      colorValue: 0xFFFA5C5C,
-    ),
-    _VocabData(
-      word: 'Blue',
-      translation: 'Xanh dương',
-      example: 'Bầu trời màu xanh dương',
-      colorValue: 0xFF4A90E2,
-    ),
-    _VocabData(
-      word: 'Green',
-      translation: 'Xanh lá',
-      example: 'Cỏ màu xanh lá',
-      colorValue: 0xFF4CAF50,
-    ),
-    _VocabData(
-      word: 'Yellow',
-      translation: 'Vàng',
-      example: 'Mặt trời màu vàng',
-      colorValue: 0xFFFBEF76,
-    ),
-    _VocabData(
-      word: 'Orange',
-      translation: 'Cam',
-      example: 'Quả cam màu cam',
-      colorValue: 0xFFFD8A6B,
-    ),
-    _VocabData(
-      word: 'Purple',
-      translation: 'Tím',
-      example: 'Bông hoa màu tím',
-      colorValue: 0xFF9C27B0,
-    ),
-  ];
+  bool _loading = true;
+  String _unitLabel = '';
+  String _lessonTitle = '';
+  String _lessonIcon = '📖';
+  int _xpReward = 50;
+  List<_VocabData> _vocab = [];
+  List<_GrammarData> _grammar = [];
+  List<_ActivityData> _activities = [];
+  int _totalExercises = 0;
 
-  static const _grammar = [
-    _GrammarData(
-      title: "Sử dụng 'is' với màu sắc",
-      desc: 'Học cách mô tả đồ vật',
-    ),
-    _GrammarData(title: 'Vị trí tính từ', desc: 'Màu sắc đứng ở đâu trong câu'),
-  ];
-
-  static const _activities = [
-    _ActivityData(emoji: '👂', title: 'Nghe', count: 5),
-    _ActivityData(emoji: '💬', title: 'Nói', count: 3),
-    _ActivityData(emoji: '✍️', title: 'Viết', count: 4),
-    _ActivityData(emoji: '🎯', title: 'Kiểm Tra', count: 1),
+  // Palette used for vocab items
+  static const _palette = [
+    0xFFFA5C5C, 0xFF4A90E2, 0xFF4CAF50, 0xFFFBEF76,
+    0xFFFD8A6B, 0xFF9C27B0, 0xFF00BCD4, 0xFFFF9800,
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final repo = AppServices.learningRepository;
+    final lesson = await repo.getLessonById(widget.lessonId);
+    if (!mounted || lesson == null) {
+      setState(() => _loading = false);
+      return;
+    }
+
+    // Unit label
+    final units = await repo.getUnits();
+    final unit = units.firstWhere(
+      (u) => u.id == lesson.unitId,
+      orElse: () => units.first,
+    );
+    _unitLabel = 'Đơn Vị ${unit.id} - Bài ${lesson.sortOrder}';
+
+    // Exercises
+    final exercises = await repo.getExercisesByLesson(widget.lessonId);
+    _totalExercises = exercises.length;
+    _xpReward = lesson.xpReward;
+    _lessonTitle = lesson.title;
+    _lessonIcon = lesson.icon;
+
+    // Build vocab from multiple_choice exercises (extract correctAnswer as word)
+    final mcExercises =
+        exercises.where((e) => e.type == 'multiple_choice').toList();
+    final vocabSet = <String>{};
+    final vocabList = <_VocabData>[];
+    for (final ex in mcExercises) {
+      final word = ex.correctAnswer;
+      if (vocabSet.contains(word) || vocabList.length >= 6) continue;
+      vocabSet.add(word);
+      vocabList.add(_VocabData(
+        word: word,
+        translation: '',
+        example: ex.question,
+        colorValue: _palette[vocabList.length % _palette.length],
+      ));
+    }
+
+    // Build grammar hints from listening exercises (fill-in-the-blank patterns)
+    final listeningExercises =
+        exercises.where((e) => e.type == 'listening').toList();
+    final grammarList = <_GrammarData>[];
+    for (int i = 0; i < listeningExercises.length && i < 3; i++) {
+      final ex = listeningExercises[i];
+      grammarList.add(_GrammarData(
+        title: 'Điền từ: "${ex.correctAnswer}"',
+        desc: ex.question,
+      ));
+    }
+
+    // Build activity counts by type
+    int mcCount = exercises.where((e) => e.type == 'multiple_choice').length;
+    int listenCount = exercises.where((e) => e.type == 'listening').length;
+    int speakCount = exercises.where((e) => e.type == 'speaking').length;
+    final actList = <_ActivityData>[];
+    if (mcCount > 0) {
+      actList.add(_ActivityData(emoji: '✍️', title: 'Trắc Nghiệm', count: mcCount));
+    }
+    if (listenCount > 0) {
+      actList.add(_ActivityData(emoji: '👂', title: 'Nghe', count: listenCount));
+    }
+    if (speakCount > 0) {
+      actList.add(_ActivityData(emoji: '💬', title: 'Nói', count: speakCount));
+    }
+    actList.add(_ActivityData(emoji: '🎯', title: 'Tổng', count: _totalExercises));
+
+    if (!mounted) return;
+    setState(() {
+      _vocab = vocabList;
+      _grammar = grammarList;
+      _activities = actList;
+      _loading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF3F4F6),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: Column(
@@ -855,14 +835,7 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () {
-                    final router = GoRouter.of(context);
-                    if (router.canPop()) {
-                      context.pop();
-                      return;
-                    }
-                    context.go('/home');
-                  },
+                  onTap: () => context.go('/home'),
                   child: Container(
                     width: 40,
                     height: 40,
@@ -870,34 +843,28 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: Color(0xFF374151),
-                      size: 20,
-                    ),
+                    child: const Icon(Icons.arrow_back_rounded,
+                        color: Color(0xFF374151), size: 20),
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Đơn Vị 1 - Bài 4',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFFFA5C5C),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      'Học Màu Sắc',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_unitLabel,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFFFA5C5C),
+                              fontWeight: FontWeight.w600)),
+                      Text(_lessonTitle,
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827)),
+                          overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -911,210 +878,192 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Mascot card
-                  _MascotCard(),
+                  _MascotCard(
+                    icon: _lessonIcon,
+                    title: _lessonTitle,
+                    xpReward: _xpReward,
+                    exerciseCount: _totalExercises,
+                  ),
                   const SizedBox(height: 24),
 
                   // Activities grid
-                  const Text(
-                    'Bạn Sẽ Luyện Tập',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
+                  const Text('Bạn Sẽ Luyện Tập',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827))),
                   const SizedBox(height: 12),
                   Row(
                     children: _activities
-                        .map(
-                          (a) => Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x0F000000),
-                                      blurRadius: 6,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      a.emoji,
-                                      style: const TextStyle(fontSize: 26),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      a.title,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF111827),
-                                      ),
-                                    ),
-                                    Text(
-                                      '${a.count} nhiệm vụ',
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: Color(0xFF9CA3AF),
-                                      ),
-                                    ),
-                                  ],
+                        .map((a) => Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.only(right: 8),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius:
+                                        BorderRadius.circular(16),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                          color: Color(0x0F000000),
+                                          blurRadius: 6,
+                                          offset: Offset(0, 2))
+                                    ],
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14),
+                                  child: Column(
+                                    children: [
+                                      Text(a.emoji,
+                                          style: const TextStyle(
+                                              fontSize: 26)),
+                                      const SizedBox(height: 5),
+                                      Text(a.title,
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight:
+                                                  FontWeight.w600,
+                                              color:
+                                                  Color(0xFF111827))),
+                                      Text('${a.count} nhiệm vụ',
+                                          style: const TextStyle(
+                                              fontSize: 10,
+                                              color:
+                                                  Color(0xFF9CA3AF))),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        )
+                            ))
                         .toList(),
                   ),
 
                   const SizedBox(height: 24),
 
                   // Vocabulary
-                  Row(
-                    children: const [
-                      Text('📚 ', style: TextStyle(fontSize: 16)),
-                      Text(
-                        'Từ Vựng Mới (6 từ)',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0F000000),
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
+                  if (_vocab.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        const Text('📚 ', style: TextStyle(fontSize: 16)),
+                        Text('Từ Vựng Mới (${_vocab.length} từ)',
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF111827))),
                       ],
                     ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: _vocab
-                          .asMap()
-                          .entries
-                          .map(
-                            (e) => Column(
-                              children: [
-                                if (e.key > 0)
-                                  const Divider(
-                                    height: 1,
-                                    color: Color(0xFFF3F4F6),
-                                  ),
-                                _VocabRow(item: e.value),
-                              ],
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Grammar
-                  Row(
-                    children: const [
-                      Text('📝 ', style: TextStyle(fontSize: 16)),
-                      Text(
-                        'Điểm Ngữ Pháp',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ..._grammar.asMap().entries.map(
-                    (e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: const [
-                            BoxShadow(
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(
                               color: Color(0x0F000000),
                               blurRadius: 6,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFEC288),
-                                    Color(0xFFFBEF76),
+                              offset: Offset(0, 2))
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        children: _vocab
+                            .asMap()
+                            .entries
+                            .map((e) => Column(
+                                  children: [
+                                    if (e.key > 0)
+                                      const Divider(
+                                          height: 1,
+                                          color: Color(0xFFF3F4F6)),
+                                    _VocabRow(item: e.value),
                                   ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${e.key + 1}',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    e.value.title,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF111827),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    e.value.desc,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF9CA3AF),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                                ))
+                            .toList(),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Grammar
+                  if (_grammar.isNotEmpty) ...[
+                    const Row(
+                      children: [
+                        Text('📝 ', style: TextStyle(fontSize: 16)),
+                        Text('Điểm Ngữ Pháp',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF111827))),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ..._grammar.asMap().entries.map((e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: const [
+                                BoxShadow(
+                                    color: Color(0x0F000000),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2))
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFEC288),
+                                          Color(0xFFFBEF76)
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end:
+                                            Alignment.bottomRight),
+                                    borderRadius:
+                                        BorderRadius.circular(14),
+                                  ),
+                                  child: Center(
+                                      child: Text('${e.key + 1}',
+                                          style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight:
+                                                  FontWeight.bold,
+                                              color: Colors.white))),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(e.value.title,
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight:
+                                                  FontWeight.w600,
+                                              color:
+                                                  Color(0xFF111827))),
+                                      const SizedBox(height: 2),
+                                      Text(e.value.desc,
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color:
+                                                  Color(0xFF9CA3AF))),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+                  ],
 
                   const SizedBox(height: 32),
                 ],
@@ -1140,10 +1089,9 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  // Load exercises for lesson 4 (Màu Sắc) into session
                   final exercises = await AppServices.learningRepository
-                      .getExercisesByLesson(4);
-                  AppServices.exerciseSession.load(4, exercises);
+                      .getExercisesByLesson(widget.lessonId);
+                  AppServices.exerciseSession.load(widget.lessonId, exercises);
                   if (!mounted) return;
                   if (exercises.isNotEmpty) {
                     final firstType = exercises.first.type;
@@ -1158,10 +1106,9 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                   }
                 },
                 icon: const Icon(Icons.play_arrow_rounded, size: 24),
-                label: const Text(
-                  'Bắt Đầu Bài Học',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                ),
+                label: const Text('Bắt Đầu Bài Học',
+                    style: TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFA5C5C),
                   foregroundColor: Colors.white,
@@ -1173,9 +1120,10 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Thời gian ước tính: 10 phút · Nhận 50 XP',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            Text(
+              'Thời gian ước tính: ${(_totalExercises * 1.2).ceil()} phút · Nhận $_xpReward XP',
+              style:
+                  const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -1187,22 +1135,31 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
 // ─── Sub-widgets ──────────────────────────────────────────────────────────────
 
 class _MascotCard extends StatelessWidget {
+  const _MascotCard({
+    required this.icon,
+    required this.title,
+    required this.xpReward,
+    required this.exerciseCount,
+  });
+  final String icon;
+  final String title;
+  final int xpReward;
+  final int exerciseCount;
+
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+            colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x40FA5C5C),
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
+              color: Color(0x40FA5C5C),
+              blurRadius: 20,
+              offset: Offset(0, 8))
         ],
       ),
       padding: const EdgeInsets.all(20),
@@ -1223,20 +1180,18 @@ class _MascotCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x20000000),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
+                          color: Color(0x20000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 2))
                     ],
                   ),
                   padding: const EdgeInsets.all(14),
-                  child: const Text(
-                    '"Cùng học màu sắc nào! 🎨 Bạn sẽ có thể mô tả mọi thứ ngay thôi!"',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF374151),
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Text(
+                    '"Cùng học $title nào! $icon Bạn sẽ giỏi hơn ngay thôi!"',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF374151),
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -1245,14 +1200,15 @@ class _MascotCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _LessonStat(icon: Icons.access_time_rounded, label: '10 phút'),
+              _LessonStat(
+                  icon: Icons.access_time_rounded,
+                  label: '${(exerciseCount * 1.2).ceil()} phút'),
               const SizedBox(width: 10),
-              _LessonStat(icon: Icons.star_rounded, label: '+50 XP'),
+              _LessonStat(icon: Icons.star_rounded, label: '+$xpReward XP'),
               const SizedBox(width: 10),
               _LessonStat(
-                icon: Icons.track_changes_rounded,
-                label: '13 Nhiệm vụ',
-              ),
+                  icon: Icons.track_changes_rounded,
+                  label: '$exerciseCount Nhiệm vụ'),
             ],
           ),
         ],
@@ -1279,14 +1235,11 @@ class _LessonStat extends StatelessWidget {
           children: [
             Icon(icon, color: Colors.white, size: 20),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
           ],
         ),
       ),
@@ -1316,7 +1269,8 @@ class _VocabRow extends StatelessWidget {
               child: Container(
                 width: 20,
                 height: 20,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: color, shape: BoxShape.circle),
               ),
             ),
           ),
@@ -1327,32 +1281,22 @@ class _VocabRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      item.word,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
+                    Text(item.word,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111827))),
                     const SizedBox(width: 8),
-                    Text(
-                      item.translation,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
+                    Text(item.translation,
+                        style: const TextStyle(
+                            fontSize: 13, color: Color(0xFF9CA3AF))),
                   ],
                 ),
-                Text(
-                  '"${item.example}"',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+                Text('"${item.example}"',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                        fontStyle: FontStyle.italic)),
               ],
             ),
           ),
@@ -1371,44 +1315,33 @@ class _OwlPainter extends CustomPainter {
 
     // Body
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, cy + 4), width: 68, height: 62),
+      Rect.fromCenter(
+          center: Offset(cx, cy + 4), width: 68, height: 62),
       Paint()..color = Colors.white,
     );
 
     // Wings
     final wingPaint = Paint()..color = const Color(0xFFFBEF76);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx - 36, cy + 8), width: 22, height: 34),
-      wingPaint,
-    );
+        Rect.fromCenter(
+            center: Offset(cx - 36, cy + 8), width: 22, height: 34),
+        wingPaint);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx + 36, cy + 8), width: 22, height: 34),
-      wingPaint,
-    );
+        Rect.fromCenter(
+            center: Offset(cx + 36, cy + 8), width: 22, height: 34),
+        wingPaint);
 
     // Eye circles
-    canvas.drawCircle(
-      Offset(cx - 13, cy - 2),
-      11,
-      Paint()..color = const Color(0xFFFA5C5C),
-    );
-    canvas.drawCircle(
-      Offset(cx + 13, cy - 2),
-      11,
-      Paint()..color = const Color(0xFFFA5C5C),
-    );
+    canvas.drawCircle(Offset(cx - 13, cy - 2), 11,
+        Paint()..color = const Color(0xFFFA5C5C));
+    canvas.drawCircle(Offset(cx + 13, cy - 2), 11,
+        Paint()..color = const Color(0xFFFA5C5C));
 
     // Eye highlights
-    canvas.drawCircle(
-      Offset(cx - 11, cy - 4),
-      4,
-      Paint()..color = Colors.white,
-    );
-    canvas.drawCircle(
-      Offset(cx + 15, cy - 4),
-      4,
-      Paint()..color = Colors.white,
-    );
+    canvas.drawCircle(Offset(cx - 11, cy - 4), 4,
+        Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(cx + 15, cy - 4), 4,
+        Paint()..color = Colors.white);
 
     // Beak
     final beakPath = Path()
@@ -1424,26 +1357,14 @@ class _OwlPainter extends CustomPainter {
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    canvas.drawLine(
-      Offset(cx - 13, cy + 32),
-      Offset(cx - 19, cy + 40),
-      feetPaint,
-    );
-    canvas.drawLine(
-      Offset(cx - 13, cy + 32),
-      Offset(cx - 7, cy + 40),
-      feetPaint,
-    );
-    canvas.drawLine(
-      Offset(cx + 13, cy + 32),
-      Offset(cx + 7, cy + 40),
-      feetPaint,
-    );
-    canvas.drawLine(
-      Offset(cx + 13, cy + 32),
-      Offset(cx + 19, cy + 40),
-      feetPaint,
-    );
+    canvas.drawLine(Offset(cx - 13, cy + 32),
+        Offset(cx - 19, cy + 40), feetPaint);
+    canvas.drawLine(Offset(cx - 13, cy + 32),
+        Offset(cx - 7, cy + 40), feetPaint);
+    canvas.drawLine(Offset(cx + 13, cy + 32),
+        Offset(cx + 7, cy + 40), feetPaint);
+    canvas.drawLine(Offset(cx + 13, cy + 32),
+        Offset(cx + 19, cy + 40), feetPaint);
   }
 
   @override

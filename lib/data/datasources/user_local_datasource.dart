@@ -22,7 +22,7 @@ class UserLocalDataSource {
     final db = await _appDatabase.database;
     final maps = await db.query(
       AppDatabase.usersTable,
-      where: 'email = ?',
+      where: 'LOWER(email) = LOWER(?)',
       whereArgs: [email],
       limit: 1,
     );

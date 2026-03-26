@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/services/app_services.dart';
+import '../data/services/achievement_service.dart';
+import '../data/services/leaderboard_service.dart';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LEADERBOARD SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14,25 +18,138 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   bool _isFriends = true;
+  bool _loading = true;
 
-  static const _topThree = [
-    _PodiumUser(rank: 2, name: 'Emma Wilson',  avatar: '👩', points: 1450, streak: 12, isCurrentUser: false),
-    _PodiumUser(rank: 1, name: 'Sarah Chen',   avatar: '👤', points: 1850, streak: 25, isCurrentUser: true),
-    _PodiumUser(rank: 3, name: 'Alex Kim',     avatar: '👨', points: 1320, streak: 8,  isCurrentUser: false),
-  ];
+  List<_PodiumUser> _topThree = [];
+  List<_RankUser> _otherUsers = [];
 
-  static const _otherUsers = [
-    _RankUser(rank: 4,  name: 'John Davis',   avatar: '👨', points: 1180, streak: 15, isCurrentUser: false),
-    _RankUser(rank: 5,  name: 'Maria Garcia', avatar: '👩', points: 1050, streak: 10, isCurrentUser: false),
-    _RankUser(rank: 6,  name: 'Bạn',          avatar: '👤', points: 980,  streak: 7,  isCurrentUser: true),
-    _RankUser(rank: 7,  name: 'Lisa Brown',   avatar: '👩', points: 890,  streak: 5,  isCurrentUser: false),
-    _RankUser(rank: 8,  name: 'Mike Johnson', avatar: '👨', points: 750,  streak: 12, isCurrentUser: false),
-    _RankUser(rank: 9,  name: 'Anna Lee',     avatar: '👩', points: 680,  streak: 3,  isCurrentUser: false),
-    _RankUser(rank: 10, name: 'Tom White',    avatar: '👨', points: 590,  streak: 6,  isCurrentUser: false),
-  ];
+  // User's own standing
+  int _myRank = 0;
+  int _myXp = 0;
+  int _myStreak = 0;
+  String _myAvatar = '👤';
+  String _myName = 'Bạn';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLeaderboard();
+  }
+
+  Future<void> _loadLeaderboard() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (user != null && user.id != null) {
+      await AppServices.syncGamificationForUser(user.id!);
+    }
+
+    var entries = await AppServices.leaderboardService.fetchTopUsers(limit: 20);
+
+    if (entries.length < 3) {
+      final demo = <LeaderboardEntry>[
+        LeaderboardEntry(
+          userId: -1,
+          displayName: 'Emma Wilson',
+          avatarEmoji: '👩',
+          totalXp: 1450,
+          currentStreak: 12,
+          achievementsUnlocked: 7,
+          updatedAt: DateTime.now(),
+        ),
+        LeaderboardEntry(
+          userId: -2,
+          displayName: 'Alex Kim',
+          avatarEmoji: '👨',
+          totalXp: 1320,
+          currentStreak: 8,
+          achievementsUnlocked: 6,
+          updatedAt: DateTime.now(),
+        ),
+        LeaderboardEntry(
+          userId: -3,
+          displayName: 'Maria Garcia',
+          avatarEmoji: '👩',
+          totalXp: 1050,
+          currentStreak: 10,
+          achievementsUnlocked: 5,
+          updatedAt: DateTime.now(),
+        ),
+      ];
+      entries = [...entries, ...demo];
+    }
+
+    // Ensure the current user is always present (may sit outside top-20).
+    if (user != null && user.id != null) {
+      final alreadyIn = entries.any((e) => e.userId == user.id);
+      if (!alreadyIn) {
+        final totalXp =
+            await AppServices.learningRepository.getTotalXp(user.id!);
+        final streak =
+            await AppServices.learningRepository.getCurrentStreak(user.id!);
+        entries.add(LeaderboardEntry(
+          userId: user.id!,
+          displayName: user.displayName,
+          avatarEmoji: user.avatarEmoji,
+          totalXp: totalXp,
+          currentStreak: streak,
+          achievementsUnlocked: 0,
+          updatedAt: DateTime.now(),
+        ));
+      }
+    }
+
+    entries.sort((a, b) => b.totalXp.compareTo(a.totalXp));
+
+    // Calculate user's rank from the full sorted list.
+    int myRank = 0;
+    int myXp = 0;
+    int myStreak = 0;
+    final String myAvatar = user?.avatarEmoji ?? '👤';
+    final String myName = user?.displayName ?? 'Bạn';
+    if (user != null) {
+      final myIndex = entries.indexWhere((e) => e.userId == user.id);
+      if (myIndex >= 0) {
+        myRank = myIndex + 1;
+        myXp = entries[myIndex].totalXp;
+        myStreak = entries[myIndex].currentStreak;
+      }
+    }
+
+    // Top 3 for podium (order: 2nd, 1st, 3rd)
+    final podium = <_PodiumUser>[];
+    if (entries.length >= 3) {
+      podium.add(_PodiumUser(rank: 2, name: entries[1].displayName, avatar: entries[1].avatarEmoji, points: entries[1].totalXp, streak: entries[1].currentStreak, isCurrentUser: user?.id == entries[1].userId));
+      podium.add(_PodiumUser(rank: 1, name: entries[0].displayName, avatar: entries[0].avatarEmoji, points: entries[0].totalXp, streak: entries[0].currentStreak, isCurrentUser: user?.id == entries[0].userId));
+      podium.add(_PodiumUser(rank: 3, name: entries[2].displayName, avatar: entries[2].avatarEmoji, points: entries[2].totalXp, streak: entries[2].currentStreak, isCurrentUser: user?.id == entries[2].userId));
+    }
+
+    final others = <_RankUser>[];
+    for (int i = 3; i < entries.length; i++) {
+      final u = entries[i];
+      final isMe = user?.id == u.userId;
+      others.add(_RankUser(rank: i + 1, name: isMe ? 'Bạn' : u.displayName, avatar: u.avatarEmoji, points: u.totalXp, streak: u.currentStreak, isCurrentUser: isMe));
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _topThree = podium;
+      _otherUsers = others;
+      _myRank = myRank;
+      _myXp = myXp;
+      _myStreak = myStreak;
+      _myAvatar = myAvatar;
+      _myName = myName;
+      _loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF3F4F6),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: Column(
@@ -120,6 +237,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   const SizedBox(height: 24),
                   _PodiumSection(users: _topThree),
                   const SizedBox(height: 16),
+                  // My rank banner – always visible, highlighted in red.
+                  if (_myRank > 0) ...[  
+                    _MyRankBanner(
+                      rank: _myRank,
+                      xp: _myXp,
+                      streak: _myStreak,
+                      avatar: _myAvatar,
+                      name: _myName,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   const Text('Tất Cả Xếp Hạng',
                       style: TextStyle(
                           fontSize: 16,
@@ -145,7 +273,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 }
 
-// ── Models ──
 class _PodiumUser {
   const _PodiumUser({
     required this.rank,
@@ -554,6 +681,108 @@ class _LeaderboardCTA extends StatelessWidget {
   }
 }
 
+// ── My rank banner ──
+class _MyRankBanner extends StatelessWidget {
+  const _MyRankBanner({
+    required this.rank,
+    required this.xp,
+    required this.streak,
+    required this.avatar,
+    required this.name,
+  });
+  final int rank, xp, streak;
+  final String avatar, name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x40FA5C5C), blurRadius: 12, offset: Offset(0, 4))
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          // Rank badge
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                '#$rank',
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Avatar
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+                color: Colors.white24, shape: BoxShape.circle),
+            child: Center(
+                child: Text(avatar, style: const TextStyle(fontSize: 24))),
+          ),
+          const SizedBox(width: 10),
+          // Name + streak
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white),
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text('🔥 $streak ngày',
+                    style: const TextStyle(
+                        fontSize: 12, color: Colors.white70)),
+              ],
+            ),
+          ),
+          // XP
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                children: [
+                  const Text('⭐', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 2),
+                  Text('$xp',
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
+                ],
+              ),
+              const Text('XP của bạn',
+                  style: TextStyle(fontSize: 11, color: Colors.white70)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ACHIEVEMENTS SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -567,76 +796,100 @@ class AchievementsScreen extends StatefulWidget {
 
 class _AchievementsScreenState extends State<AchievementsScreen> {
   int? _selectedId;
+  List<_AchievItem> _achievements = [];
+  bool _loading = true;
 
-  static const _achievements = [
-    _AchievItem(
-        id: 1, title: 'Bước Đầu Tiên', desc: 'Hoàn thành bài học đầu tiên',
-        icon: '🎯', unlocked: true,
-        gradStart: Color(0xFFFBEF76), gradEnd: Color(0xFFFEC288),
-        date: '2 ngày trước', rarity: 'Thường'),
-    _AchievItem(
-        id: 2, title: 'Chiến Binh Tuần', desc: 'Duy trì chuỗi 7 ngày',
-        icon: '🔥', unlocked: true,
-        gradStart: Color(0xFFFA5C5C), gradEnd: Color(0xFFFD8A6B),
-        date: '1 ngày trước', rarity: 'Hiếm'),
-    _AchievItem(
-        id: 3, title: 'Điểm Tuyệt Đối', desc: 'Đạt 100% trong bất kỳ bài học',
-        icon: '⭐', unlocked: true,
-        gradStart: Color(0xFFFEC288), gradEnd: Color(0xFFFBEF76),
-        date: '3 ngày trước', rarity: 'Thường'),
-    _AchievItem(
-        id: 4, title: 'Học Viên Nhanh', desc: 'Hoàn thành 5 bài học trong ngày',
-        icon: '⚡', unlocked: true,
-        gradStart: Color(0xFFFD8A6B), gradEnd: Color(0xFFFA5C5C),
-        date: '5 ngày trước', rarity: 'Hiếm'),
-    _AchievItem(
-        id: 5, title: 'Bậc Thầy Từ Vựng', desc: 'Học 100 từ mới',
-        icon: '📚', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 65, rarity: 'Sử Thi'),
-    _AchievItem(
-        id: 6, title: 'Cánh Bướm Xã Hội', desc: 'Thêm 5 bạn bè',
-        icon: '👥', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 3, total: 5, rarity: 'Thường'),
-    _AchievItem(
-        id: 7, title: 'Người Chạy Marathon', desc: 'Chuỗi 30 ngày',
-        icon: '🏃', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 15, total: 30, rarity: 'Sử Thi'),
-    _AchievItem(
-        id: 8, title: 'Nhà Vô Địch Quiz', desc: 'Vượt qua 20 bài kiểm tra',
-        icon: '🎓', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 12, total: 20, rarity: 'Hiếm'),
-    _AchievItem(
-        id: 9, title: 'Chim Sớm', desc: 'Học trước 8 giờ sáng',
-        icon: '🌅', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        rarity: 'Hiếm'),
-    _AchievItem(
-        id: 10, title: 'Cú Đêm', desc: 'Học sau 10 giờ tối',
-        icon: '🦉', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        rarity: 'Hiếm'),
-    _AchievItem(
-        id: 11, title: 'Huyền Thoại', desc: 'Hoàn thành tất cả đơn vị',
-        icon: '👑', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 1, total: 10, rarity: 'Huyền Thoại'),
-    _AchievItem(
-        id: 12, title: 'Chuyên Gia Phát Âm', desc: '90%+ trong 10 bài nói',
-        icon: '🎤', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 4, total: 10, rarity: 'Sử Thi'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadAchievements();
+  }
+
+  Future<void> _loadAchievements() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    final items = <_AchievItem>[];
+    if (user != null && user.id != null) {
+      final repo = AppServices.learningRepository;
+      final completedIds = await repo.getCompletedLessonIds(user.id!);
+      final streak = await repo.getCurrentStreak(user.id!);
+      final longestStreak = await repo.getLongestStreak(user.id!);
+      final totalXp = await repo.getTotalXp(user.id!);
+      final savedWords = await AppServices.dictionaryRepository.countSavedWords();
+
+      final sync = await AppServices.achievementService.syncAchievements(
+        userId: user.id!,
+        stats: UserLearningStats(
+          completedLessons: completedIds.length,
+          currentStreak: streak,
+          longestStreak: longestStreak,
+          savedWords: savedWords,
+          totalXp: totalXp,
+        ),
+      );
+
+      for (final progress in sync.allProgress) {
+        items.add(
+          _AchievItem(
+            id: progress.definition.id,
+            title: progress.definition.title,
+            desc: progress.definition.description,
+            icon: progress.definition.icon,
+            unlocked: progress.unlocked,
+            gradStart: const Color(0xFFD1D5DB),
+            gradEnd: const Color(0xFF9CA3AF),
+            rarity: _rarityFor(progress.definition.target),
+            date: progress.unlocked ? 'Vừa mở khóa' : null,
+            progress: progress.progress,
+            total: progress.definition.target,
+          ),
+        );
+      }
+    }
+
+    // Set colors for unlocked items
+    for (int i = 0; i < items.length; i++) {
+      if (items[i].unlocked) {
+        final colors = [
+          [const Color(0xFFFBEF76), const Color(0xFFFEC288)],
+          [const Color(0xFFFA5C5C), const Color(0xFFFD8A6B)],
+          [const Color(0xFFFEC288), const Color(0xFFFBEF76)],
+          [const Color(0xFFFD8A6B), const Color(0xFFFA5C5C)],
+        ];
+        final c = colors[i % colors.length];
+        items[i] = _AchievItem(
+          id: items[i].id, title: items[i].title, desc: items[i].desc,
+          icon: items[i].icon, unlocked: true,
+          gradStart: c[0], gradEnd: c[1],
+          rarity: items[i].rarity, progress: items[i].progress, total: items[i].total,
+        );
+      }
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _achievements = items;
+      _loading = false;
+    });
+  }
+
+  String _rarityFor(int target) {
+    if (target >= 30 || target >= 1000) return 'Sử Thi';
+    if (target >= 10) return 'Hiếm';
+    return 'Thường';
+  }
 
   int get _unlockedCount =>
       _achievements.where((a) => a.unlocked).length;
 
   @override
   Widget build(BuildContext context) {
-    final pct = _unlockedCount / _achievements.length;
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF3F4F6),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    final pct = _achievements.isEmpty ? 0.0 : _unlockedCount / _achievements.length;
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: Stack(
