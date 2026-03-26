@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>English Learning cần quyền micrô để chuyển lời nói thành văn bản khi bạn làm bài nói.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>English Learning cần quyền nhận diện giọng nói để chấm điểm bài nói dựa trên nội dung bạn phát âm.</string>
 </dict>
 </plist>
