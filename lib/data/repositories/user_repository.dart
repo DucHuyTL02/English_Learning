@@ -1,7 +1,10 @@
 import '../datasources/user_local_datasource.dart';
 import '../models/user_model.dart';
+import '../../firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class UserRepositoryException implements Exception {
   UserRepositoryException(this.message);
@@ -246,17 +249,29 @@ class UserRepository {
         }
       }
 
-      // Xóa Firebase Auth account.
+      // Xóa Firebase Auth account. Bắt buộc thành công trước khi xóa local.
       if (currentFirebaseUser != null) {
+        var deleted = false;
         try {
           await currentFirebaseUser.delete();
+          deleted = true;
         } on FirebaseAuthException catch (e) {
           if (e.code == 'requires-recent-login') {
             throw UserRepositoryException(
               'Vui lòng đăng nhập lại trước khi xóa tài khoản.',
             );
           }
-          // Other Firebase errors: still proceed with local deletion.
+        }
+
+        // Fallback cho Windows/Desktop khi SDK không xóa được user.
+        if (!deleted) {
+          deleted = await _deleteFirebaseAccountViaRest(currentFirebaseUser);
+        }
+
+        if (!deleted) {
+          throw UserRepositoryException(
+            'Không thể xóa tài khoản trên Firebase. Vui lòng thử lại.',
+          );
         }
       }
 
@@ -264,22 +279,36 @@ class UserRepository {
 
       // Sign out và dọn dẹp session.
       try { await _firebaseAuth.signOut(); } catch (_) {}
-
-      final remainingUsers = await _localDataSource.getAllUsers();
-      if (remainingUsers.isEmpty) return;
-
-      if (!user.isActive) return;
-      final nextUser = remainingUsers.firstWhere(
-        (item) => item.id != null,
-        orElse: () => remainingUsers.first,
-      );
-      if (nextUser.id != null) {
-        await _localDataSource.setOnlyActiveUser(nextUser.id!);
-      }
+      await _localDataSource.deactivateAllUsers();
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
       throw UserRepositoryException('Không thể xóa tài khoản.');
+    }
+  }
+
+  Future<bool> _deleteFirebaseAccountViaRest(User user) async {
+    try {
+      final idToken = await user.getIdToken(true);
+      if (idToken == null || idToken.isEmpty) return false;
+
+      final apiKey = DefaultFirebaseOptions.currentPlatform.apiKey;
+      if (apiKey.isEmpty) return false;
+
+      final response = await http.post(
+        Uri.parse(
+          'https://identitytoolkit.googleapis.com/v1/accounts:delete?key=$apiKey',
+        ),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({'idToken': idToken}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
     }
   }
 
