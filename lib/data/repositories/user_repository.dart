@@ -230,20 +230,24 @@ class UserRepository {
       final user = await _localDataSource.getUserById(userId);
       if (user == null) return;
 
+      final currentFirebaseUser = _firebaseAuth.currentUser;
+
+      // Xác định Firebase UID: ưu tiên local, fallback sang current session.
+      final firebaseUid = (user.firebaseUid != null && user.firebaseUid!.isNotEmpty)
+          ? user.firebaseUid!
+          : currentFirebaseUser?.uid;
+
       // Xóa tài liệu Firestore nếu có.
-      if (user.firebaseUid != null && user.firebaseUid!.isNotEmpty) {
+      if (firebaseUid != null && firebaseUid.isNotEmpty) {
         try {
-          await _firestore.collection('users').doc(user.firebaseUid).delete();
+          await _firestore.collection('users').doc(firebaseUid).delete();
         } catch (_) {
           // Best-effort Firestore cleanup.
         }
       }
 
-      // Xóa Firebase Auth account nếu đang đăng nhập bằng user đó.
-      final currentFirebaseUser = _firebaseAuth.currentUser;
-      if (currentFirebaseUser != null &&
-          user.firebaseUid != null &&
-          currentFirebaseUser.uid == user.firebaseUid) {
+      // Xóa Firebase Auth account.
+      if (currentFirebaseUser != null) {
         try {
           await currentFirebaseUser.delete();
         } on FirebaseAuthException catch (e) {
@@ -252,19 +256,19 @@ class UserRepository {
               'Vui lòng đăng nhập lại trước khi xóa tài khoản.',
             );
           }
-          // Other errors: still proceed with local deletion.
+          // Other Firebase errors: still proceed with local deletion.
         }
       }
 
       await _localDataSource.deleteUserById(userId);
 
-      if (!user.isActive) return;
+      // Sign out và dọn dẹp session.
+      try { await _firebaseAuth.signOut(); } catch (_) {}
+
       final remainingUsers = await _localDataSource.getAllUsers();
-      if (remainingUsers.isEmpty) {
-        // Sign out if no users left.
-        try { await _firebaseAuth.signOut(); } catch (_) {}
-        return;
-      }
+      if (remainingUsers.isEmpty) return;
+
+      if (!user.isActive) return;
       final nextUser = remainingUsers.firstWhere(
         (item) => item.id != null,
         orElse: () => remainingUsers.first,
