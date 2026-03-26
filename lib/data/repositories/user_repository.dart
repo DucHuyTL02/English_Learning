@@ -357,14 +357,18 @@ class UserRepository {
 
   /// Xác thực lại người dùng trước khi thực hiện thao tác nhạy cảm (xóa tài khoản).
   Future<void> reauthenticate(String password) async {
+    final trimmedPassword = password.trim();
+    if (trimmedPassword.isEmpty) {
+      throw UserRepositoryException('Vui lòng nhập mật khẩu.');
+    }
     final currentFirebaseUser = _firebaseAuth.currentUser;
     if (currentFirebaseUser == null || currentFirebaseUser.email == null) {
-      throw UserRepositoryException('Không tìm thấy phiên đăng nhập.');
+      throw UserRepositoryException('Không tìm thấy phiên đăng nhập. Vui lòng đăng xuất rồi đăng nhập lại.');
     }
     try {
       final credential = EmailAuthProvider.credential(
         email: currentFirebaseUser.email!,
-        password: password,
+        password: trimmedPassword,
       );
       await currentFirebaseUser.reauthenticateWithCredential(credential);
     } on FirebaseAuthException catch (e) {

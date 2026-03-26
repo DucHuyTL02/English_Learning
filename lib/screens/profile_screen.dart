@@ -1234,22 +1234,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final password = await _askPasswordForReauth();
     if (password == null || password.isEmpty || !mounted) return;
 
+    if (_activeUserId == null) {
+      _showSnackBar('Không tìm thấy tài khoản đang đăng nhập.');
+      return;
+    }
+
     try {
       // Xác thực lại với Firebase trước khi xóa.
-      await AppServices.userRepository.reauthenticate(password);
+      await AppServices.userRepository.reauthenticate(password.trim());
 
-      if (_activeUserId != null) {
-        await AppServices.userRepository.deleteUser(_activeUserId!);
-      }
+      await AppServices.userRepository.deleteUser(_activeUserId!);
       await AppServices.routeStateService.clear();
       if (!mounted) return;
       context.go('/login');
     } on UserRepositoryException catch (e) {
       if (!mounted) return;
       _showSnackBar(e.message);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      _showSnackBar('Không thể xóa tài khoản lúc này.');
+      _showSnackBar('Không thể xóa tài khoản: $e');
     }
   }
 
@@ -1283,7 +1286,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: const Text('Hủy'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(ctrl.text),
+            onPressed: () => Navigator.of(ctx).pop(ctrl.text.trim()),
             child: const Text(
               'Xác nhận',
               style: TextStyle(color: Color(0xFFDC2626)),
