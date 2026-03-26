@@ -267,7 +267,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -1204,11 +1204,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _deleteAccount() async {
+    // Bước 1: Hỏi xác nhận.
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Xóa tài khoản'),
-        content: const Text('Bạn có chắc muốn xóa tài khoản này không?'),
+        content: const Text(
+          'Tài khoản và toàn bộ dữ liệu sẽ bị xóa vĩnh viễn. '
+          'Hành động này không thể hoàn tác.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -1217,16 +1221,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text(
-              'Xóa',
+              'Xóa vĩnh viễn',
               style: TextStyle(color: Color(0xFFDC2626)),
             ),
           ),
         ],
       ),
     );
-    if (shouldDelete != true) return;
+    if (shouldDelete != true || !mounted) return;
+
+    // Bước 2: Yêu cầu nhập mật khẩu để xác thực lại.
+    final password = await _askPasswordForReauth();
+    if (password == null || password.isEmpty || !mounted) return;
 
     try {
+      // Xác thực lại với Firebase trước khi xóa.
+      await AppServices.userRepository.reauthenticate(password);
+
       if (_activeUserId != null) {
         await AppServices.userRepository.deleteUser(_activeUserId!);
       }
@@ -1240,6 +1251,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       _showSnackBar('Không thể xóa tài khoản lúc này.');
     }
+  }
+
+  Future<String?> _askPasswordForReauth() {
+    final ctrl = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xác thực lại'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Nhập mật khẩu hiện tại để tiếp tục xóa tài khoản.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: 'Mật khẩu',
+                prefixIcon: const Icon(Icons.lock_outline_rounded),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(ctrl.text),
+            child: const Text(
+              'Xác nhận',
+              style: TextStyle(color: Color(0xFFDC2626)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSnackBar(String message) {
@@ -1937,15 +1989,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     ];
 
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // ── Header ──
           _SlideIn(
             dy: -20,
             child: Container(
-              color: Colors.white,
+              color: cs.surface,
               padding: EdgeInsets.only(
                 top: MediaQuery.of(context).padding.top + 8,
                 bottom: 12,
@@ -1956,17 +2011,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   IconButton(
                     onPressed: () => _popOrGo(context, '/profile'),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_rounded,
-                      color: Color(0xFF374151),
+                      color: cs.onSurface,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Cài Đặt',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
+                      color: cs.onSurface,
                     ),
                   ),
                 ],
@@ -2093,7 +2148,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: cs.surface,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: const Color(0xFFFECACA),
@@ -2136,20 +2191,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Column(
-                              children: const [
+                              children: [
                                 Text(
                                   'LinguaJoy v1.0.0',
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Color(0xFF9CA3AF),
+                                    color: cs.onSurface.withValues(alpha: 0.4),
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
                                   '© 2026 All rights reserved',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Color(0xFFD1D5DB),
+                                    color: cs.onSurface.withValues(alpha: 0.25),
                                   ),
                                 ),
                               ],
@@ -2222,6 +2277,9 @@ class _SettingsGroupWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2229,23 +2287,23 @@ class _SettingsGroupWidget extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             group.title.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF9CA3AF),
+              color: cs.onSurface.withValues(alpha: 0.4),
               letterSpacing: 1.0,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cs.surface,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0F000000),
+                color: cs.shadow.withValues(alpha: 0.06),
                 blurRadius: 8,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -2257,10 +2315,10 @@ class _SettingsGroupWidget extends StatelessWidget {
               return Column(
                 children: [
                   if (!isFirst)
-                    const Divider(
+                    Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFFF3F4F6),
+                      color: cs.outlineVariant.withValues(alpha: 0.3),
                       indent: 56,
                     ),
                   ClipRRect(
@@ -2291,12 +2349,12 @@ class _SettingsGroupWidget extends StatelessWidget {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
+                                color: cs.onSurface.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
                                 item.icon,
-                                color: const Color(0xFF6B7280),
+                                color: cs.onSurface.withValues(alpha: 0.5),
                                 size: 20,
                               ),
                             ),
@@ -2307,18 +2365,18 @@ class _SettingsGroupWidget extends StatelessWidget {
                                 children: [
                                   Text(
                                     item.label,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF111827),
+                                      color: cs.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 1),
                                   Text(
                                     item.desc,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF9CA3AF),
+                                      color: cs.onSurface.withValues(alpha: 0.4),
                                     ),
                                   ),
                                 ],
@@ -2327,9 +2385,9 @@ class _SettingsGroupWidget extends StatelessWidget {
                             if (item.type == _ItemType.toggle)
                               _Toggle(value: item.toggleValue ?? false)
                             else
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right_rounded,
-                                color: Color(0xFFD1D5DB),
+                                color: cs.onSurface.withValues(alpha: 0.25),
                                 size: 20,
                               ),
                           ],
@@ -2353,12 +2411,13 @@ class _Toggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       width: 46,
       height: 26,
       decoration: BoxDecoration(
-        color: value ? const Color(0xFFFA5C5C) : const Color(0xFFD1D5DB),
+        color: value ? const Color(0xFFFA5C5C) : cs.onSurface.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(13),
       ),
       child: AnimatedAlign(

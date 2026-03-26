@@ -114,19 +114,20 @@ class _AnimatedBottomNavState extends State<_AnimatedBottomNav>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cs.surface,
             border: Border(
-              top: BorderSide(color: Colors.grey.shade100, width: 1),
+              top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3), width: 1),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: cs.shadow.withValues(alpha: 0.06),
                 blurRadius: 12,
                 offset: const Offset(0, -3),
               ),
@@ -265,7 +266,7 @@ class _TabButtonState extends State<_TabButton>
                       boxShadow: active
                           ? [
                               BoxShadow(
-                                color: tab.color.withOpacity(0.4),
+                                color: tab.color.withValues(alpha: 0.4),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -275,7 +276,9 @@ class _TabButtonState extends State<_TabButton>
                     child: Icon(
                       tab.icon,
                       size: 22,
-                      color: active ? Colors.white : Colors.grey.shade400,
+                      color: active
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
                 ),
@@ -289,7 +292,9 @@ class _TabButtonState extends State<_TabButton>
                     fontSize: 10,
                     fontWeight:
                         active ? FontWeight.w600 : FontWeight.w500,
-                    color: active ? tab.color : Colors.grey.shade400,
+                    color: active
+                        ? tab.color
+                        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                     height: 1.2,
                   ),
                   child: Text(
@@ -313,7 +318,7 @@ class _TabButtonState extends State<_TabButton>
                   decoration: BoxDecoration(
                     color: const Color(0xFFFA5C5C),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: Theme.of(context).colorScheme.surface, width: 2),
                   ),
                 ),
               ),

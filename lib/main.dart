@@ -162,6 +162,10 @@ final _router = GoRouter(
       path: '/forgot-password',
       builder: (context, state) => const ChangePasswordScreen(),
     ),
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
 
     // ── Shell: các màn hình chính có BottomNavigation ──────────────────────
     ShellRoute(

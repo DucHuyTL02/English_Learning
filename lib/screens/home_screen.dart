@@ -9,7 +9,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F9),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -52,8 +52,9 @@ class _HeaderState extends State<_Header> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      color: Colors.white,
+      color: cs.surface,
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 12,
         bottom: 16,
@@ -68,16 +69,16 @@ class _HeaderState extends State<_Header> {
             children: [
               Text(
                 'Xin chào, $_displayName! 👋',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
+              Text(
                 'Sẵn sàng học hôm nay chưa?',
-                style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.5)),
               ),
             ],
           ),
@@ -89,10 +90,10 @@ class _HeaderState extends State<_Header> {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.notifications_outlined,
                         size: 22,
-                        color: Color(0xFF6B7280),
+                        color: cs.onSurface.withValues(alpha: 0.5),
                       ),
                       Positioned(
                         top: -4,
@@ -150,10 +151,10 @@ class _HeaderState extends State<_Header> {
               GestureDetector(
                 onTap: () => context.go('/settings'),
                 child: _IconBtn(
-                  child: const Icon(
+                  child: Icon(
                     Icons.settings_outlined,
                     size: 22,
-                    color: Color(0xFF6B7280),
+                    color: cs.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -171,11 +172,12 @@ class _IconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: cs.onSurface.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(21),
       ),
       child: Center(child: child),
@@ -243,7 +245,7 @@ class _StatsBannerState extends State<_StatsBanner> {
                 label: 'Ngày Liên Tiếp',
               ),
             ),
-            Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
+            Container(width: 1, height: 40, color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
             GestureDetector(
               onTap: () => context.go('/achievements'),
               child: _StatItem(
@@ -295,15 +297,15 @@ class _StatItem extends StatelessWidget {
           children: [
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
             ),
           ],
         ),

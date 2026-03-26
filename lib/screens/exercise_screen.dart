@@ -90,7 +90,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(children: [
         _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(
@@ -326,7 +326,7 @@ class _ListeningScreenState extends State<ListeningScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(children: [
         _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 24, 24, 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -519,7 +519,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen> with Ti
     final acc = _accuracy;
     final isExcellent = acc != null && acc >= 80;
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(children: [
         _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 28, 24, 24), child: Column(children: [
@@ -694,7 +694,7 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen> with Si
   Widget build(BuildContext context) {
     final ok = _isCorrect;
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(children: [
         _ExerciseHeader(progress: _progress, total: _total, onClose: () => context.go('/home')),
         Expanded(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 24, 24, 24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1005,7 +1005,7 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen> with Tick
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(children: [
         Column(children: [
           Expanded(

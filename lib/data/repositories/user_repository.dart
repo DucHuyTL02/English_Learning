@@ -230,11 +230,41 @@ class UserRepository {
       final user = await _localDataSource.getUserById(userId);
       if (user == null) return;
 
+      // Xóa tài liệu Firestore nếu có.
+      if (user.firebaseUid != null && user.firebaseUid!.isNotEmpty) {
+        try {
+          await _firestore.collection('users').doc(user.firebaseUid).delete();
+        } catch (_) {
+          // Best-effort Firestore cleanup.
+        }
+      }
+
+      // Xóa Firebase Auth account nếu đang đăng nhập bằng user đó.
+      final currentFirebaseUser = _firebaseAuth.currentUser;
+      if (currentFirebaseUser != null &&
+          user.firebaseUid != null &&
+          currentFirebaseUser.uid == user.firebaseUid) {
+        try {
+          await currentFirebaseUser.delete();
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'requires-recent-login') {
+            throw UserRepositoryException(
+              'Vui lòng đăng nhập lại trước khi xóa tài khoản.',
+            );
+          }
+          // Other errors: still proceed with local deletion.
+        }
+      }
+
       await _localDataSource.deleteUserById(userId);
 
       if (!user.isActive) return;
       final remainingUsers = await _localDataSource.getAllUsers();
-      if (remainingUsers.isEmpty) return;
+      if (remainingUsers.isEmpty) {
+        // Sign out if no users left.
+        try { await _firebaseAuth.signOut(); } catch (_) {}
+        return;
+      }
       final nextUser = remainingUsers.firstWhere(
         (item) => item.id != null,
         orElse: () => remainingUsers.first,
@@ -242,6 +272,8 @@ class UserRepository {
       if (nextUser.id != null) {
         await _localDataSource.setOnlyActiveUser(nextUser.id!);
       }
+    } on UserRepositoryException {
+      rethrow;
     } catch (_) {
       throw UserRepositoryException('Không thể xóa tài khoản.');
     }
@@ -301,6 +333,43 @@ class UserRepository {
 
   Future<List<UserModel>> getAllLocalUsers() {
     return _localDataSource.getAllUsers();
+  }
+
+  /// Gửi email đặt lại mật khẩu qua Firebase Auth.
+  Future<void> sendPasswordResetEmail(String email) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.isEmpty) {
+      throw UserRepositoryException('Vui lòng nhập email.');
+    }
+    if (!_emailRegex.hasMatch(normalizedEmail)) {
+      throw UserRepositoryException('Email không đúng định dạng.');
+    }
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: normalizedEmail);
+    } on FirebaseAuthException catch (e) {
+      throw UserRepositoryException(_mapFirebaseAuthError(e));
+    } catch (_) {
+      throw UserRepositoryException(
+        'Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.',
+      );
+    }
+  }
+
+  /// Xác thực lại người dùng trước khi thực hiện thao tác nhạy cảm (xóa tài khoản).
+  Future<void> reauthenticate(String password) async {
+    final currentFirebaseUser = _firebaseAuth.currentUser;
+    if (currentFirebaseUser == null || currentFirebaseUser.email == null) {
+      throw UserRepositoryException('Không tìm thấy phiên đăng nhập.');
+    }
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: currentFirebaseUser.email!,
+        password: password,
+      );
+      await currentFirebaseUser.reauthenticateWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw UserRepositoryException(_mapFirebaseAuthError(e));
+    }
   }
 
   Future<UserModel> _upsertLocalUserFromFirebase({

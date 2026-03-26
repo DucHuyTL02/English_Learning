@@ -659,7 +659,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () => context.push('/reset-password'),
                         child: const Text(
                           'Quên mật khẩu?',
                           style: TextStyle(
