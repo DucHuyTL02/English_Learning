@@ -356,12 +356,31 @@ class UserRepository {
   }
 
   /// Xác thực lại người dùng trước khi thực hiện thao tác nhạy cảm (xóa tài khoản).
-  Future<void> reauthenticate(String password) async {
+  /// Nếu Firebase session chưa có (app restart), sẽ đăng nhập lại trước.
+  Future<void> reauthenticate(String password, {int? userId}) async {
     final trimmedPassword = password.trim();
     if (trimmedPassword.isEmpty) {
       throw UserRepositoryException('Vui lòng nhập mật khẩu.');
     }
-    final currentFirebaseUser = _firebaseAuth.currentUser;
+
+    var currentFirebaseUser = _firebaseAuth.currentUser;
+
+    // Nếu chưa có Firebase session, đăng nhập lại bằng email từ local DB.
+    if (currentFirebaseUser == null && userId != null) {
+      final localUser = await _localDataSource.getUserById(userId);
+      if (localUser != null && localUser.email.isNotEmpty) {
+        try {
+          final credential = await _firebaseAuth.signInWithEmailAndPassword(
+            email: localUser.email,
+            password: trimmedPassword,
+          );
+          currentFirebaseUser = credential.user;
+        } on FirebaseAuthException catch (e) {
+          throw UserRepositoryException(_mapFirebaseAuthError(e));
+        }
+      }
+    }
+
     if (currentFirebaseUser == null || currentFirebaseUser.email == null) {
       throw UserRepositoryException('Không tìm thấy phiên đăng nhập. Vui lòng đăng xuất rồi đăng nhập lại.');
     }

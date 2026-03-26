@@ -1241,7 +1241,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       // Xác thực lại với Firebase trước khi xóa.
-      await AppServices.userRepository.reauthenticate(password.trim());
+      await AppServices.userRepository.reauthenticate(
+        password.trim(),
+        userId: _activeUserId,
+      );
 
       await AppServices.userRepository.deleteUser(_activeUserId!);
       await AppServices.routeStateService.clear();
