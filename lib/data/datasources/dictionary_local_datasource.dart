@@ -15,12 +15,44 @@ class DictionaryLocalDataSource {
     return maps.map(DictionaryWordModel.fromMap).toList();
   }
 
+  Future<List<DictionaryWordModel>> getSavedWords() async {
+    final db = await _appDatabase.database;
+    final maps = await db.query(
+      AppDatabase.dictionaryWordsTable,
+      where: 'is_saved = ?',
+      whereArgs: [1],
+      orderBy: 'updated_at DESC, id DESC',
+    );
+    return maps.map(DictionaryWordModel.fromMap).toList();
+  }
+
   Future<DictionaryWordModel?> getWordById(int id) async {
     final db = await _appDatabase.database;
     final maps = await db.query(
       AppDatabase.dictionaryWordsTable,
       where: 'id = ?',
       whereArgs: [id],
+      limit: 1,
+    );
+    if (maps.isEmpty) return null;
+    return DictionaryWordModel.fromMap(maps.first);
+  }
+
+  Future<DictionaryWordModel?> findWordByContent({
+    required String word,
+    required String partOfSpeech,
+    required String definition,
+  }) async {
+    final db = await _appDatabase.database;
+    final maps = await db.query(
+      AppDatabase.dictionaryWordsTable,
+      where:
+          'LOWER(word) = ? AND LOWER(part_of_speech) = ? AND LOWER(definition) = ?',
+      whereArgs: [
+        word.trim().toLowerCase(),
+        partOfSpeech.trim().toLowerCase(),
+        definition.trim().toLowerCase(),
+      ],
       limit: 1,
     );
     if (maps.isEmpty) return null;

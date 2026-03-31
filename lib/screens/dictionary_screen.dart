@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,9 +8,6 @@ import '../data/repositories/dictionary_repository.dart';
 import '../data/services/app_services.dart';
 import '../data/services/tts_service.dart';
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Data Model
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 String _relativeDateLabel(DateTime createdAt) {
   final now = DateTime.now();
   final diff = now.difference(createdAt);
@@ -25,8 +24,31 @@ String _relativeDateLabel(DateTime createdAt) {
   return 'today';
 }
 
-// Screen
-// ------------------------------------------------------------------------------// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+String _wordContentKey(DictionaryWordModel word) {
+  return [
+    word.word.trim().toLowerCase(),
+    word.partOfSpeech.trim().toLowerCase(),
+    word.definition.trim().toLowerCase(),
+  ].join('|');
+}
+
+bool _isSameWordEntry(DictionaryWordModel left, DictionaryWordModel right) {
+  if (left.id != null && right.id != null) {
+    return left.id == right.id;
+  }
+  return _wordContentKey(left) == _wordContentKey(right);
+}
+
+String _wordStatusLabel(DictionaryWordModel word) {
+  if (word.isSaved) {
+    return 'Saved ${_relativeDateLabel(word.createdAt)}';
+  }
+  if (word.id != null) {
+    return 'Stored locally';
+  }
+  return 'Search result';
+}
+
 class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({super.key});
 
@@ -47,11 +69,18 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   final TextEditingController _searchCtrl = TextEditingController();
   final DictionaryRepository _dictionaryRepository =
       AppServices.dictionaryRepository;
+
+  Timer? _searchDebounce;
+  int _searchRequestId = 0;
+
   String _searchQuery = '';
-  String _activeTab = 'saved'; // 'saved' | 'all'
-  List<DictionaryWordModel> _words = [];
-  bool _isLoading = true;
-  String? _errorMessage;
+  String _activeTab = 'saved';
+  List<DictionaryWordModel> _savedWords = [];
+  List<DictionaryWordModel> _searchResults = [];
+  bool _isLoadingSavedWords = true;
+  bool _isSearching = false;
+  String? _savedWordsError;
+  String? _searchError;
 
   @override
   void initState() {
@@ -82,73 +111,137 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       if (mounted) _footerCtrl.forward();
     });
 
-    _searchCtrl.addListener(() {
-      setState(() => _searchQuery = _searchCtrl.text);
-    });
-    _loadWords();
+    _searchCtrl.addListener(_handleSearchChanged);
+    _loadSavedWords();
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _headerCtrl.dispose();
     _footerCtrl.dispose();
+    _searchCtrl.removeListener(_handleSearchChanged);
     _searchCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _loadWords() async {
+  Future<void> _loadSavedWords() async {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _isLoadingSavedWords = true;
+      _savedWordsError = null;
     });
+
     try {
-      final words = await _dictionaryRepository.getWords();
+      final words = await _dictionaryRepository.getSavedWords();
       if (!mounted) return;
-      setState(() => _words = words);
+      setState(() {
+        _savedWords = words;
+        _savedWordsError = null;
+      });
     } on DictionaryRepositoryException catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.message);
+      setState(() => _savedWordsError = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Failed to load words.');
+      setState(() => _savedWordsError = 'Failed to load saved words.');
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() => _isLoadingSavedWords = false);
       }
     }
   }
 
-  Future<void> _toggleBookmark(int id) async {
-    DictionaryWordModel? currentWord;
-    for (final item in _words) {
-      if (item.id == id) {
-        currentWord = item;
-        break;
-      }
-    }
-    if (currentWord == null) return;
+  void _handleSearchChanged() {
+    final query = _searchCtrl.text;
+    final trimmedQuery = query.trim();
 
-    final updatedLocal = _words
-        .map(
-          (item) => item.id == id
-              ? item.copyWith(isSaved: !item.isSaved, updatedAt: DateTime.now())
-              : item,
-        )
-        .toList();
-    setState(() => _words = updatedLocal);
+    _searchDebounce?.cancel();
+
+    setState(() {
+      _searchQuery = query;
+      if (trimmedQuery.isNotEmpty && _activeTab == 'saved') {
+        _activeTab = 'all';
+      }
+    });
+
+    if (trimmedQuery.isEmpty) {
+      _searchRequestId++;
+      setState(() {
+        _searchResults = [];
+        _searchError = null;
+        _isSearching = false;
+      });
+      return;
+    }
+
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 450),
+      () => _searchWords(trimmedQuery),
+    );
+  }
+
+  Future<void> _searchWords(String query) async {
+    final requestId = ++_searchRequestId;
+
+    setState(() {
+      _isSearching = true;
+      _searchError = null;
+    });
 
     try {
-      await _dictionaryRepository.toggleSaved(
-        wordId: id,
-        isSaved: !currentWord.isSaved,
+      final words = await _dictionaryRepository.searchWords(query);
+      if (!mounted || requestId != _searchRequestId) return;
+      setState(() => _searchResults = words);
+    } on DictionaryRepositoryException catch (e) {
+      if (!mounted || requestId != _searchRequestId) return;
+      setState(() {
+        _searchResults = [];
+        _searchError = e.message;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _searchRequestId) return;
+      setState(() {
+        _searchResults = [];
+        _searchError = 'Failed to search dictionary.';
+      });
+    } finally {
+      if (mounted && requestId == _searchRequestId) {
+        setState(() => _isSearching = false);
+      }
+    }
+  }
+
+  Future<void> _toggleBookmark(DictionaryWordModel word) async {
+    try {
+      final updatedWord = await _dictionaryRepository.setSavedState(
+        word: word,
+        isSaved: !word.isSaved,
+      );
+      if (!mounted) return;
+
+      final nextSavedWords = _savedWords
+          .where((item) => !_isSameWordEntry(item, updatedWord))
+          .toList();
+      if (updatedWord.isSaved) {
+        nextSavedWords.insert(0, updatedWord);
+      }
+
+      setState(() {
+        _searchResults = _searchResults
+            .map((item) => _isSameWordEntry(item, word) ? updatedWord : item)
+            .toList();
+        _savedWords = nextSavedWords;
+      });
+    } on DictionaryRepositoryException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: const Color(0xFFFA5C5C),
+        ),
       );
     } catch (_) {
       if (!mounted) return;
-      setState(
-        () => _words = _words
-            .map((item) => item.id == id ? currentWord! : item)
-            .toList(),
-      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Unable to update bookmark. Please try again.'),
@@ -158,23 +251,83 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     }
   }
 
-  List<DictionaryWordModel> get _filteredWords => _words.where((w) {
-    final matchesSearch = w.word.toLowerCase().contains(
-      _searchQuery.toLowerCase(),
-    );
-    final matchesTab = _activeTab == 'all' || w.isSaved;
-    return matchesSearch && matchesTab;
-  }).toList();
+  List<DictionaryWordModel> get _visibleWords {
+    final normalizedQuery = _searchQuery.trim().toLowerCase();
 
-  int get _savedCount => _words.where((w) => w.isSaved).length;
+    if (_activeTab == 'saved') {
+      return _savedWords.where((word) {
+        if (normalizedQuery.isEmpty) return true;
+        return word.word.toLowerCase().contains(normalizedQuery);
+      }).toList();
+    }
+
+    return _searchResults;
+  }
+
+  int get _savedCount => _savedWords.length;
 
   @override
   Widget build(BuildContext context) {
+    final visibleWords = _visibleWords;
+    final trimmedQuery = _searchQuery.trim();
+    final isSavedTab = _activeTab == 'saved';
+
+    Widget bodySliver;
+
+    if (isSavedTab && _isLoadingSavedWords) {
+      bodySliver = const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    } else if (isSavedTab && _savedWordsError != null) {
+      bodySliver = SliverFillRemaining(
+        hasScrollBody: false,
+        child: _DictionaryErrorState(
+          message: _savedWordsError!,
+          onRetry: _loadSavedWords,
+        ),
+      );
+    } else if (!isSavedTab && _searchError != null) {
+      bodySliver = SliverFillRemaining(
+        hasScrollBody: false,
+        child: _DictionaryErrorState(
+          message: _searchError!,
+          onRetry: () => _searchWords(trimmedQuery),
+        ),
+      );
+    } else if (!isSavedTab && _isSearching && visibleWords.isEmpty) {
+      bodySliver = const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    } else if (visibleWords.isEmpty) {
+      bodySliver = SliverToBoxAdapter(
+        child: _buildEmptyState(
+          isSavedTab: isSavedTab,
+          trimmedQuery: trimmedQuery,
+        ),
+      );
+    } else {
+      bodySliver = SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _WordCard(
+              word: visibleWords[index],
+              index: index,
+              onToggleBookmark: _toggleBookmark,
+              tts: AppServices.tts,
+            ),
+            childCount: visibleWords.length,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       body: CustomScrollView(
         slivers: [
-          // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SliverToBoxAdapter(
             child: SlideTransition(
               position: _headerSlide,
@@ -185,49 +338,13 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                   searchCtrl: _searchCtrl,
                   searchQuery: _searchQuery,
                   activeTab: _activeTab,
-                  onTabChanged: (t) => setState(() => _activeTab = t),
-                  onClearSearch: () {
-                    _searchCtrl.clear();
-                    setState(() => _searchQuery = '');
-                  },
+                  onTabChanged: (tab) => setState(() => _activeTab = tab),
+                  onClearSearch: () => _searchCtrl.clear(),
                 ),
               ),
             ),
           ),
-
-          // â”€â”€ Word List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          if (_isLoading)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_errorMessage != null)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _DictionaryErrorState(
-                message: _errorMessage!,
-                onRetry: _loadWords,
-              ),
-            )
-          else if (_filteredWords.isEmpty)
-            SliverToBoxAdapter(child: _EmptyState(searchQuery: _searchQuery))
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, i) => _WordCard(
-                    word: _filteredWords[i],
-                    index: i,
-                    onToggleBookmark: _toggleBookmark,
-                    tts: AppServices.tts,
-                  ),
-                  childCount: _filteredWords.length,
-                ),
-              ),
-            ),
-
-          // â”€â”€ Stats Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          bodySliver,
           SliverToBoxAdapter(
             child: SlideTransition(
               position: _footerSlide,
@@ -237,26 +354,46 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               ),
             ),
           ),
-
-          // Bottom padding for nav bar
           const SliverToBoxAdapter(child: SizedBox(height: 88)),
         ],
       ),
     );
   }
+
+  Widget _buildEmptyState({
+    required bool isSavedTab,
+    required String trimmedQuery,
+  }) {
+    if (isSavedTab) {
+      if (trimmedQuery.isNotEmpty) {
+        return const _EmptyState(
+          title: 'No saved words found',
+          subtitle: 'Try a different search term',
+        );
+      }
+
+      return const _EmptyState(
+        title: 'No saved words yet',
+        subtitle: 'Save words from lessons or search results to see them here',
+      );
+    }
+
+    if (trimmedQuery.isEmpty) {
+      return const _EmptyState(
+        title: 'Search a word',
+        subtitle:
+            'Enter an English word to look it up with Free Dictionary API',
+      );
+    }
+
+    return const _EmptyState(
+      title: 'No definitions found',
+      subtitle: 'Try a different English word',
+    );
+  }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Header Section
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _Header extends StatelessWidget {
-  final int savedCount;
-  final TextEditingController searchCtrl;
-  final String searchQuery;
-  final String activeTab;
-  final ValueChanged<String> onTabChanged;
-  final VoidCallback onClearSearch;
-
   const _Header({
     required this.savedCount,
     required this.searchCtrl,
@@ -266,8 +403,19 @@ class _Header extends StatelessWidget {
     required this.onClearSearch,
   });
 
+  final int savedCount;
+  final TextEditingController searchCtrl;
+  final String searchQuery;
+  final String activeTab;
+  final ValueChanged<String> onTabChanged;
+  final VoidCallback onClearSearch;
+
   @override
   Widget build(BuildContext context) {
+    final subtitle = activeTab == 'saved'
+        ? 'Your saved vocabulary'
+        : 'Search with Free Dictionary API';
+
     return Container(
       color: Colors.white,
       child: SafeArea(
@@ -277,7 +425,6 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title row
               Row(
                 children: [
                   GestureDetector(
@@ -300,8 +447,8 @@ class _Header extends StatelessWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           'Dictionary',
                           style: TextStyle(
                             fontSize: 22,
@@ -310,8 +457,8 @@ class _Header extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Your saved vocabulary',
-                          style: TextStyle(
+                          subtitle,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF6B7280),
                           ),
@@ -330,15 +477,15 @@ class _Header extends StatelessWidget {
                       ),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Center(
-                      child: Text('📚', style: TextStyle(fontSize: 22)),
+                    child: const Icon(
+                      Icons.menu_book_rounded,
+                      size: 24,
+                      color: Color(0xFF8C4A13),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-
-              // Search bar
               Container(
                 height: 54,
                 decoration: BoxDecoration(
@@ -389,8 +536,6 @@ class _Header extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-
-              // Tab switcher
               Container(
                 height: 46,
                 decoration: BoxDecoration(
@@ -425,17 +570,17 @@ class _Header extends StatelessWidget {
 }
 
 class _Tab extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final bool active;
-  final VoidCallback onTap;
-
   const _Tab({
     required this.label,
     this.icon,
     required this.active,
     required this.onTap,
   });
+
+  final String label;
+  final IconData? icon;
+  final bool active;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -450,7 +595,7 @@ class _Tab extends StatelessWidget {
             boxShadow: active
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -488,21 +633,18 @@ class _Tab extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Word Card
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _WordCard extends StatefulWidget {
-  final DictionaryWordModel word;
-  final int index;
-  final ValueChanged<int> onToggleBookmark;
-  final TtsService tts;
-
   const _WordCard({
     required this.word,
     required this.index,
     required this.onToggleBookmark,
     required this.tts,
   });
+
+  final DictionaryWordModel word;
+  final int index;
+  final ValueChanged<DictionaryWordModel> onToggleBookmark;
+  final TtsService tts;
 
   @override
   State<_WordCard> createState() => _WordCardState();
@@ -541,7 +683,10 @@ class _WordCardState extends State<_WordCard>
 
   @override
   Widget build(BuildContext context) {
-    final w = widget.word;
+    final word = widget.word;
+    final hasPhonetic = word.phonetic.isNotEmpty;
+    final hasExample = word.example.isNotEmpty;
+
     return SlideTransition(
       position: _slide,
       child: FadeTransition(
@@ -553,7 +698,7 @@ class _WordCardState extends State<_WordCard>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -563,17 +708,15 @@ class _WordCardState extends State<_WordCard>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Word info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Word title + speaker
                     Row(
                       children: [
                         Flexible(
                           child: Text(
-                            w.word,
+                            word.word,
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -584,7 +727,7 @@ class _WordCardState extends State<_WordCard>
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
-                          onTap: () => widget.tts.speak(w.word),
+                          onTap: () => widget.tts.speak(word.word),
                           child: Container(
                             width: 36,
                             height: 36,
@@ -601,20 +744,18 @@ class _WordCardState extends State<_WordCard>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-
-                    // Phonetic
-                    Text(
-                      w.phonetic,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                        fontFamily: 'monospace',
+                    if (hasPhonetic) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        word.phonetic,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                          fontFamily: 'monospace',
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 10),
-
-                    // Part of speech chip
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -627,7 +768,7 @@ class _WordCardState extends State<_WordCard>
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        w.partOfSpeech,
+                        word.partOfSpeech,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -636,39 +777,35 @@ class _WordCardState extends State<_WordCard>
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                    // Definition
                     Text(
-                      w.definition,
+                      word.definition,
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF374151),
                       ),
                     ),
-                    const SizedBox(height: 8),
-
-                    // Example sentence
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9F9F9),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '"${w.example}"',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                          fontStyle: FontStyle.italic,
+                    if (hasExample) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9F9F9),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '"${word.example}"',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 8),
-
-                    // Date added
                     Text(
-                      'Added ${_relativeDateLabel(w.createdAt)}',
+                      _wordStatusLabel(word),
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF9CA3AF),
@@ -677,17 +814,13 @@ class _WordCardState extends State<_WordCard>
                   ],
                 ),
               ),
-
-              // Bookmark button
               GestureDetector(
-                onTap: w.id == null
-                    ? null
-                    : () => widget.onToggleBookmark(w.id!),
+                onTap: () => widget.onToggleBookmark(word),
                 child: Padding(
                   padding: const EdgeInsets.only(left: 8, top: 2),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    child: w.isSaved
+                    child: word.isSaved
                         ? const Icon(
                             Icons.bookmark,
                             key: ValueKey('saved'),
@@ -711,12 +844,11 @@ class _WordCardState extends State<_WordCard>
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Empty State
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EmptyState extends StatelessWidget {
-  final String searchQuery;
-  const _EmptyState({required this.searchQuery});
+  const _EmptyState({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -732,13 +864,17 @@ class _EmptyState extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Center(
-              child: Text('📖', style: TextStyle(fontSize: 40)),
+              child: Icon(
+                Icons.auto_stories_rounded,
+                size: 38,
+                color: Color(0xFF9CA3AF),
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No words found',
-            style: TextStyle(
+          Text(
+            title,
+            style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
               color: Color(0xFF111827),
@@ -746,9 +882,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            searchQuery.isNotEmpty
-                ? 'Try a different search term'
-                : 'Save words from lessons to see them here',
+            subtitle,
             style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
             textAlign: TextAlign.center,
           ),
@@ -795,12 +929,10 @@ class _DictionaryErrorState extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Stats Footer
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _StatsFooter extends StatelessWidget {
-  final int savedCount;
   const _StatsFooter({required this.savedCount});
+
+  final int savedCount;
 
   @override
   Widget build(BuildContext context) {
@@ -816,7 +948,7 @@ class _StatsFooter extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFA5C5C).withOpacity(0.35),
+              color: const Color(0xFFFA5C5C).withValues(alpha: 0.35),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -825,7 +957,6 @@ class _StatsFooter extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         child: Stack(
           children: [
-            // Decoration circle
             Positioned(
               top: -20,
               right: -20,
@@ -833,7 +964,7 @@ class _StatsFooter extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -853,7 +984,7 @@ class _StatsFooter extends StatelessWidget {
                             'Total Saved Words',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -872,21 +1003,23 @@ class _StatsFooter extends StatelessWidget {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: const Center(
-                          child: Text('📖', style: TextStyle(fontSize: 28)),
+                        child: const Icon(
+                          Icons.bookmarks_rounded,
+                          size: 28,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Keep learning and expanding your vocabulary! 🚀',
+                    'Keep learning and expanding your vocabulary!',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ],

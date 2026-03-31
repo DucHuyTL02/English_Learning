@@ -7,7 +7,7 @@ class AppDatabase {
 
   static final AppDatabase instance = AppDatabase._();
 
-  static const int _version = 3;
+  static const int _version = 4;
   static const String usersTable = 'users';
   static const String dictionaryWordsTable = 'dictionary_words';
   static const String unitsTable = 'units';
@@ -15,6 +15,7 @@ class AppDatabase {
   static const String exercisesTable = 'exercises';
   static const String userProgressTable = 'user_progress';
   static const String dailyActivityTable = 'daily_activity';
+  static const String speakHistoryTable = 'speak_history';
 
   Database? _database;
 
@@ -43,6 +44,9 @@ class AppDatabase {
           await db.execute(
             'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_firebase_uid ON $usersTable(firebase_uid)',
           );
+        }
+        if (oldVersion < 4) {
+          await _createSpeakHistoryTable(db);
         }
       },
     );
@@ -89,6 +93,7 @@ class AppDatabase {
     ''');
 
     await _createV2Tables(db);
+    await _createSpeakHistoryTable(db);
   }
 
   Future<void> _createV2Tables(Database db) async {
@@ -148,6 +153,19 @@ class AppDatabase {
         lessons_completed INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY (user_id) REFERENCES $usersTable(id),
         UNIQUE(user_id, date)
+      );
+    ''');
+  }
+
+  Future<void> _createSpeakHistoryTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $speakHistoryTable (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        target_word TEXT NOT NULL,
+        spoken_word TEXT NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
+        edit_distance INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
       );
     ''');
   }

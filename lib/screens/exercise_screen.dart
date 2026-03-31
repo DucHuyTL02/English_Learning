@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -966,6 +967,13 @@ class _SentenceBuilder extends StatelessWidget {
 
 // ─── SPEAKING ─────────────────────────────────────────────────────────────────
 
+class _WordMatch {
+  const _WordMatch({required this.target, required this.spoken, required this.isMatch});
+  final String target;
+  final String spoken;
+  final bool isMatch;
+}
+
 class SpeakingExerciseScreen extends StatefulWidget {
   const SpeakingExerciseScreen({super.key});
   @override
@@ -996,6 +1004,15 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
   late String _phonetic;
   late int _progress;
   late int _total;
+
+  // ── Timer (giống Android RecordCompareActivity) ──
+  Timer? _recordTimer;
+  int _recordSeconds = 0;
+  static const int _maxRecordSeconds = 10;
+
+  // ── Edit distance chi tiết ──
+  int _editDistance = 0;
+  List<_WordMatch> _wordMatches = [];
   static const _baseHeights = [
     28.0,
     45.0,
@@ -1057,6 +1074,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
 
   @override
   void dispose() {
+    _recordTimer?.cancel();
     _speech.stop();
     _pulseCtrl1.dispose();
     _pulseCtrl2.dispose();
@@ -1289,9 +1307,39 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
     }
   }
 
+  // ── Timer helpers (giống Android) ──
+  void _startRecordTimer() {
+    _recordTimer?.cancel();
+    _recordSeconds = 0;
+    _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || !_isRecording) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _recordSeconds++);
+      if (_recordSeconds >= _maxRecordSeconds) {
+        timer.cancel();
+        // Tự động dừng ghi âm khi hết thời gian (giống Android)
+        _manualStopRequested = true;
+        _speech.stop().then((_) => _queueFinalizeScoring());
+      }
+    });
+  }
+
+  void _stopRecordTimer() {
+    _recordTimer?.cancel();
+    _recordTimer = null;
+  }
+
+  String get _timerDisplay {
+    final m = (_recordSeconds ~/ 60).toString().padLeft(2, '0');
+    final s = (_recordSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  // ── Normalize & Tokenize ──
   String _normalizeForScoring(String input) {
     var s = input.toLowerCase();
-    // Remove punctuation; keep letters/numbers/spaces only.
     s = s.replaceAll(RegExp(r'[^a-z0-9\s]'), ' ');
     s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
     return s;
@@ -1303,12 +1351,30 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
     return normalized.split(' ').where((t) => t.isNotEmpty).toList();
   }
 
+  // ── Character-level Levenshtein (giống Android levenshteinDistance) ──
+  int _charLevenshteinDistance(String a, String b) {
+    if (a.isEmpty) return b.length;
+    if (b.isEmpty) return a.length;
+    final la = a.length, lb = b.length;
+    final dp = List.generate(la + 1, (_) => List<int>.filled(lb + 1, 0));
+    for (var i = 0; i <= la; i++) dp[i][0] = i;
+    for (var j = 0; j <= lb; j++) dp[0][j] = j;
+    for (var i = 1; i <= la; i++) {
+      for (var j = 1; j <= lb; j++) {
+        dp[i][j] = math.min(
+          math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+          dp[i - 1][j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1),
+        );
+      }
+    }
+    return dp[la][lb];
+  }
+
+  // ── Word-level Levenshtein (WER) ──
   int _wordLevenshteinDistance(List<String> a, List<String> b) {
     if (a.isEmpty) return b.length;
     if (b.isEmpty) return a.length;
-
     final prev = List<int>.generate(b.length + 1, (j) => j);
-
     for (var i = 1; i <= a.length; i++) {
       final curr = List<int>.filled(b.length + 1, 0);
       curr[0] = i;
@@ -1321,28 +1387,64 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
       }
       prev.setAll(0, curr);
     }
-
     return prev[b.length];
   }
 
+  // ── So sánh từng từ: tạo danh sách _WordMatch ──
+  List<_WordMatch> _buildWordMatches(String target, String spoken) {
+    final tWords = _tokenize(target);
+    final sWords = _tokenize(spoken);
+    final matches = <_WordMatch>[];
+    for (var i = 0; i < tWords.length; i++) {
+      if (i < sWords.length) {
+        final match = tWords[i] == sWords[i];
+        matches.add(_WordMatch(target: tWords[i], spoken: sWords[i], isMatch: match));
+      } else {
+        matches.add(_WordMatch(target: tWords[i], spoken: '', isMatch: false));
+      }
+    }
+    // Từ thừa trong spoken
+    for (var i = tWords.length; i < sWords.length; i++) {
+      matches.add(_WordMatch(target: '', spoken: sWords[i], isMatch: false));
+    }
+    return matches;
+  }
+
+  // ── Hybrid Scoring (kết hợp Android char-level + word-level) ──
   int _calculateSpeakingAccuracy(String targetSentence, String spokenSentence) {
     final targetTokens = _tokenize(targetSentence);
     final spokenTokens = _tokenize(spokenSentence);
     if (targetTokens.isEmpty) return 0;
 
-    // Word Error Rate (WER) ~= editDistance / referenceLength
-    final dist = _wordLevenshteinDistance(spokenTokens, targetTokens);
-    final wer = dist / targetTokens.length;
-    final similarity = (1 - wer).clamp(0.0, 1.0);
-    return (similarity * 100).round();
+    // 1) Word-level WER score (60% trọng số)
+    final wordDist = _wordLevenshteinDistance(spokenTokens, targetTokens);
+    final wer = wordDist / targetTokens.length;
+    final wordScore = ((1 - wer).clamp(0.0, 1.0) * 100).round();
+
+    // 2) Character-level score (40% trọng số) — giống Android
+    final targetNorm = _normalizeForScoring(targetSentence);
+    final spokenNorm = _normalizeForScoring(spokenSentence);
+    final charDist = _charLevenshteinDistance(targetNorm, spokenNorm);
+    final maxLen = math.max(targetNorm.length, spokenNorm.length);
+    final charScore = maxLen == 0
+        ? (charDist == 0 ? 100 : 0)
+        : math.max(0, 100 - (charDist * 100 ~/ maxLen));
+
+    // Lưu edit distance
+    _editDistance = charDist;
+
+    // Hybrid: 60% word + 40% char
+    return (0.6 * wordScore + 0.4 * charScore).round().clamp(0, 100);
   }
 
   void _finalizeScoring() {
     if (_hasRecorded) return;
+    _stopRecordTimer();
     final spoken = _recognizedText.isNotEmpty
         ? _recognizedText
         : _speech.lastRecognizedWords;
     final acc = _calculateSpeakingAccuracy(_targetSentence, spoken);
+    final wordMatches = _buildWordMatches(_targetSentence, spoken);
     final pluginError = _speech.lastError?.errorMsg;
     final pluginStatus = _speech.lastStatus;
     setState(() {
@@ -1354,6 +1456,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
       _autoRestartCount = 0;
       _accuracy = acc;
       _recognizedText = spoken;
+      _wordMatches = wordMatches;
       if (_speechMessage.isEmpty) {
         _speechMessage = pluginStatus;
       }
@@ -1364,6 +1467,8 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
       }
     });
     _resultCtrl.forward();
+    // Lưu lịch sử phát âm vào SQLite
+    _saveHistory(spoken, acc);
   }
 
   Future<void> _queueFinalizeScoring() async {
@@ -1447,7 +1552,11 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
       _speechMessage = 'starting';
       _speechError = '';
       _soundLevel = 0;
+      _recordSeconds = 0;
+      _editDistance = 0;
+      _wordMatches = [];
     });
+    _startRecordTimer();
 
     var started = await _startListeningWithLocale(_speechLocaleId);
     if (!started &&
@@ -1480,6 +1589,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
   }
 
   void _handleTryAgain() {
+    _stopRecordTimer();
     if (_isRecording) _speech.stop();
     setState(() {
       _isRecording = false;
@@ -1493,8 +1603,29 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
       _speechMessage = '';
       _speechError = '';
       _soundLevel = 0;
+      _recordSeconds = 0;
+      _editDistance = 0;
+      _wordMatches = [];
     });
     _resultCtrl.reset();
+  }
+
+  // ── Lưu lịch sử phát âm (giống saveHistory Android) ──
+  Future<void> _saveHistory(String spoken, int score) async {
+    if (spoken.isEmpty || score < 0) return;
+    try {
+      final db = await AppServices.database.database;
+      await db.insert('speak_history', {
+        'target_word': _targetSentence,
+        'spoken_word': spoken,
+        'score': score,
+        'edit_distance': _editDistance,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print('Failed to save speak history: $e');
+    }
   }
 
   void _onContinue() {
@@ -1715,14 +1846,26 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // Timer + status text (giống Android)
+                  if (_isRecording)
+                    Text(
+                      '$_timerDisplay / 00:${_maxRecordSeconds.toString().padLeft(2, '0')}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                        color: Color(0xFFFA5C5C),
+                      ),
+                    ),
+                  const SizedBox(height: 4),
                   Text(
                     _isRecording
-                        ? 'Listening...'
+                        ? 'Đang nghe... (tap để dừng)'
                         : _hasRecorded
-                        ? 'Processing...'
-                        : 'Tap to speak',
+                        ? 'Đã hoàn thành'
+                        : 'Tap để nói',
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: _isRecording
                           ? const Color(0xFFFA5C5C)
@@ -1775,7 +1918,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                       ),
                     ),
                   ],
-                  // Accuracy card
+                  // Accuracy card — enhanced (giống Android score screen)
                   if (acc != null) ...[
                     const SizedBox(height: 24),
                     ScaleTransition(
@@ -1788,14 +1931,10 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: isExcellent
-                                ? [
-                                    const Color(0xFFF0FDF4),
-                                    const Color(0xFFDCFCE7),
-                                  ]
-                                : [
-                                    const Color(0xFFFEFCE8),
-                                    const Color(0xFFFEF9C3),
-                                  ],
+                                ? [const Color(0xFFF0FDF4), const Color(0xFFDCFCE7)]
+                                : acc >= 50
+                                ? [const Color(0xFFFEFCE8), const Color(0xFFFEF9C3)]
+                                : [const Color(0xFFFEF2F2), const Color(0xFFFEE2E2)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -1803,13 +1942,16 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                           border: Border.all(
                             color: isExcellent
                                 ? const Color(0xFF22C55E)
-                                : const Color(0xFFEAB308),
+                                : acc >= 50
+                                ? const Color(0xFFEAB308)
+                                : const Color(0xFFEF4444),
                             width: 2,
                           ),
                         ),
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
+                            // Header row: icon + message + score
                             Row(
                               children: [
                                 Container(
@@ -1818,50 +1960,52 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                                   decoration: BoxDecoration(
                                     color: isExcellent
                                         ? const Color(0xFF22C55E)
-                                        : const Color(0xFFEAB308),
+                                        : acc >= 50
+                                        ? const Color(0xFFEAB308)
+                                        : const Color(0xFFEF4444),
                                     shape: BoxShape.circle,
                                   ),
                                   child: isExcellent
-                                      ? const Icon(
-                                          Icons.check_circle_rounded,
-                                          color: Colors.white,
-                                          size: 32,
-                                        )
-                                      : const Center(
-                                          child: Text(
-                                            '💪',
-                                            style: TextStyle(fontSize: 26),
-                                          ),
-                                        ),
+                                      ? const Icon(Icons.check_circle_rounded, color: Colors.white, size: 32)
+                                      : acc >= 50
+                                      ? const Center(child: Text('💪', style: TextStyle(fontSize: 26)))
+                                      : const Icon(Icons.refresh_rounded, color: Colors.white, size: 32),
                                 ),
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         isExcellent
-                                            ? 'Rất tốt! 🎉'
-                                            : 'Cố gắng hơn!',
+                                            ? 'Xuất sắc! 🎉'
+                                            : acc >= 50
+                                            ? 'Khá tốt! 👍'
+                                            : 'Cần cải thiện 💪',
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                           color: isExcellent
                                               ? const Color(0xFF15803D)
-                                              : const Color(0xFF854D0E),
+                                              : acc >= 50
+                                              ? const Color(0xFF854D0E)
+                                              : const Color(0xFF991B1B),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         isExcellent
-                                            ? 'Khớp khá tốt với câu mẫu'
-                                            : 'Chưa khớp câu mẫu',
+                                            ? 'Phát âm rất chính xác'
+                                            : acc >= 50
+                                            ? 'Gần đúng, luyện thêm nhé'
+                                            : 'Thử lại để cải thiện',
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: isExcellent
                                               ? const Color(0xFF16A34A)
-                                              : const Color(0xFF92400E),
+                                              : acc >= 50
+                                              ? const Color(0xFF92400E)
+                                              : const Color(0xFFB91C1C),
                                         ),
                                       ),
                                     ],
@@ -1870,96 +2014,141 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                                 Column(
                                   children: [
                                     Text(
-                                      isExcellent ? 'Rất tốt' : '$acc%',
+                                      '$acc%',
                                       style: TextStyle(
-                                        fontSize: isExcellent ? 22 : 36,
+                                        fontSize: 36,
                                         fontWeight: FontWeight.bold,
                                         color: isExcellent
                                             ? const Color(0xFF22C55E)
-                                            : const Color(0xFFEAB308),
+                                            : acc >= 50
+                                            ? const Color(0xFFEAB308)
+                                            : const Color(0xFFEF4444),
                                       ),
                                     ),
-                                    Text(
-                                      isExcellent
-                                          ? 'Chính xác'
-                                          : 'Độ chính xác',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF6B7280),
-                                      ),
+                                    const Text(
+                                      'Độ chính xác',
+                                      style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                                     ),
                                   ],
                                 ),
                               ],
                             ),
                             const SizedBox(height: 16),
+                            // Progress bar
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: TweenAnimationBuilder<double>(
                                 tween: Tween(begin: 0, end: acc / 100),
                                 duration: const Duration(milliseconds: 1000),
                                 curve: Curves.easeOut,
-                                builder: (context, value, _) =>
-                                    LinearProgressIndicator(
-                                      value: value,
-                                      minHeight: 12,
-                                      backgroundColor: const Color(0xFFE5E7EB),
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        isExcellent
-                                            ? const Color(0xFF22C55E)
-                                            : const Color(0xFFEAB308),
-                                      ),
+                                builder: (context, value, _) => LinearProgressIndicator(
+                                  value: value,
+                                  minHeight: 12,
+                                  backgroundColor: const Color(0xFFE5E7EB),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    isExcellent
+                                        ? const Color(0xFF22C55E)
+                                        : acc >= 50
+                                        ? const Color(0xFFEAB308)
+                                        : const Color(0xFFEF4444),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // So sánh từng từ (giống Android score screen)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Mẫu
+                                  const Text(
+                                    'Câu mẫu:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
                                     ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _targetSentence,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF111827),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Bạn nói
+                                  const Text(
+                                    'Bạn nói:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (_recognizedText.isEmpty)
+                                    const Text(
+                                      'Không nhận diện được',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF9CA3AF),
+                                      ),
+                                    )
+                                  else
+                                    Wrap(
+                                      spacing: 4,
+                                      runSpacing: 4,
+                                      children: _wordMatches.map((wm) {
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: wm.isMatch
+                                                ? const Color(0xFFDCFCE7)
+                                                : const Color(0xFFFEE2E2),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: wm.isMatch
+                                                  ? const Color(0xFF22C55E)
+                                                  : const Color(0xFFEF4444),
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            wm.spoken.isNotEmpty ? wm.spoken : '___',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: wm.isMatch
+                                                  ? const Color(0xFF16A34A)
+                                                  : const Color(0xFFDC2626),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  const SizedBox(height: 10),
+                                  // Edit distance
+                                  Text(
+                                    'Khoảng cách chỉnh sửa: $_editDistance',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF9CA3AF),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            Text(
-                              _recognizedText.isEmpty
-                                  ? 'Không nhận diện được lời nói'
-                                  : 'Bạn nói: $_recognizedText',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6B7280),
-                              ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (_recognizedText.isEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                'STT: available=$_speechAvailable, initialized=$_speechInitialized, locale=${_speechLocaleId ?? "system-default"}, status=${_speechMessage.isEmpty ? "(empty)" : _speechMessage}, level=${_soundLevel.toStringAsFixed(1)}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF6B7280),
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                            if (_speechError.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                'STT error: $_speechError',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFFEF4444),
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                            if (_speechMessage.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                'STT status: $_speechMessage',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF6B7280),
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
                           ],
                         ),
                       ),

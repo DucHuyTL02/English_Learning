@@ -1,5 +1,6 @@
 import '../app_database.dart';
 import '../datasources/dictionary_local_datasource.dart';
+import '../datasources/dictionary_remote_datasource.dart';
 import '../datasources/learning_local_datasource.dart';
 import '../datasources/user_local_datasource.dart';
 import '../repositories/dictionary_repository.dart';
@@ -18,6 +19,7 @@ class AppServices {
   );
   static final DictionaryRepository dictionaryRepository = DictionaryRepository(
     DictionaryLocalDataSource(database),
+    DictionaryRemoteDataSource(),
   );
   static final LearningRepository learningRepository = LearningRepository(
     LearningLocalDataSource(database),
