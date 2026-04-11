@@ -8,7 +8,9 @@ import 'data/services/app_services.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
 import 'screens/dictionary_screen.dart';
+import 'screens/email_verification_screen.dart';
 import 'screens/exercise_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'screens/gamification_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/lesson_screen.dart';
@@ -45,10 +47,13 @@ class _ShellScaffold extends StatelessWidget {
       },
       child: Stack(
         children: [
-          MediaQuery.removePadding(
-            context: context,
-            removeBottom: false,
-            child: child,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 80),
+            child: MediaQuery.removePadding(
+              context: context,
+              removeBottom: false,
+              child: child,
+            ),
           ),
           const Positioned(
             left: 0,
@@ -82,6 +87,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: '/verify-email',
+      builder: (context, state) => const EmailVerificationScreen(),
     ),
     GoRoute(
       path: '/edit-profile',
@@ -151,8 +160,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/forgot-password',
-      builder: (context, state) =>
-          const _PlaceholderScreen(title: 'Đổi Mật Khẩu'),
+      builder: (context, state) => const ForgotPasswordScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) => _ShellScaffold(child: child),

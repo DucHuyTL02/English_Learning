@@ -549,6 +549,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _isSubmitting = false;
+  bool _isResendingVerification = false;
 
   @override
   void dispose() {
@@ -584,11 +585,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showSnackBar(String message) {
+  Future<void> _resendVerificationEmail() async {
+    final email = _emailCtrl.text.trim();
+    final password = _passCtrl.text;
+    if (email.isEmpty || password.isEmpty) {
+      _showSnackBar('Nhập email và mật khẩu để gửi lại email xác thực.');
+      return;
+    }
+
+    setState(() => _isResendingVerification = true);
+    try {
+      await AppServices.userRepository.sendEmailVerificationForCredentials(
+        email: email,
+        password: password,
+      );
+      if (!mounted) return;
+      _showSnackBar('Đã gửi lại email xác thực.', success: true);
+    } on UserRepositoryException catch (e) {
+      if (!mounted) return;
+      _showSnackBar(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar('Không thể gửi lại email xác thực.');
+    } finally {
+      if (mounted) {
+        setState(() => _isResendingVerification = false);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, {bool success = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: const Color(0xFFFA5C5C),
+        backgroundColor: success
+            ? const Color(0xFF16A34A)
+            : const Color(0xFFFA5C5C),
       ),
     );
   }
@@ -659,7 +691,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () => context.go('/forgot-password'),
                         child: const Text(
                           'Quên mật khẩu?',
                           style: TextStyle(
@@ -668,6 +700,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Color(0xFFFA5C5C),
                           ),
                         ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _isResendingVerification
+                            ? null
+                            : _resendVerificationEmail,
+                        child: _isResendingVerification
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Gửi lại email xác thực',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFFA5C5C),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -770,7 +826,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: password,
       );
       if (!mounted) return;
-      context.go('/home');
+      context.go('/verify-email');
     } on UserRepositoryException catch (e) {
       if (!mounted) return;
       _showSnackBar(e.message);

@@ -98,6 +98,14 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateFromSession() async {
+    final hasPendingVerification = await AppServices.userRepository
+        .hasPendingEmailVerification();
+    if (!mounted) return;
+    if (hasPendingVerification) {
+      context.go('/verify-email');
+      return;
+    }
+
     final activeUser = await AppServices.userRepository.getActiveUser();
     if (!mounted) return;
     if (activeUser != null) {

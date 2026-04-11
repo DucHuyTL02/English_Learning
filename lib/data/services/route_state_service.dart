@@ -30,7 +30,13 @@ class RouteStateService {
     final uri = Uri.tryParse(route);
     final path = uri?.path ?? route;
 
-    const blockedRoutes = {'/', '/login', '/register'};
+    const blockedRoutes = {
+      '/',
+      '/login',
+      '/register',
+      '/verify-email',
+      '/forgot-password',
+    };
     if (blockedRoutes.contains(path)) return false;
     if (path.startsWith('/onboarding')) return false;
 

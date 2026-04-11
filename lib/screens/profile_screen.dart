@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/repositories/user_repository.dart';
@@ -883,7 +883,7 @@ class _StatCard extends StatelessWidget {
               style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
           ],
-        ),  
+        ),
       ),
     );
   }
@@ -1092,6 +1092,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _birthdate = '1995-03-15';
   int? _activeUserId;
   bool _isSaving = false;
+  bool _isDeleting = false;
   bool _isLoadingUser = true;
 
   @override
@@ -1191,6 +1192,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _deleteAccount() async {
+    if (_isDeleting) return;
+    if (_activeUserId == null) {
+      _showSnackBar('Không tìm thấy tài khoản đang đăng nhập.');
+      return;
+    }
+
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -1213,20 +1220,98 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
     if (shouldDelete != true) return;
 
+    final password = await _promptDeletePassword();
+    if (password == null) return;
+    if (password.trim().isEmpty) {
+      _showSnackBar('Vui lòng nhập mật khẩu để xác nhận xóa tài khoản.');
+      return;
+    }
+
+    final userId = _activeUserId;
+    if (userId == null) {
+      _showSnackBar('Không tìm thấy tài khoản đang đăng nhập.');
+      return;
+    }
+
+    var didNavigateToLogin = false;
+    setState(() => _isDeleting = true);
     try {
-      if (_activeUserId != null) {
-        await AppServices.userRepository.deleteUser(_activeUserId!);
-      }
+      await AppServices.userRepository.deleteUserWithPassword(
+        userId: userId,
+        currentPassword: password,
+      );
       await AppServices.routeStateService.clear();
       if (!mounted) return;
       context.go('/login');
+      didNavigateToLogin = true;
     } on UserRepositoryException catch (e) {
       if (!mounted) return;
       _showSnackBar(e.message);
     } catch (_) {
       if (!mounted) return;
       _showSnackBar('Không thể xóa tài khoản lúc này.');
+    } finally {
+      if (mounted && !didNavigateToLogin) {
+        setState(() => _isDeleting = false);
+      }
     }
+  }
+
+  Future<String?> _promptDeletePassword() async {
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        var obscure = true;
+        var password = '';
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('Xác nhận mật khẩu'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nhập mật khẩu hiện tại để hoàn tất xóa tài khoản Firebase.',
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  obscureText: obscure,
+                  autofocus: true,
+                  onChanged: (value) => password = value,
+                  decoration: InputDecoration(
+                    hintText: 'Mật khẩu hiện tại',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: IconButton(
+                      onPressed: () => setDialogState(() => obscure = !obscure),
+                      icon: Icon(
+                        obscure
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Hủy'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(password),
+                child: const Text(
+                  'Xóa Tài Khoản',
+                  style: TextStyle(color: Color(0xFFDC2626)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showSnackBar(String message) {
@@ -1414,7 +1499,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed: _isSaving ? null : _saveProfile,
+                                  onPressed: (_isSaving || _isDeleting)
+                                      ? null
+                                      : _saveProfile,
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
@@ -1449,8 +1536,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton(
-                                  onPressed: () =>
-                                      _popOrGo(context, '/profile'),
+                                  onPressed: _isDeleting
+                                      ? null
+                                      : () => _popOrGo(context, '/profile'),
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
@@ -1497,12 +1585,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               _AccountActionBtn(
                                 label: 'Đổi Mật Khẩu',
                                 danger: false,
+                                enabled: !_isDeleting,
                                 onTap: () {},
                               ),
                               const SizedBox(height: 10),
                               _AccountActionBtn(
-                                label: 'Xóa Tài Khoản',
+                                label: _isDeleting
+                                    ? 'Đang Xóa Tài Khoản...'
+                                    : 'Xóa Tài Khoản',
                                 danger: true,
+                                enabled: !_isDeleting,
                                 onTap: _deleteAccount,
                               ),
                             ],
@@ -1684,31 +1776,36 @@ class _AccountActionBtn extends StatelessWidget {
     required this.label,
     required this.danger,
     required this.onTap,
+    this.enabled = true,
   });
   final String label;
   final bool danger;
   final VoidCallback onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: danger ? const Color(0xFFFECACA) : const Color(0xFFE5E7EB),
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.6,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: danger ? const Color(0xFFFECACA) : const Color(0xFFE5E7EB),
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: danger ? const Color(0xFFDC2626) : const Color(0xFF374151),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: danger ? const Color(0xFFDC2626) : const Color(0xFF374151),
+            ),
           ),
         ),
       ),

@@ -77,11 +77,23 @@ class UserLocalDataSource {
 
   Future<int> deleteUserById(int userId) async {
     final db = await _appDatabase.database;
-    return db.delete(
-      AppDatabase.usersTable,
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+    return db.transaction((txn) async {
+      await txn.delete(
+        AppDatabase.userProgressTable,
+        where: 'user_id = ?',
+        whereArgs: [userId],
+      );
+      await txn.delete(
+        AppDatabase.dailyActivityTable,
+        where: 'user_id = ?',
+        whereArgs: [userId],
+      );
+      return txn.delete(
+        AppDatabase.usersTable,
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+    });
   }
 
   Future<void> setOnlyActiveUser(int userId) async {
