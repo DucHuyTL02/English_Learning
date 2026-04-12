@@ -1,4 +1,5 @@
 import '../datasources/learning_local_datasource.dart';
+import '../models/user_model.dart';
 import '../models/unit_model.dart';
 import '../models/lesson_model.dart';
 import '../models/exercise_model.dart';
@@ -58,6 +59,17 @@ class LearningRepository {
     } catch (_) {
       throw LearningRepositoryException('Không thể tải bài tập.');
     }
+  }
+
+  // ── Premium gate ──
+
+  /// Bài đầu tiên (unit 1, sortOrder 1) luôn miễn phí.
+  /// Tất cả bài còn lại yêu cầu Premium.
+  Future<bool> canAccessLesson(int lessonId, UserModel user) async {
+    if (user.isActivePremium) return true;
+    final lesson = await _ds.getLessonById(lessonId);
+    if (lesson == null) return false;
+    return lesson.unitId == 1 && lesson.sortOrder == 1;
   }
 
   // ── Progress ──

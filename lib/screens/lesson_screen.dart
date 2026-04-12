@@ -98,6 +98,7 @@ class _CourseMapScreenState extends State<CourseMapScreen>
 
   Future<void> _loadData() async {
     final user = await AppServices.userRepository.getActiveUser();
+    final isPremium = user?.isActivePremium ?? false;
     final repo = AppServices.learningRepository;
     final units = await repo.getUnits();
     final completedIds = user?.id != null
@@ -113,8 +114,10 @@ class _CourseMapScreenState extends State<CourseMapScreen>
 
       for (final lesson in lessons) {
         final completed = completedIds.contains(lesson.id);
-        final locked = !completed && foundCurrent;
-        final current = !completed && !foundCurrent;
+        final isFree = lesson.unitId == 1 && lesson.sortOrder == 1;
+        final premiumLocked = !isPremium && !isFree;
+        final current = !completed && !foundCurrent && !premiumLocked;
+        final locked = premiumLocked || (!completed && !current);
         if (current) foundCurrent = true;
 
         lessonItems.add(_LessonItem(
@@ -497,7 +500,9 @@ class _LessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: lesson.locked ? null : () => context.go('/lesson-intro/${lesson.id}'),
+      onTap: lesson.locked
+          ? () => context.go('/subscription')
+          : () => context.go('/lesson-intro/${lesson.id}'),
       child: Opacity(
         opacity: lesson.locked ? 0.6 : 1.0,
         child: Container(
@@ -740,6 +745,16 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
     if (!mounted || lesson == null) {
       setState(() => _loading = false);
       return;
+    }
+
+    // ── Premium gate ──
+    final user = await AppServices.userRepository.getActiveUser();
+    if (user != null) {
+      final canAccess = await repo.canAccessLesson(widget.lessonId, user);
+      if (!canAccess && mounted) {
+        context.go('/subscription');
+        return;
+      }
     }
 
     // Unit label

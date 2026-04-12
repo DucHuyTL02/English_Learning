@@ -250,8 +250,19 @@ class UserRepository {
       }
 
       // Xóa Firebase Auth account. Bắt buộc thành công trước khi xóa local.
-      if (currentFirebaseUser != null) {
-        var deleted = false;
+      if (currentFirebaseUser == null) {
+        throw UserRepositoryException(
+          'Không tìm thấy phiên Firebase để xóa tài khoản. Vui lòng đăng nhập lại rồi thử.',
+        );
+      }
+
+      var deleted = false;
+
+      // Ưu tiên REST API để tránh lỗi SDK desktop (DeleteUserData: Credential not found).
+      deleted = await _deleteFirebaseAccountViaRest(currentFirebaseUser);
+
+      // Fallback SDK delete nếu REST chưa thành công.
+      if (!deleted) {
         try {
           await currentFirebaseUser.delete();
           deleted = true;
@@ -262,20 +273,31 @@ class UserRepository {
             );
           }
         }
+      }
 
-        // Fallback cho Windows/Desktop khi SDK không xóa được user.
-        if (!deleted) {
-          deleted = await _deleteFirebaseAccountViaRest(currentFirebaseUser);
-        }
+      // Luôn verify sau cùng; nếu chưa mất user thì coi như thất bại.
+      if (deleted) {
+        deleted = await _verifyFirebaseUserDeleted(currentFirebaseUser.uid);
+      }
 
-        if (!deleted) {
-          throw UserRepositoryException(
-            'Không thể xóa tài khoản trên Firebase. Vui lòng thử lại.',
-          );
-        }
+      if (!deleted) {
+        throw UserRepositoryException(
+          'Không thể xóa tài khoản trên Firebase. Vui lòng thử lại.',
+        );
       }
 
       await _localDataSource.deleteUserById(userId);
+
+      // Dọn các bản ghi local trùng email để tránh tự tái tạo account khi login.
+      final allUsers = await _localDataSource.getAllUsers();
+      final sameEmailUsers = allUsers.where(
+        (u) => u.id != null &&
+            u.id != userId &&
+            u.email.trim().toLowerCase() == user.email.trim().toLowerCase(),
+      );
+      for (final local in sameEmailUsers) {
+        await _localDataSource.deleteUserById(local.id!);
+      }
 
       // Sign out và dọn dẹp session.
       try { await _firebaseAuth.signOut(); } catch (_) {}
@@ -303,10 +325,22 @@ class UserRepository {
         body: jsonEncode({'idToken': idToken}),
       );
 
-      if (response.statusCode == 200) {
-        return true;
-      }
+      if (response.statusCode == 200) return true;
       return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> _verifyFirebaseUserDeleted(String uid) async {
+    try {
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      final current = _firebaseAuth.currentUser;
+      if (current == null) return true;
+      await current.reload();
+      final afterReload = _firebaseAuth.currentUser;
+      if (afterReload == null) return true;
+      return afterReload.uid != uid;
     } catch (_) {
       return false;
     }
@@ -556,6 +590,12 @@ class UserRepository {
       return null;
     }
 
+    // Chỉ migrate tài khoản local cũ chưa từng liên kết Firebase.
+    // Nếu đã có firebaseUid mà Firebase báo user-not-found, không tự tạo lại.
+    if (local.firebaseUid != null && local.firebaseUid!.isNotEmpty) {
+      return null;
+    }
+
     try {
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
@@ -594,5 +634,46 @@ class UserRepository {
     } on FirebaseAuthException {
       return null;
     }
+  }
+
+  // ── Premium ──
+
+  /// Kích hoạt Premium cho user. [plan] = 'monthly' | 'yearly'.
+  Future<UserModel> activatePremium(int userId, String plan) async {
+    final user = await _localDataSource.getUserById(userId);
+    if (user == null) {
+      throw UserRepositoryException('Không tìm thấy tài khoản.');
+    }
+
+    final now = DateTime.now();
+    final duration = plan == 'yearly'
+        ? const Duration(days: 365)
+        : const Duration(days: 30);
+
+    final updated = user.copyWith(
+      isPremium: true,
+      premiumExpiresAt: now.add(duration),
+      subscriptionPlan: plan,
+      updatedAt: now,
+    );
+    await _localDataSource.updateUser(updated);
+    return updated;
+  }
+
+  /// Kiểm tra & tắt Premium nếu đã hết hạn.
+  Future<UserModel?> checkAndExpirePremium(int userId) async {
+    final user = await _localDataSource.getUserById(userId);
+    if (user == null) return null;
+    if (!user.isPremium) return user;
+    if (user.isActivePremium) return user;
+
+    // Hết hạn → tắt Premium
+    final updated = user.copyWith(
+      isPremium: false,
+      subscriptionPlan: '',
+      updatedAt: DateTime.now(),
+    );
+    await _localDataSource.updateUser(updated);
+    return updated;
   }
 }

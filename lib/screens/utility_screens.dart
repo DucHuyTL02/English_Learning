@@ -251,11 +251,70 @@ class _LocalUsersDebugScreenState extends State<LocalUsersDebugScreen> {
 // SUBSCRIPTION/PREMIUM SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-class SubscriptionScreen extends StatelessWidget {
+class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
 
   @override
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends State<SubscriptionScreen> {
+  String _selectedPlan = 'yearly'; // 'monthly' | 'yearly'
+  bool _loading = true;
+  bool _activating = false;
+  UserModel? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final u = await AppServices.userRepository.getActiveUser();
+    if (!mounted) return;
+    setState(() {
+      _user = u;
+      _loading = false;
+    });
+  }
+
+  Future<void> _activate() async {
+    if (_user?.id == null || _activating) return;
+    setState(() => _activating = true);
+    try {
+      final updated = await AppServices.userRepository.activatePremium(
+        _user!.id!,
+        _selectedPlan,
+      );
+      if (!mounted) return;
+      setState(() {
+        _user = updated;
+        _activating = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🎉 Kích hoạt Premium thành công!')),
+      );
+    } on UserRepositoryException catch (e) {
+      if (!mounted) return;
+      setState(() => _activating = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF3F4F6),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final isPremium = _user?.isActivePremium ?? false;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       body: SingleChildScrollView(
@@ -290,13 +349,48 @@ class SubscriptionScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   const Text('LinguaJoy Premium', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 6),
-                  Text('Mở khóa toàn bộ tính năng', style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.9))),
+                  Text(
+                    isPremium ? 'Bạn đang sử dụng Premium' : 'Mở khóa toàn bộ bài học',
+                    style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.9)),
+                  ),
                 ],
               ),
             ),
+
+            // Active Premium status
+            if (isPremium)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.check_circle_rounded, color: Colors.white, size: 40),
+                      const SizedBox(height: 8),
+                      const Text('Premium đang hoạt động', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Gói: ${_user!.subscriptionPlan == 'yearly' ? 'Năm' : 'Tháng'}',
+                        style: const TextStyle(fontSize: 14, color: Colors.white),
+                      ),
+                      if (_user!.premiumExpiresAt != null)
+                        Text(
+                          'Hết hạn: ${_user!.premiumExpiresAt!.day}/${_user!.premiumExpiresAt!.month}/${_user!.premiumExpiresAt!.year}',
+                          style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.9)),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+
             // Features
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   _FeatureRow(icon: '📚', title: 'Không giới hạn bài học', desc: 'Truy cập tất cả bài học mọi lúc'),
@@ -306,39 +400,66 @@ class SubscriptionScreen extends StatelessWidget {
                   _FeatureRow(icon: '📊', title: 'Báo cáo chi tiết', desc: 'Theo dõi tiến độ học tập chuyên sâu'),
                   const SizedBox(height: 12),
                   _FeatureRow(icon: '🚫', title: 'Không quảng cáo', desc: 'Trải nghiệm học tập liền mạch'),
-                  const SizedBox(height: 24),
-                  // Price cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _PriceCard(title: 'Tháng', price: '99.000₫', sub: '/tháng', selected: false),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _PriceCard(title: 'Năm', price: '599.000₫', sub: '/năm • Tiết kiệm 50%', selected: true),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFA5C5C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: const StadiumBorder(),
-                      ),
-                      child: const Text('Bắt Đầu Dùng Thử 7 Ngày', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Hủy bất cứ lúc nào • Không mất phí trong 7 ngày', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
-                  const SizedBox(height: 32),
                 ],
               ),
             ),
+
+            // Plan selection + activate (only when NOT already premium)
+            if (!isPremium)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedPlan = 'monthly'),
+                            child: _PriceCard(
+                              title: 'Tháng',
+                              price: '99.000₫',
+                              sub: '/tháng',
+                              selected: _selectedPlan == 'monthly',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedPlan = 'yearly'),
+                            child: _PriceCard(
+                              title: 'Năm',
+                              price: '599.000₫',
+                              sub: '/năm • Tiết kiệm 50%',
+                              selected: _selectedPlan == 'yearly',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _activating ? null : _activate,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFA5C5C),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: const StadiumBorder(),
+                        ),
+                        child: _activating
+                            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                            : const Text('Nâng Cấp Premium', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Thanh toán mô phỏng — chưa tính phí thật', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 32),
           ],
         ),
       ),

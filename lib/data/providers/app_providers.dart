@@ -43,7 +43,14 @@ final localeNotifierProvider =
 
 class ActiveUserNotifier extends AsyncNotifier<UserModel?> {
   @override
-  Future<UserModel?> build() => AppServices.userRepository.getActiveUser();
+  Future<UserModel?> build() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (user?.id != null) {
+      // Kiểm tra & tắt Premium nếu hết hạn
+      return await AppServices.userRepository.checkAndExpirePremium(user!.id!);
+    }
+    return user;
+  }
 
   Future<void> refresh() async {
     state = const AsyncLoading();

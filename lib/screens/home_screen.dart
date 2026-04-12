@@ -328,6 +328,7 @@ class _NextLessonCardState extends State<_NextLessonCard> {
   String _lessonIcon = '📖';
   int _lessonId = 0;
   bool _loading = true;
+  bool _needsPremium = false;
 
   @override
   void initState() {
@@ -345,12 +346,14 @@ class _NextLessonCardState extends State<_NextLessonCard> {
       final lessons = await repo.getLessonsByUnit(unit.id!);
       for (final lesson in lessons) {
         if (!completedIds.contains(lesson.id)) {
+          final isFree = lesson.unitId == 1 && lesson.sortOrder == 1;
           if (!mounted) return;
           setState(() {
             _unitLabel = 'Đơn Vị ${unit.id} - Bài ${lesson.sortOrder}';
             _lessonTitle = lesson.title;
             _lessonIcon = lesson.icon;
             _lessonId = lesson.id!;
+            _needsPremium = !isFree && !user.isActivePremium;
             _loading = false;
           });
           return;
@@ -514,25 +517,45 @@ class _NextLessonCardState extends State<_NextLessonCard> {
                   // Start Button
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.go('/lesson-intro/$_lessonId'),
-                      icon: const Icon(Icons.play_arrow_rounded, size: 26),
-                      label: const Text(
-                        'Bắt Đầu Bài Học',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFFFA5C5C),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: const StadiumBorder(),
-                        elevation: 4,
-                        shadowColor: Colors.black26,
-                      ),
-                    ),
+                    child: _needsPremium
+                        ? ElevatedButton.icon(
+                            onPressed: () => context.go('/subscription'),
+                            icon: const Icon(Icons.lock_rounded, size: 22),
+                            label: const Text(
+                              'Nâng Cấp Premium',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFBEF76),
+                              foregroundColor: const Color(0xFF7C3A00),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: const StadiumBorder(),
+                              elevation: 4,
+                              shadowColor: Colors.black26,
+                            ),
+                          )
+                        : ElevatedButton.icon(
+                            onPressed: () => context.go('/lesson-intro/$_lessonId'),
+                            icon: const Icon(Icons.play_arrow_rounded, size: 26),
+                            label: const Text(
+                              'Bắt Đầu Bài Học',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFFFA5C5C),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: const StadiumBorder(),
+                              elevation: 4,
+                              shadowColor: Colors.black26,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -596,6 +619,7 @@ class _LearningPathMap extends StatefulWidget {
 class _LearningPathMapState extends State<_LearningPathMap> {
   List<_PathNode> _pathNodes = [];
   bool _loading = true;
+  bool _isPremium = false;
 
   @override
   void initState() {
@@ -609,8 +633,9 @@ class _LearningPathMapState extends State<_LearningPathMap> {
       setState(() => _loading = false);
       return;
     }
+    _isPremium = user!.isActivePremium;
     final repo = AppServices.learningRepository;
-    final completedIds = await repo.getCompletedLessonIds(user!.id!);
+    final completedIds = await repo.getCompletedLessonIds(user.id!);
     final allLessons = await repo.getAllLessons();
 
     // Show first 6 lessons on the path map (rest visible in course-map)
@@ -620,8 +645,10 @@ class _LearningPathMapState extends State<_LearningPathMap> {
     for (int i = 0; i < displayCount; i++) {
       final lesson = allLessons[i];
       final isCompleted = completedIds.contains(lesson.id);
-      final isCurrent = !isCompleted && !foundCurrent;
-      final isLocked = !isCompleted && !isCurrent;
+      final isFree = lesson.unitId == 1 && lesson.sortOrder == 1;
+      final premiumLocked = !_isPremium && !isFree;
+      final isCurrent = !isCompleted && !foundCurrent && !premiumLocked;
+      final isLocked = premiumLocked || (!isCompleted && !isCurrent);
       if (isCurrent) foundCurrent = true;
       nodes.add(_PathNode(
         id: lesson.id!,
@@ -719,7 +746,7 @@ class _LearningPathMapState extends State<_LearningPathMap> {
                             width: 88,
                             child: GestureDetector(
                               onTap: node.locked
-                                  ? null
+                                  ? () => context.go('/subscription')
                                   : () => context.go(
                                       node.current
                                           ? '/lesson-intro/${node.id}'

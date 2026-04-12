@@ -7,7 +7,7 @@ class AppDatabase {
 
   static final AppDatabase instance = AppDatabase._();
 
-  static const int _version = 4;
+  static const int _version = 5;
   static const String usersTable = 'users';
   static const String dictionaryWordsTable = 'dictionary_words';
   static const String unitsTable = 'units';
@@ -46,6 +46,17 @@ class AppDatabase {
             columnDefinition: 'TEXT',
           );
         }
+        if (oldVersion < 5) {
+          await _addUserColumnIfMissing(db,
+              columnName: 'is_premium',
+              columnDefinition: 'INTEGER NOT NULL DEFAULT 0');
+          await _addUserColumnIfMissing(db,
+              columnName: 'premium_expires_at',
+              columnDefinition: 'TEXT');
+          await _addUserColumnIfMissing(db,
+              columnName: 'subscription_plan',
+              columnDefinition: "TEXT NOT NULL DEFAULT ''");
+        }
       },
     );
     return _database!;
@@ -67,6 +78,9 @@ class AppDatabase {
         sound_enabled INTEGER NOT NULL DEFAULT 1,
         dark_mode_enabled INTEGER NOT NULL DEFAULT 0,
         total_xp INTEGER NOT NULL DEFAULT 0,
+        is_premium INTEGER NOT NULL DEFAULT 0,
+        premium_expires_at TEXT,
+        subscription_plan TEXT NOT NULL DEFAULT '',
         is_active INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL
