@@ -7,7 +7,7 @@ class AppDatabase {
 
   static final AppDatabase instance = AppDatabase._();
 
-  static const int _version = 4;
+  static const int _version = 5;
   static const String usersTable = 'users';
   static const String dictionaryWordsTable = 'dictionary_words';
   static const String unitsTable = 'units';
@@ -16,6 +16,7 @@ class AppDatabase {
   static const String userProgressTable = 'user_progress';
   static const String dailyActivityTable = 'daily_activity';
   static const String speakHistoryTable = 'speak_history';
+  static const String notificationsTable = 'notifications';
 
   Database? _database;
 
@@ -47,6 +48,9 @@ class AppDatabase {
         }
         if (oldVersion < 4) {
           await _createSpeakHistoryTable(db);
+        }
+        if (oldVersion < 5) {
+          await _createNotificationsTable(db);
         }
       },
     );
@@ -94,6 +98,7 @@ class AppDatabase {
 
     await _createV2Tables(db);
     await _createSpeakHistoryTable(db);
+    await _createNotificationsTable(db);
   }
 
   Future<void> _createV2Tables(Database db) async {
@@ -166,6 +171,22 @@ class AppDatabase {
         score INTEGER NOT NULL DEFAULT 0,
         edit_distance INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
+      );
+    ''');
+  }
+
+  Future<void> _createNotificationsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $notificationsTable (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        payload TEXT NOT NULL DEFAULT '',
+        is_read INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES $usersTable(id)
       );
     ''');
   }

@@ -132,7 +132,7 @@
       "flashcards": [
         {
           "word": "Hello",
-          "translation": "Xin chao",
+          "translation": "Xin chào",
           "phonetic": "/həˈloʊ/",
           "example": "Hello, how are you?",
           "illustration": "👋",
@@ -141,7 +141,7 @@
         },
         {
           "word": "Hi",
-          "translation": "Chao",
+          "translation": "Chào",
           "phonetic": "/haɪ/",
           "example": "Hi, my name is Tom",
           "illustration": "🙂",
@@ -150,7 +150,7 @@
         },
         {
           "word": "Good morning",
-          "translation": "Chao buoi sang",
+          "translation": "Chào buổi sáng",
           "phonetic": "/ɡʊd ˈmɔːrnɪŋ/",
           "example": "Good morning, teacher",
           "illustration": "🌅",
@@ -159,7 +159,7 @@
         },
         {
           "word": "Good afternoon",
-          "translation": "Chao buoi chieu",
+          "translation": "Chào buổi chiều",
           "phonetic": "/ˌɡʊd ˌæftərˈnuːn/",
           "example": "Good afternoon, everyone",
           "illustration": "☀️",
@@ -168,7 +168,7 @@
         },
         {
           "word": "Good evening",
-          "translation": "Chao buoi toi",
+          "translation": "Chào buổi tối",
           "phonetic": "/ˌɡʊd ˌiːvnɪŋ/",
           "example": "Good evening, sir",
           "illustration": "🌇",
@@ -177,7 +177,7 @@
         },
         {
           "word": "Goodbye",
-          "translation": "Tam biet",
+          "translation": "Tạm biệt",
           "phonetic": "/ˌɡʊdˈbaɪ/",
           "example": "Goodbye, see you tomorrow",
           "illustration": "👋",
@@ -186,7 +186,7 @@
         },
         {
           "word": "Bye",
-          "translation": "Tam biet",
+          "translation": "Tạm biệt",
           "phonetic": "/baɪ/",
           "example": "Bye, have a nice day",
           "illustration": "🙋",
@@ -195,7 +195,7 @@
         },
         {
           "word": "See you later",
-          "translation": "Hen gap lai",
+          "translation": "Hẹn gặp lại",
           "phonetic": "/siː juː ˈleɪtər/",
           "example": "See you later at school",
           "illustration": "⏳",
@@ -204,7 +204,7 @@
         },
         {
           "word": "Thank you",
-          "translation": "Cam on",
+          "translation": "Cảm ơn",
           "phonetic": "/θæŋk juː/",
           "example": "Thank you for your help",
           "illustration": "🙏",
@@ -213,7 +213,7 @@
         },
         {
           "word": "Thanks",
-          "translation": "Cam on",
+          "translation": "Cảm ơn",
           "phonetic": "/θæŋks/",
           "example": "Thanks, that is very kind",
           "illustration": "😊",
@@ -222,7 +222,7 @@
         },
         {
           "word": "Sorry",
-          "translation": "Xin loi",
+          "translation": "Xin lỗi",
           "phonetic": "/ˈsɑːri/",
           "example": "Sorry, I am late",
           "illustration": "😔",
@@ -231,7 +231,7 @@
         },
         {
           "word": "Excuse me",
-          "translation": "Xin loi",
+          "translation": "Xin lỗi",
           "phonetic": "/ɪkˈskjuːz miː/",
           "example": "Excuse me, where is the bus stop?",
           "illustration": "🗣️",
@@ -240,7 +240,7 @@
         },
         {
           "word": "Please",
-          "translation": "Lam on",
+          "translation": "Làm ơn",
           "phonetic": "/pliːz/",
           "example": "Please open the door",
           "illustration": "🤲",
@@ -249,7 +249,7 @@
         },
         {
           "word": "Welcome",
-          "translation": "Chao mung",
+          "translation": "Chào mừng",
           "phonetic": "/ˈwelkəm/",
           "example": "Welcome to our class",
           "illustration": "🏠",
@@ -258,7 +258,7 @@
         },
         {
           "word": "Nice to meet you",
-          "translation": "Rat vui duoc gap ban",
+          "translation": "Rất vui được gặp bạn",
           "phonetic": "/naɪs tuː miːt juː/",
           "example": "Nice to meet you, Anna",
           "illustration": "🤝",
@@ -267,7 +267,7 @@
         },
         {
           "word": "How are you?",
-          "translation": "Ban khoe khong?",
+          "translation": "Bạn khỏe không?",
           "phonetic": "/haʊ ɑːr juː/",
           "example": "How are you today?",
           "illustration": "❓",
@@ -276,7 +276,7 @@
         },
         {
           "word": "I am fine",
-          "translation": "Toi khoe",
+          "translation": "Tôi khỏe",
           "phonetic": "/aɪ æm faɪn/",
           "example": "I am fine, thank you",
           "illustration": "😄",
@@ -285,7 +285,7 @@
         },
         {
           "word": "Good night",
-          "translation": "Chuc ngu ngon",
+          "translation": "Chúc ngủ ngon",
           "phonetic": "/ɡʊd naɪt/",
           "example": "Good night, Mom",
           "illustration": "🌙",
@@ -294,7 +294,7 @@
         },
         {
           "word": "Take care",
-          "translation": "Giu gin suc khoe",
+          "translation": "Giữ gìn sức khỏe",
           "phonetic": "/teɪk keər/",
           "example": "Take care on your way home",
           "illustration": "💙",
@@ -303,7 +303,7 @@
         },
         {
           "word": "Have a nice day",
-          "translation": "Chuc mot ngay tot lanh",
+          "translation": "Chúc một ngày tốt lành",
           "phonetic": "/hæv ə naɪs deɪ/",
           "example": "Have a nice day at work",
           "illustration": "🌞",

@@ -36,8 +36,8 @@ class _Header extends StatefulWidget {
 }
 
 class _HeaderState extends State<_Header> {
-  final int _notificationCount = 2;
-  String _displayName = 'Bạn';
+  int _notificationCount = 0;
+  String _displayName = 'Báº¡n';
 
   @override
   void initState() {
@@ -48,7 +48,17 @@ class _HeaderState extends State<_Header> {
   Future<void> _loadActiveUser() async {
     final user = await AppServices.userRepository.getActiveUser();
     if (!mounted || user == null) return;
-    setState(() => _displayName = user.displayName);
+    await AppServices.notificationService.maybeSendDailyStudyReminder(
+      user: user,
+    );
+    final unread = user.id == null
+        ? 0
+        : await AppServices.notificationService.getUnreadCount(user.id!);
+    if (!mounted) return;
+    setState(() {
+      _displayName = user.displayName;
+      _notificationCount = unread;
+    });
   }
 
   @override
@@ -93,7 +103,11 @@ class _HeaderState extends State<_Header> {
             mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
-                onTap: () => context.push('/notifications'),
+                onTap: () async {
+                  await context.push('/notifications');
+                  if (!mounted) return;
+                  await _loadActiveUser();
+                },
                 child: _NotificationIconBtn(count: _notificationCount),
               ),
               const SizedBox(width: 8),
@@ -282,7 +296,7 @@ class _StatsBannerState extends State<_StatsBanner> {
                 icon: Icons.star_rounded,
                 gradientColors: const [Color(0xFFFEC288), Color(0xFFFBEF76)],
                 value: _totalXp,
-                label: 'Tổng XP',
+                label: 'Tăng XP',
               ),
             ),
           ],
@@ -355,7 +369,7 @@ class _NextLessonCard extends StatefulWidget {
 class _NextLessonCardState extends State<_NextLessonCard> {
   String _unitLabel = '';
   String _lessonTitle = '';
-  String _lessonIcon = '📖';
+  String _lessonIcon = '📘';
   int _lessonId = 0;
   bool _loading = true;
 
@@ -659,7 +673,7 @@ const _pathNodes = [
   _PathNode(
     id: 6,
     title: 'Weather',
-    emoji: '🌤',
+    emoji: '🌤️',
     completed: false,
     locked: true,
     xPercent: 0.68,
@@ -945,7 +959,7 @@ class _QuickActions extends StatelessWidget {
       route: '/practice/vocabulary',
     ),
     _Action(
-      emoji: '🎤',
+      emoji: '🗣️',
       title: 'Phát Âm',
       subtitle: 'Cải thiện khả năng nói',
       gradientColors: [Color(0xFFFEC288), Color(0xFFFBEF76)],

@@ -3294,9 +3294,21 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen>
     final user = await AppServices.userRepository.getActiveUser();
     if (user?.id == null) return;
     final lessonId = AppServices.exerciseSession.lessonId;
+    final safeLessonId = lessonId > 0 ? lessonId : 4;
     await AppServices.learningRepository.completeLesson(
       userId: user!.id!,
-      lessonId: lessonId > 0 ? lessonId : 4,
+      lessonId: safeLessonId,
+      score: _score,
+      xpEarned: _xp,
+    );
+
+    final lesson = await AppServices.learningRepository.getLessonById(
+      safeLessonId,
+    );
+    await AppServices.notificationService.notifyLessonCompleted(
+      user: user,
+      lessonId: safeLessonId,
+      lessonTitle: lesson?.title ?? 'Bài học',
       score: _score,
       xpEarned: _xp,
     );

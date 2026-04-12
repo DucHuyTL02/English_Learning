@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -46,8 +46,11 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>English Learning cần quyền micrô để chuyển lời nói thành văn bản khi bạn làm bài nói.</string>
+	<string>English Learning cáº§n quyá»n micrÃ´ Ä‘á»ƒ chuyá»ƒn lá»i nÃ³i thÃ nh vÄƒn báº£n khi báº¡n lÃ m bÃ i nÃ³i.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>English Learning cần quyền nhận diện giọng nói để chấm điểm bài nói dựa trên nội dung bạn phát âm.</string>
+	<string>English Learning cáº§n quyá»n nháº­n diá»‡n giá»ng nÃ³i Ä‘á»ƒ cháº¥m Ä‘iá»ƒm bÃ i nÃ³i dá»±a trÃªn ná»™i dung báº¡n phÃ¡t Ã¢m.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>English Learning sử dụng thông báo để nhắc bạn học tập và báo khi hoàn thành bài học.</string>
 </dict>
 </plist>
+

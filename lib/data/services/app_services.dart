@@ -8,6 +8,7 @@ import '../repositories/learning_repository.dart';
 import '../repositories/user_repository.dart';
 import 'exercise_session.dart';
 import 'learning_content_service.dart';
+import 'notification_service.dart';
 import 'route_state_service.dart';
 import 'tts_service.dart';
 
@@ -30,12 +31,20 @@ class AppServices {
   static final TtsService tts = TtsService.instance;
   static final ExerciseSession exerciseSession = ExerciseSession.instance;
   static final RouteStateService routeStateService = RouteStateService();
+  static final NotificationService notificationService = NotificationService(
+    database: database,
+  );
 
   static Future<void> initialize() async {
     await database.database;
     await learningContentService.bootstrapLearningData(
       repository: learningRepository,
     );
+    await notificationService.initialize();
+    final user = await userRepository.getActiveUser();
+    if (user != null) {
+      await notificationService.maybeSendDailyStudyReminder(user: user);
+    }
     await routeStateService.initialize();
     await tts.init();
   }

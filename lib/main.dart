@@ -15,6 +15,7 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/gamification_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/lesson_screen.dart';
+import 'screens/notifications_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/splash_screen.dart';
@@ -163,7 +164,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/notifications',
-      builder: (context, state) => const _PlaceholderScreen(title: 'Thông Báo'),
+      builder: (context, state) => const NotificationsScreen(),
     ),
     GoRoute(
       path: '/streak',
@@ -172,12 +173,12 @@ final _router = GoRouter(
     GoRoute(
       path: '/subscription',
       builder: (context, state) =>
-          const _PlaceholderScreen(title: 'Gói Premium'),
+          const _PlaceholderScreen(title: 'GÃ³i Premium'),
     ),
     GoRoute(
       path: '/help',
       builder: (context, state) =>
-          const _PlaceholderScreen(title: 'Trợ Giúp & Hỗ Trợ'),
+          const _PlaceholderScreen(title: 'Trá»£ GiÃºp & Há»— Trá»£'),
     ),
     GoRoute(
       path: '/forgot-password',
