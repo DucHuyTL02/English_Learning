@@ -10,13 +10,20 @@ class ExerciseSession {
   int _currentIndex = 0;
   List<ExerciseModel> _exercises = [];
   int _correctCount = 0;
+  String _completionRoute = '/lesson-completed';
+  String _exitRoute = '/home';
+  bool _shouldPersistProgress = true;
 
   int get lessonId => _lessonId;
   int get currentIndex => _currentIndex;
   int get total => _exercises.length;
   bool get hasNext => _currentIndex < _exercises.length - 1;
   int get correctCount => _correctCount;
-  int get scorePercent => total > 0 ? ((_correctCount / total) * 100).round() : 0;
+  String get completionRoute => _completionRoute;
+  String get exitRoute => _exitRoute;
+  bool get shouldPersistProgress => _shouldPersistProgress;
+  int get scorePercent =>
+      total > 0 ? ((_correctCount / total) * 100).round() : 0;
   int get xpEarned {
     final s = scorePercent;
     if (s >= 90) return 50;
@@ -24,16 +31,26 @@ class ExerciseSession {
     if (s >= 50) return 25;
     return 15;
   }
+
   ExerciseModel? get current =>
       _exercises.isNotEmpty && _currentIndex < _exercises.length
-          ? _exercises[_currentIndex]
-          : null;
+      ? _exercises[_currentIndex]
+      : null;
 
-  void load(int lessonId, List<ExerciseModel> exercises) {
+  void load(
+    int lessonId,
+    List<ExerciseModel> exercises, {
+    String completionRoute = '/lesson-completed',
+    String exitRoute = '/home',
+    bool shouldPersistProgress = true,
+  }) {
     _lessonId = lessonId;
     _exercises = exercises;
     _currentIndex = 0;
     _correctCount = 0;
+    _completionRoute = completionRoute;
+    _exitRoute = exitRoute;
+    _shouldPersistProgress = shouldPersistProgress;
   }
 
   void recordAnswer(bool isCorrect) {
@@ -54,5 +71,8 @@ class ExerciseSession {
     _currentIndex = 0;
     _exercises = [];
     _correctCount = 0;
+    _completionRoute = '/lesson-completed';
+    _exitRoute = '/home';
+    _shouldPersistProgress = true;
   }
 }

@@ -97,7 +97,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
     session.recordAnswer(_isCorrect);
     final next = session.next();
     if (next == null) {
-      context.go('/lesson-completed');
+      context.go(session.completionRoute);
       return;
     }
     final route = switch (next.type) {
@@ -119,7 +119,10 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
           _ExerciseHeader(
             progress: _progress,
             total: _total,
-            onClose: () => context.go('/home'),
+            onClose: () {
+              final session = AppServices.exerciseSession;
+              context.go(session.total > 0 ? session.exitRoute : '/home');
+            },
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -556,12 +559,28 @@ class _ListeningScreenState extends State<ListeningScreen>
 
       _sentence = words;
       _blanks = blankEntries;
-      // Build word bank: correct answer + distractors
-      const distractors = ['red', 'green', 'cold', 'big', 'white', 'rainy'];
-      final others =
-          distractors.where((d) => d != ex.correctAnswer.toLowerCase()).toList()
-            ..shuffle();
-      _wordBank = [ex.correctAnswer, ...others.take(3)]..shuffle();
+      // Build word bank: prefer explicit options from exercise payload.
+      final exerciseOptions = ex.optionList
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList();
+      if (exerciseOptions.isNotEmpty) {
+        final deduped = exerciseOptions.toSet().toList();
+        if (!deduped.any(
+          (value) => value.toLowerCase() == ex.correctAnswer.toLowerCase(),
+        )) {
+          deduped.insert(0, ex.correctAnswer);
+        }
+        _wordBank = deduped..shuffle();
+      } else {
+        const distractors = ['red', 'green', 'cold', 'big', 'white', 'rainy'];
+        final others =
+            distractors
+                .where((d) => d != ex.correctAnswer.toLowerCase())
+                .toList()
+              ..shuffle();
+        _wordBank = [ex.correctAnswer, ...others.take(3)]..shuffle();
+      }
     } else {
       _fullSentence = 'The weather is sunny today';
       _sentence = ['The', 'is', 'today'];
@@ -603,7 +622,7 @@ class _ListeningScreenState extends State<ListeningScreen>
     session.recordAnswer(allCorrect);
     final next = session.next();
     if (next == null) {
-      context.go('/lesson-completed');
+      context.go(session.completionRoute);
       return;
     }
     final route = switch (next.type) {
@@ -636,7 +655,10 @@ class _ListeningScreenState extends State<ListeningScreen>
           _ExerciseHeader(
             progress: _progress,
             total: _total,
-            onClose: () => context.go('/home'),
+            onClose: () {
+              final session = AppServices.exerciseSession;
+              context.go(session.total > 0 ? session.exitRoute : '/home');
+            },
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -1686,7 +1708,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
     session.recordAnswer(_accuracy != null && _accuracy! >= 70);
     final next = session.next();
     if (next == null) {
-      context.go('/lesson-completed');
+      context.go(session.completionRoute);
       return;
     }
     final route = switch (next.type) {
@@ -1710,7 +1732,10 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
           _ExerciseHeader(
             progress: _progress,
             total: _total,
-            onClose: () => context.go('/home'),
+            onClose: () {
+              final session = AppServices.exerciseSession;
+              context.go(session.total > 0 ? session.exitRoute : '/home');
+            },
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -2502,7 +2527,7 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
     session.recordAnswer(_isCorrect);
     final next = session.next();
     if (next == null) {
-      context.go('/lesson-completed');
+      context.go(session.completionRoute);
       return;
     }
     final route = switch (next.type) {
@@ -2525,7 +2550,10 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
           _ExerciseHeader(
             progress: _progress,
             total: _total,
-            onClose: () => context.go('/home'),
+            onClose: () {
+              final session = AppServices.exerciseSession;
+              context.go(session.total > 0 ? session.exitRoute : '/home');
+            },
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -3291,6 +3319,8 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen>
   }
 
   Future<void> _saveProgress() async {
+    if (!AppServices.exerciseSession.shouldPersistProgress) return;
+
     final user = await AppServices.userRepository.getActiveUser();
     if (user?.id == null) return;
     final lessonId = AppServices.exerciseSession.lessonId;
@@ -3648,7 +3678,8 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen>
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/home'),
+                  onPressed: () =>
+                      context.go(AppServices.exerciseSession.exitRoute),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFA5C5C),
                     foregroundColor: Colors.white,
@@ -3709,10 +3740,36 @@ class _FlashcardData {
   final Color gradStart, gradEnd;
 }
 
+class FlashcardLaunchConfig {
+  const FlashcardLaunchConfig({
+    this.cards,
+    this.title,
+    this.closeRoute,
+    this.completeRoute,
+  });
+
+  final List<FlashcardModel>? cards;
+  final String? title;
+  final String? closeRoute;
+  final String? completeRoute;
+}
+
 class FlashcardScreen extends StatefulWidget {
-  const FlashcardScreen({super.key, this.isExercise = false, this.lessonId});
+  const FlashcardScreen({
+    super.key,
+    this.isExercise = false,
+    this.lessonId,
+    this.customCards,
+    this.customTitle,
+    this.closeRoute,
+    this.completeRoute,
+  });
   final bool isExercise;
   final int? lessonId;
+  final List<FlashcardModel>? customCards;
+  final String? customTitle;
+  final String? closeRoute;
+  final String? completeRoute;
   @override
   State<FlashcardScreen> createState() => _FlashcardScreenState();
 }
@@ -3789,6 +3846,22 @@ class _FlashcardScreenState extends State<FlashcardScreen>
   }
 
   Future<void> _loadCards() async {
+    final providedCards = widget.customCards;
+    if (providedCards != null) {
+      setState(() {
+        if (providedCards.isNotEmpty) {
+          _cards = providedCards.map(_toFlashcardData).toList();
+        } else {
+          _cards = List<_FlashcardData>.from(_fallbackCards);
+        }
+        _isLoadingCards = false;
+        _currentIndex = 0;
+        _isFlipped = false;
+        _flipCtrl.value = 0;
+      });
+      return;
+    }
+
     final lessonId = widget.lessonId ?? AppServices.exerciseSession.lessonId;
     final remoteCards = await AppServices.learningContentService.getFlashcards(
       lessonId: lessonId > 0 ? lessonId : null,
@@ -3857,6 +3930,41 @@ class _FlashcardScreenState extends State<FlashcardScreen>
         curve: Curves.easeOut,
       );
     }
+  }
+
+  void _handleClose() {
+    final closeRoute = widget.closeRoute;
+    if (closeRoute != null && closeRoute.isNotEmpty) {
+      context.go(closeRoute);
+      return;
+    }
+
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    context.go('/home');
+  }
+
+  void _handleComplete() {
+    if (widget.isExercise) {
+      context.go('/lesson-completed');
+      return;
+    }
+
+    final completeRoute = widget.completeRoute;
+    if (completeRoute != null && completeRoute.isNotEmpty) {
+      context.go(completeRoute);
+      return;
+    }
+
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    context.go('/home');
   }
 
   Widget _buildFrontFace(_FlashcardData card) {
@@ -4102,7 +4210,7 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => context.go('/home'),
+                      onTap: _handleClose,
                       child: Container(
                         width: 42,
                         height: 42,
@@ -4117,11 +4225,11 @@ class _FlashcardScreenState extends State<FlashcardScreen>
                         ),
                       ),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Ôn Từ Vựng',
+                        widget.customTitle ?? 'Ôn Từ Vựng',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF111827),
@@ -4277,11 +4385,7 @@ class _FlashcardScreenState extends State<FlashcardScreen>
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: isLast
-                ? () => context.go(
-                    widget.isExercise ? '/lesson-completed' : '/home',
-                  )
-                : _goNext,
+            onPressed: isLast ? _handleComplete : _goNext,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFA5C5C),
               foregroundColor: Colors.white,

@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../datasources/user_local_datasource.dart';
@@ -30,6 +30,9 @@ class UserRepository {
     caseSensitive: false,
   );
   static const String _firebaseUsersCollection = 'users';
+  static const String _firebaseTopicsCollection = 'topics';
+  static const String _firebaseWordsCollection = 'words';
+  static const int _firestoreDeleteBatchLimit = 400;
   static const String _localPasswordPlaceholder = '__firebase_auth__';
 
   Future<UserModel?> getActiveUser() async {
@@ -589,12 +592,15 @@ class UserRepository {
     }
 
     try {
-      await _firestore
-          .collection(_firebaseUsersCollection)
-          .doc(authUser.uid)
-          .delete();
+      await _deleteRemoteUserData(authUser.uid);
+    } on FirebaseException catch (_) {
+      throw UserRepositoryException(
+        'Không thể xóa dữ liệu tài khoản trên Firestore.',
+      );
     } catch (_) {
-      // Keep account deletion flow resilient even if profile doc is missing.
+      throw UserRepositoryException(
+        'Không thể xóa dữ liệu tài khoản trên Firestore.',
+      );
     }
 
     try {
@@ -627,6 +633,53 @@ class UserRepository {
       userId: active!.id!,
       currentPassword: currentPassword,
     );
+  }
+
+  Future<void> _deleteRemoteUserData(String firebaseUid) async {
+    final userDoc = _firestore
+        .collection(_firebaseUsersCollection)
+        .doc(firebaseUid);
+    final topicsCol = userDoc.collection(_firebaseTopicsCollection);
+
+    while (true) {
+      final topicsSnap = await topicsCol
+          .limit(_firestoreDeleteBatchLimit)
+          .get();
+      if (topicsSnap.docs.isEmpty) break;
+
+      for (final topicDoc in topicsSnap.docs) {
+        await _deleteCollectionInBatches(
+          topicDoc.reference.collection(_firebaseWordsCollection),
+        );
+      }
+
+      final batch = _firestore.batch();
+      for (final topicDoc in topicsSnap.docs) {
+        batch.delete(topicDoc.reference);
+      }
+      await batch.commit();
+
+      if (topicsSnap.docs.length < _firestoreDeleteBatchLimit) break;
+    }
+
+    await userDoc.delete();
+  }
+
+  Future<void> _deleteCollectionInBatches(
+    Query<Map<String, dynamic>> query,
+  ) async {
+    while (true) {
+      final snap = await query.limit(_firestoreDeleteBatchLimit).get();
+      if (snap.docs.isEmpty) break;
+
+      final batch = _firestore.batch();
+      for (final doc in snap.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      if (snap.docs.length < _firestoreDeleteBatchLimit) break;
+    }
   }
 
   Future<void> logoutActiveUser() async {

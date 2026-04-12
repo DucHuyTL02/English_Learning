@@ -11,6 +11,7 @@ import 'learning_content_service.dart';
 import 'notification_service.dart';
 import 'route_state_service.dart';
 import 'tts_service.dart';
+import 'user_topic_service.dart';
 
 class AppServices {
   AppServices._();
@@ -34,6 +35,7 @@ class AppServices {
   static final NotificationService notificationService = NotificationService(
     database: database,
   );
+  static final UserTopicService userTopicService = UserTopicService();
 
   static Future<void> initialize() async {
     await database.database;

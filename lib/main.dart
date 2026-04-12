@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'data/models/user_topic_model.dart';
 import 'data/services/app_services.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
@@ -20,6 +21,8 @@ import 'screens/onboarding_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/streak_screen.dart';
+import 'screens/topic_words_screen.dart';
+import 'screens/user_topics_screen.dart';
 import 'widgets/bottom_navigation.dart';
 
 Future<void> main() async {
@@ -133,7 +136,15 @@ final _router = GoRouter(
         final lessonId = int.tryParse(
           state.uri.queryParameters['lessonId'] ?? '',
         );
-        return FlashcardScreen(lessonId: lessonId);
+        final extra = state.extra;
+        final launch = extra is FlashcardLaunchConfig ? extra : null;
+        return FlashcardScreen(
+          lessonId: lessonId,
+          customCards: launch?.cards,
+          customTitle: launch?.title,
+          closeRoute: launch?.closeRoute,
+          completeRoute: launch?.completeRoute,
+        );
       },
     ),
     GoRoute(
@@ -142,7 +153,15 @@ final _router = GoRouter(
         final lessonId = int.tryParse(
           state.uri.queryParameters['lessonId'] ?? '',
         );
-        return FlashcardScreen(lessonId: lessonId);
+        final extra = state.extra;
+        final launch = extra is FlashcardLaunchConfig ? extra : null;
+        return FlashcardScreen(
+          lessonId: lessonId,
+          customCards: launch?.cards,
+          customTitle: launch?.title,
+          closeRoute: launch?.closeRoute,
+          completeRoute: launch?.completeRoute,
+        );
       },
     ),
     GoRoute(
@@ -187,6 +206,21 @@ final _router = GoRouter(
     GoRoute(
       path: '/change-password',
       builder: (context, state) => const ChangePasswordScreen(),
+    ),
+    GoRoute(
+      path: '/user-topics',
+      builder: (context, state) => const UserTopicsScreen(),
+    ),
+    GoRoute(
+      path: '/user-topics/:topicId',
+      builder: (context, state) {
+        final topicId = state.pathParameters['topicId'] ?? '';
+        final topic = state.extra;
+        return TopicWordsScreen(
+          topicId: topicId,
+          topic: topic is UserTopicModel ? topic : null,
+        );
+      },
     ),
     ShellRoute(
       builder: (context, state, child) => _ShellScaffold(child: child),

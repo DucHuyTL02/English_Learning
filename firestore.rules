@@ -13,6 +13,16 @@ service cloud.firestore {
         && request.resource.data.hoTen is string;
       allow update: if isOwner(userId)
         && request.resource.data.id == request.auth.uid;
+
+      // User-created vocabulary topics
+      match /topics/{topicId} {
+        allow read, write: if isOwner(userId);
+
+        // Vocabulary words under each topic
+        match /words/{wordId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
     }
   }
 }

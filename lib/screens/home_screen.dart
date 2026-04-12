@@ -37,7 +37,7 @@ class _Header extends StatefulWidget {
 
 class _HeaderState extends State<_Header> {
   int _notificationCount = 0;
-  String _displayName = 'Báº¡n';
+  String _displayName = 'Bạn';
 
   @override
   void initState() {

@@ -1,9 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/models/dictionary_word_model.dart';
+import '../data/models/user_topic_model.dart';
 import '../data/repositories/dictionary_repository.dart';
 import '../data/services/app_services.dart';
 import '../data/services/tts_service.dart';
@@ -213,6 +214,12 @@ class _DictionaryScreenState extends State<DictionaryScreen>
 
   Future<void> _toggleBookmark(DictionaryWordModel word) async {
     try {
+      if (!word.isSaved) {
+        // Saving: show topic dialog first and stop if user cancels.
+        final didSaveToTopic = await _showSaveToTopicDialog(word);
+        if (!mounted || !didSaveToTopic) return;
+      }
+
       final updatedWord = await _dictionaryRepository.setSavedState(
         word: word,
         isSaved: !word.isSaved,
@@ -249,6 +256,17 @@ class _DictionaryScreenState extends State<DictionaryScreen>
         ),
       );
     }
+  }
+
+  Future<bool> _showSaveToTopicDialog(DictionaryWordModel word) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _SaveToTopicSheet(word: word),
+    );
+    return result ?? false;
   }
 
   List<DictionaryWordModel> get _visibleWords {
@@ -350,7 +368,10 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               position: _footerSlide,
               child: FadeTransition(
                 opacity: _footerFade,
-                child: _StatsFooter(savedCount: _savedCount),
+                child: _StatsFooter(
+                  savedCount: _savedCount,
+                  onTap: () => context.push('/user-topics'),
+                ),
               ),
             ),
           ),
@@ -930,103 +951,628 @@ class _DictionaryErrorState extends StatelessWidget {
 }
 
 class _StatsFooter extends StatelessWidget {
-  const _StatsFooter({required this.savedCount});
+  const _StatsFooter({required this.savedCount, this.onTap});
 
   final int savedCount;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFA5C5C).withValues(alpha: 0.35),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        clipBehavior: Clip.hardEdge,
-        child: Stack(
-          children: [
-            Positioned(
-              top: -20,
-              right: -20,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFA5C5C).withValues(alpha: 0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: Stack(
+            children: [
+              Positioned(
+                top: -20,
+                right: -20,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Total Saved Words',
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Saved Words',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$savedCount',
+                              style: const TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                height: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(
+                            Icons.bookmarks_rounded,
+                            size: 28,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Xem chủ đề từ vựng của tôi →',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.95),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// â”€â”€â”€ Save to Topic Bottom Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+class _SaveToTopicSheet extends StatefulWidget {
+  const _SaveToTopicSheet({required this.word});
+
+  final DictionaryWordModel word;
+
+  @override
+  State<_SaveToTopicSheet> createState() => _SaveToTopicSheetState();
+}
+
+class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
+  List<UserTopicModel> _topics = [];
+  final Set<String> _selectedTopicIds = {};
+  bool _isLoading = true;
+  bool _isSaving = false;
+  bool _isCreatingTopic = false;
+  bool _isCreatingTopicSubmitting = false;
+  String? _error;
+  String? _actionError;
+  final TextEditingController _newTopicCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTopics();
+  }
+
+  @override
+  void dispose() {
+    _newTopicCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadTopics() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final topics = await AppServices.userTopicService.getTopics();
+      if (!mounted) return;
+      setState(() {
+        _topics = topics;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _toggleCreateTopicInput() {
+    if (_isSaving || _isCreatingTopicSubmitting) return;
+    setState(() {
+      _isCreatingTopic = !_isCreatingTopic;
+      _actionError = null;
+      if (!_isCreatingTopic) {
+        _newTopicCtrl.clear();
+      }
+    });
+  }
+
+  Future<void> _createNewTopic() async {
+    if (_isCreatingTopicSubmitting || _isSaving) return;
+
+    final name = _newTopicCtrl.text.trim();
+
+    if (name.isEmpty) {
+      setState(() => _actionError = 'Please enter a topic name.');
+      return;
+    }
+
+    setState(() {
+      _isCreatingTopicSubmitting = true;
+      _actionError = null;
+    });
+    try {
+      final newTopic = await AppServices.userTopicService.createTopic(name);
+      if (!mounted) return;
+      setState(() {
+        _topics.insert(0, newTopic);
+        _selectedTopicIds.add(newTopic.id);
+        _isCreatingTopic = false;
+        _isCreatingTopicSubmitting = false;
+        _actionError = null;
+        _newTopicCtrl.clear();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCreatingTopicSubmitting = false;
+        _actionError = e.toString();
+      });
+    }
+  }
+
+  Future<void> _saveWord() async {
+    if (_selectedTopicIds.isEmpty) {
+      setState(() => _actionError = 'Please select at least one topic.');
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+      _actionError = null;
+    });
+
+    try {
+      for (final topicId in _selectedTopicIds) {
+        await AppServices.userTopicService.addWordToTopic(
+          topicId: topicId,
+          word: widget.word.word,
+          phonetic: widget.word.phonetic,
+          partOfSpeech: widget.word.partOfSpeech,
+          definition: widget.word.definition,
+          example: widget.word.example,
+        );
+      }
+      if (!mounted) return;
+      // Return success to parent screen and let parent handle follow-up UI.
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _actionError = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.7,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // â”€â”€ Handle â”€â”€
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1D5DB),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // â”€â”€ Title â”€â”€
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.bookmark_add_rounded,
+                    size: 22,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Lưu vào chủ đề',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      Text(
+                        widget.word.word,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF6B7280),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+
+          // Create new topic input
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
+            child: !_isCreatingTopic
+                ? GestureDetector(
+                    onTap: _toggleCreateTopicInput,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color(0xFFFA5C5C),
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline,
+                            size: 20,
+                            color: Color(0xFFFA5C5C),
+                          ),
+                          SizedBox(width: 8),
                           Text(
-                            '$savedCount',
-                            style: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              height: 1,
+                            'Tạo chủ đề mới',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFA5C5C),
                             ),
                           ),
                         ],
                       ),
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(18),
+                    ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: _newTopicCtrl,
+                          autofocus: true,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _createNewTopic(),
+                          decoration: InputDecoration(
+                            hintText: 'Nhập tên chủ đề...',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            isDense: true,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.bookmarks_rounded,
-                          size: 28,
-                          color: Colors.white,
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _isCreatingTopicSubmitting
+                                    ? null
+                                    : _toggleCreateTopicInput,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF6B7280),
+                                  side: const BorderSide(
+                                    color: Color(0xFFD1D5DB),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text('Hủy'),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isCreatingTopicSubmitting
+                                    ? null
+                                    : _createNewTopic,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFA5C5C),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: _isCreatingTopicSubmitting
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text('Tạo'),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Keep learning and expanding your vocabulary!',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.9),
+                      ],
                     ),
                   ),
-                ],
+          ),
+          if (_actionError != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Text(
+                  _actionError!,
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+
+          // â”€â”€ Topics list â”€â”€
+          Flexible(
+            child: _isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : _error != null
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(
+                        color: Color(0xFFFA5C5C),
+                        fontSize: 13,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : _topics.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'Chưa có chủ đề nào.\nHãy tạo chủ đề mới!',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
+                    itemCount: _topics.length,
+                    itemBuilder: (context, index) {
+                      final topic = _topics[index];
+                      final isSelected = _selectedTopicIds.contains(topic.id);
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedTopicIds.remove(topic.id);
+                            } else {
+                              _selectedTopicIds.add(topic.id);
+                            }
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFFFEF2F2)
+                                : const Color(0xFFF9F9F9),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFFFA5C5C)
+                                  : const Color(0xFFE5E7EB),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: isSelected
+                                    ? const Icon(
+                                        Icons.check_circle,
+                                        key: ValueKey('checked'),
+                                        color: Color(0xFFFA5C5C),
+                                        size: 22,
+                                      )
+                                    : const Icon(
+                                        Icons.circle_outlined,
+                                        key: ValueKey('unchecked'),
+                                        color: Color(0xFFD1D5DB),
+                                        size: 22,
+                                      ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      topic.name,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: isSelected
+                                            ? const Color(0xFFFA5C5C)
+                                            : const Color(0xFF111827),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      '${topic.wordCount} từ vựng',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF9CA3AF),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+
+          // â”€â”€ Save button â”€â”€
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : _saveWord,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFA5C5C),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Text(
+                        _selectedTopicIds.isEmpty
+                            ? 'Chọn chủ đề để lưu'
+                            : 'Lưu vào ${_selectedTopicIds.length} chủ đề',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,17 +2,17 @@
   "units": [
     {
       "id": 1,
-      "title": "Co Ban",
+      "title": "Cơ Bản",
       "sort_order": 1
     },
     {
       "id": 2,
-      "title": "Cuoc Song Hang Ngay",
+      "title": "Cuộc Sống Hàng Ngày",
       "sort_order": 2
     },
     {
       "id": 3,
-      "title": "Giao Tiep",
+      "title": "Giao Tiếp Cơ Bản",
       "sort_order": 3
     }
   ],
@@ -20,7 +20,7 @@
     {
       "id": 1,
       "unit_id": 1,
-      "title": "Chao Hoi",
+      "title": "Chào Hỏi",
       "icon": "👋",
       "sort_order": 1,
       "xp_reward": 50
@@ -28,7 +28,7 @@
     {
       "id": 2,
       "unit_id": 1,
-      "title": "Gia Dinh",
+      "title": "Gia Đình",
       "icon": "👨‍👩‍👧",
       "sort_order": 2,
       "xp_reward": 50
@@ -36,7 +36,7 @@
     {
       "id": 3,
       "unit_id": 1,
-      "title": "Do An",
+      "title": "Đồ Ăn",
       "icon": "🍕",
       "sort_order": 3,
       "xp_reward": 50
@@ -44,7 +44,7 @@
     {
       "id": 4,
       "unit_id": 1,
-      "title": "Mau Sac",
+      "title": "Màu Sắc",
       "icon": "🎨",
       "sort_order": 4,
       "xp_reward": 50
@@ -52,7 +52,7 @@
     {
       "id": 5,
       "unit_id": 1,
-      "title": "So Dem",
+      "title": "Số Đếm",
       "icon": "🔢",
       "sort_order": 5,
       "xp_reward": 50
@@ -60,7 +60,7 @@
     {
       "id": 6,
       "unit_id": 2,
-      "title": "Thoi Gian",
+      "title": "Thời Gian",
       "icon": "⏰",
       "sort_order": 1,
       "xp_reward": 60
@@ -68,7 +68,7 @@
     {
       "id": 7,
       "unit_id": 2,
-      "title": "Thoi Tiet",
+      "title": "Thời Tiết",
       "icon": "🌤",
       "sort_order": 2,
       "xp_reward": 60
@@ -76,7 +76,7 @@
     {
       "id": 8,
       "unit_id": 2,
-      "title": "Mua Sam",
+      "title": "Mua Sắm",
       "icon": "🛍",
       "sort_order": 3,
       "xp_reward": 60
@@ -84,7 +84,7 @@
     {
       "id": 9,
       "unit_id": 2,
-      "title": "Phuong Tien",
+      "title": "Phương Tiện Giao Thông",
       "icon": "🚗",
       "sort_order": 4,
       "xp_reward": 60
@@ -92,7 +92,7 @@
     {
       "id": 10,
       "unit_id": 3,
-      "title": "Dat Cau Hoi",
+      "title": "Đặt Câu Hỏi",
       "icon": "❓",
       "sort_order": 1,
       "xp_reward": 70
@@ -100,7 +100,7 @@
     {
       "id": 11,
       "unit_id": 3,
-      "title": "Chi Duong",
+      "title": "Chỉ Đường",
       "icon": "🧭",
       "sort_order": 2,
       "xp_reward": 70
@@ -108,7 +108,7 @@
     {
       "id": 12,
       "unit_id": 3,
-      "title": "Goi Dien",
+      "title": "Gọi Điện",
       "icon": "📞",
       "sort_order": 3,
       "xp_reward": 70
@@ -118,13 +118,13 @@
     {
       "unit": {
         "id": 1,
-        "title": "Co Ban",
+        "title": "Cơ Bản",
         "sort_order": 1
       },
       "lesson": {
         "id": 1,
         "unit_id": 1,
-        "title": "Chao Hoi",
+        "title": "Chào Hỏi",
         "icon": "👋",
         "sort_order": 1,
         "xp_reward": 50
