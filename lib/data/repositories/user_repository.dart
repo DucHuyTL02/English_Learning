@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../datasources/user_local_datasource.dart';
@@ -64,14 +64,10 @@ class UserRepository {
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || password.trim().isEmpty) {
-      throw UserRepositoryException(
-        'Vui lÃƒÂ²ng Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Email vÃƒÂ  mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u.',
-      );
+      throw UserRepositoryException('Vui lòng đăng nhập Email và mật khẩu.');
     }
     if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException(
-        'Email khÃƒÂ´ng Ã„â€˜ÃƒÂºng Ã„â€˜Ã¡Â»â€¹nh dÃ¡ÂºÂ¡ng.',
-      );
+      throw UserRepositoryException('Email không đúng định dạng.');
     }
 
     try {
@@ -81,9 +77,7 @@ class UserRepository {
       );
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
-        throw UserRepositoryException(
-          'KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o phiÃƒÂªn Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p.',
-        );
+        throw UserRepositoryException('Không thể tạo phiên đăng nhập.');
       }
       final isVerified = await reloadAndCheckCurrentUserEmailVerified();
       if (!isVerified) {
@@ -95,15 +89,13 @@ class UserRepository {
         await _auth.signOut();
         await _localDataSource.deactivateAllUsers();
         throw UserRepositoryException(
-          'Email chÃ†Â°a Ã„â€˜Ã†Â°Ã¡Â»Â£c xÃƒÂ¡c thÃ¡Â»Â±c. Vui lÃƒÂ²ng kiÃ¡Â»Æ’m tra hÃ¡Â»â„¢p thÃ†Â° vÃƒÂ  xÃƒÂ¡c thÃ¡Â»Â±c trÃ†Â°Ã¡Â»â€ºc khi Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p.',
+          'Email chưa được xác thực. Vui lòng kiểm tra hộp thư và xác thực trước khi đăng nhập.',
         );
       }
 
       final verifiedUser = _auth.currentUser;
       if (verifiedUser == null) {
-        throw UserRepositoryException(
-          'PhiÃƒÂªn Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡.',
-        );
+        throw UserRepositoryException('Phiên đăng nhập không hợp lệ.');
       }
 
       return await _syncLocalUser(firebaseUser: verifiedUser);
@@ -112,9 +104,7 @@ class UserRepository {
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
-      throw UserRepositoryException(
-        'Ã„ÂÃ„Æ’ng nhÃ¡ÂºÂ­p thÃ¡ÂºÂ¥t bÃ¡ÂºÂ¡i, vui lÃƒÂ²ng thÃ¡Â»Â­ lÃ¡ÂºÂ¡i.',
-      );
+      throw UserRepositoryException('Đăng nhập thất bại, vui lòng thử lại.');
     }
   }
 
@@ -126,19 +116,13 @@ class UserRepository {
     final trimmedName = fullName.trim();
     final normalizedEmail = email.trim().toLowerCase();
     if (trimmedName.isEmpty || normalizedEmail.isEmpty || password.isEmpty) {
-      throw UserRepositoryException(
-        'Vui lÃƒÂ²ng Ã„â€˜iÃ¡Â»Ân Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§ thÃƒÂ´ng tin Ã„â€˜Ã„Æ’ng kÃƒÂ½.',
-      );
+      throw UserRepositoryException('Vui lòng điền đầy đủ thông tin đăng ký.');
     }
     if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException(
-        'Email khÃƒÂ´ng Ã„â€˜ÃƒÂºng Ã„â€˜Ã¡Â»â€¹nh dÃ¡ÂºÂ¡ng.',
-      );
+      throw UserRepositoryException('Email không đúng định dạng.');
     }
     if (password.length < 6) {
-      throw UserRepositoryException(
-        'MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u phÃ¡ÂºÂ£i cÃƒÂ³ ÃƒÂ­t nhÃ¡ÂºÂ¥t 6 kÃƒÂ½ tÃ¡Â»Â±.',
-      );
+      throw UserRepositoryException('Mật khẩu phải có ít nhất 6 ký tự.');
     }
 
     User? createdAuthUser;
@@ -149,9 +133,7 @@ class UserRepository {
       );
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
-        throw UserRepositoryException(
-          'KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o tÃƒÂ i khoÃ¡ÂºÂ£n.',
-        );
+        throw UserRepositoryException('Không thể tạo tài khoản.');
       }
       createdAuthUser = firebaseUser;
 
@@ -172,9 +154,7 @@ class UserRepository {
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
-      throw UserRepositoryException(
-        'Ã„ÂÃ„Æ’ng kÃƒÂ½ thÃ¡ÂºÂ¥t bÃ¡ÂºÂ¡i, vui lÃƒÂ²ng thÃ¡Â»Â­ lÃ¡ÂºÂ¡i.',
-      );
+      throw UserRepositoryException('Đăng ký thất bại, vui lòng thử lại.');
     }
   }
 
@@ -183,7 +163,7 @@ class UserRepository {
   }) async {
     final authUser = _auth.currentUser;
     if (authUser == null) {
-      throw UserRepositoryException('KhÃ´ng tÃ¬m tháº¥y phiÃªn Ä‘Äƒng nháº­p.');
+      throw UserRepositoryException('Không tìm thấy phiên đăng nhập.');
     }
     if (authUser.emailVerified) return;
 
@@ -199,12 +179,10 @@ class UserRepository {
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty) {
-      throw UserRepositoryException('Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p email.');
+      throw UserRepositoryException('Vui lòng nhập email.');
     }
     if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException(
-        'Email khÃƒÂ´ng Ã„â€˜ÃƒÂºng Ã„â€˜Ã¡Â»â€¹nh dÃ¡ÂºÂ¡ng.',
-      );
+      throw UserRepositoryException('Email không đúng định dạng.');
     }
 
     try {
@@ -218,7 +196,7 @@ class UserRepository {
       rethrow;
     } catch (_) {
       throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ gÃ¡Â»Â­i email Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u. Vui lÃƒÂ²ng thÃ¡Â»Â­ lÃ¡ÂºÂ¡i.',
+        'Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại.',
       );
     }
   }
@@ -229,11 +207,11 @@ class UserRepository {
   }) async {
     final authUser = _auth.currentUser;
     if (authUser == null) {
-      throw UserRepositoryException('Phien dang nhap da het han.');
+      throw UserRepositoryException('Phiên đăng nhập đã hết hạn.');
     }
 
     if (currentPassword.trim().isEmpty) {
-      throw UserRepositoryException('Vui long nhap mat khau hien tai.');
+      throw UserRepositoryException('Vui lòng nhập mật khẩu hiện tại.');
     }
 
     final normalizedNewPassword = newPassword.trim();
@@ -247,7 +225,7 @@ class UserRepository {
         // best effort
       }
       throw UserRepositoryException(
-        'Email chua duoc xac thuc. Da gui lai email xac thuc, vui long xac thuc roi thu lai.',
+        'Email chưa được xác thực. Đã gửi lại email xác thực, vui lòng xác thực rồi thử lại.',
       );
     }
 
@@ -264,7 +242,7 @@ class UserRepository {
       rethrow;
     } catch (_) {
       throw UserRepositoryException(
-        'Khong the doi mat khau luc nay. Vui long thu lai.',
+        'Không thể đổi mật khẩu lúc này. Vui lòng thử lại.',
       );
     }
   }
@@ -330,9 +308,7 @@ class UserRepository {
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
-      throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã¡Â»â€œng bÃ¡Â»â„¢ tÃƒÂ i khoÃ¡ÂºÂ£n cÃ¡Â»Â¥c bÃ¡Â»â„¢.',
-      );
+      throw UserRepositoryException('Không thể đồng bộ tài khoản cục bộ.');
     }
   }
 
@@ -343,14 +319,10 @@ class UserRepository {
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail.isEmpty || password.isEmpty) {
-      throw UserRepositoryException(
-        'Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p email vÃƒÂ  mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u.',
-      );
+      throw UserRepositoryException('Vui lòng nhập email và mật khẩu.');
     }
     if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException(
-        'Email khÃƒÂ´ng Ã„â€˜ÃƒÂºng Ã„â€˜Ã¡Â»â€¹nh dÃ¡ÂºÂ¡ng.',
-      );
+      throw UserRepositoryException('Email không đúng định dạng.');
     }
 
     UserCredential? credential;
@@ -361,16 +333,12 @@ class UserRepository {
       );
       final authUser = credential.user;
       if (authUser == null) {
-        throw UserRepositoryException(
-          'KhÃƒÂ´ng thÃ¡Â»Æ’ xÃƒÂ¡c thÃ¡Â»Â±c tÃƒÂ i khoÃ¡ÂºÂ£n.',
-        );
+        throw UserRepositoryException('Không thể xác thực tài khoản.');
       }
 
       final isVerified = await reloadAndCheckCurrentUserEmailVerified();
       if (isVerified) {
-        throw UserRepositoryException(
-          'Email nÃƒÂ y Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c xÃƒÂ¡c thÃ¡Â»Â±c.',
-        );
+        throw UserRepositoryException('Email này đã được xác thực.');
       }
 
       await _sendEmailVerificationWithRetry(
@@ -383,7 +351,7 @@ class UserRepository {
       rethrow;
     } catch (_) {
       throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ gÃ¡Â»Â­i lÃ¡ÂºÂ¡i email xÃƒÂ¡c thÃ¡Â»Â±c. Vui lÃƒÂ²ng thÃ¡Â»Â­ lÃ¡ÂºÂ¡i.',
+        'Không thể gửi lại email xác thực. Vui lòng thử lại.',
       );
     } finally {
       try {
@@ -427,7 +395,7 @@ class UserRepository {
       );
     }
     throw UserRepositoryException(
-      'KhÃ´ng thá»ƒ gá»­i email xÃ¡c thá»±c. Vui lÃ²ng thá»­ láº¡i.',
+      'Không thể gửi email xác thực. Vui lòng thử lại.',
     );
   }
 
@@ -441,34 +409,26 @@ class UserRepository {
   }) async {
     final user = await _localDataSource.getUserById(userId);
     if (user == null) {
-      throw UserRepositoryException(
-        'KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y tÃƒÂ i khoÃ¡ÂºÂ£n Ã„â€˜Ã¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t.',
-      );
+      throw UserRepositoryException('Không tìm thấy tài khoản để cập nhật.');
     }
 
     final authUser = _auth.currentUser;
     if (authUser == null) {
-      throw UserRepositoryException(
-        'PhiÃƒÂªn Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Ã„â€˜ÃƒÂ£ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n.',
-      );
+      throw UserRepositoryException('Phiên đăng nhập đã hết hạn.');
     }
     if (!_isSameSignedInUser(localUser: user, authUser: authUser)) {
       throw UserRepositoryException(
-        'BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t tÃƒÂ i khoÃ¡ÂºÂ£n nÃƒÂ y.',
+        'Bạn không có quyền cập nhật tài khoản này.',
       );
     }
 
     final trimmedName = fullName.trim();
     final normalizedEmail = email.trim().toLowerCase();
     if (trimmedName.isEmpty || normalizedEmail.isEmpty) {
-      throw UserRepositoryException(
-        'HÃ¡Â»Â tÃƒÂªn vÃƒÂ  email khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng.',
-      );
+      throw UserRepositoryException('Họ tên và email không được để trống.');
     }
     if (!_emailRegex.hasMatch(normalizedEmail)) {
-      throw UserRepositoryException(
-        'Email khÃƒÂ´ng Ã„â€˜ÃƒÂºng Ã„â€˜Ã¡Â»â€¹nh dÃ¡ÂºÂ¡ng.',
-      );
+      throw UserRepositoryException('Email không đúng định dạng.');
     }
 
     final duplicatedEmailUser = await _localDataSource.getUserByEmail(
@@ -476,7 +436,7 @@ class UserRepository {
     );
     if (duplicatedEmailUser != null && duplicatedEmailUser.id != userId) {
       throw UserRepositoryException(
-        'Email nÃƒÂ y Ã„â€˜ang Ã„â€˜Ã†Â°Ã¡Â»Â£c dÃƒÂ¹ng bÃ¡Â»Å¸i tÃƒÂ i khoÃ¡ÂºÂ£n khÃƒÂ¡c.',
+        'Email này đang được dùng bởi tài khoản khác.',
       );
     }
 
@@ -514,23 +474,17 @@ class UserRepository {
 
       final refreshed = await _localDataSource.getUserById(userId);
       if (refreshed == null) {
-        throw UserRepositoryException(
-          'KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ£i hÃ¡Â»â€œ sÃ†Â¡ sau khi cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t.',
-        );
+        throw UserRepositoryException('Không thể tải hồ sơ sau khi cập nhật.');
       }
       return refreshed;
     } on FirebaseAuthException catch (e) {
       throw UserRepositoryException(_mapFirebaseAuthException(e));
     } on FirebaseException catch (_) {
-      throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t hÃ¡Â»â€œ sÃ†Â¡ trÃƒÂªn Firebase.',
-      );
+      throw UserRepositoryException('Không thể cập nhật hồ sơ trên Firebase.');
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
-      throw UserRepositoryException(
-        'CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t hÃ¡Â»â€œ sÃ†Â¡ thÃ¡ÂºÂ¥t bÃ¡ÂºÂ¡i.',
-      );
+      throw UserRepositoryException('Cập nhật hồ sơ thất bại.');
     }
   }
 
@@ -543,20 +497,16 @@ class UserRepository {
     final user = await _localDataSource.getUserById(userId);
     if (user == null) {
       throw UserRepositoryException(
-        'KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y tÃƒÂ i khoÃ¡ÂºÂ£n Ã„â€˜Ã¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t cÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t.',
+        'Không tìm thấy tài khoản để cập nhật cài đặt.',
       );
     }
 
     final authUser = _auth.currentUser;
     if (authUser == null) {
-      throw UserRepositoryException(
-        'PhiÃƒÂªn Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Ã„â€˜ÃƒÂ£ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n.',
-      );
+      throw UserRepositoryException('Phiên đăng nhập đã hết hạn.');
     }
     if (!_isSameSignedInUser(localUser: user, authUser: authUser)) {
-      throw UserRepositoryException(
-        'BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t cÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t nÃƒÂ y.',
-      );
+      throw UserRepositoryException('Bạn không có quyền cập nhật cài đặt này.');
     }
 
     try {
@@ -582,20 +532,18 @@ class UserRepository {
       final refreshed = await _localDataSource.getUserById(userId);
       if (refreshed == null) {
         throw UserRepositoryException(
-          'KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ£i cÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t sau khi cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t.',
+          'Không thể tải cài đặt sau khi cập nhật.',
         );
       }
       return refreshed;
     } on FirebaseException catch (_) {
       throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t cÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t trÃƒÂªn Firebase.',
+        'Không thể cập nhật cài đặt trên Firebase.',
       );
     } on UserRepositoryException {
       rethrow;
     } catch (_) {
-      throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t cÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t.',
-      );
+      throw UserRepositoryException('Không thể cập nhật cài đặt.');
     }
   }
 
@@ -605,7 +553,7 @@ class UserRepository {
   }) async {
     if (currentPassword.trim().isEmpty) {
       throw UserRepositoryException(
-        'Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u Ã„â€˜Ã¡Â»Æ’ xÃƒÂ¡c nhÃ¡ÂºÂ­n xÃƒÂ³a tÃƒÂ i khoÃ¡ÂºÂ£n.',
+        'Vui lòng nhập mật khẩu để xác nhận xóa tài khoản.',
       );
     }
     await _deleteUserInternal(userId: userId, currentPassword: currentPassword);
@@ -630,9 +578,7 @@ class UserRepository {
     }
 
     if (!_isSameSignedInUser(localUser: user, authUser: authUser)) {
-      throw UserRepositoryException(
-        'BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xÃƒÂ³a tÃƒÂ i khoÃ¡ÂºÂ£n nÃƒÂ y.',
-      );
+      throw UserRepositoryException('Bạn không có quyền xóa tài khoản này.');
     }
 
     if (currentPassword != null) {
@@ -656,14 +602,12 @@ class UserRepository {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login' && currentPassword == null) {
         throw UserRepositoryException(
-          'PhiÃƒÂªn Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p Ã„â€˜ÃƒÂ£ cÃ…Â©. Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u Ã„â€˜Ã¡Â»Æ’ xÃƒÂ¡c nhÃ¡ÂºÂ­n xÃƒÂ³a tÃƒÂ i khoÃ¡ÂºÂ£n.',
+          'Phiên đăng nhập đã cũ. Vui lòng nhập mật khẩu để xác nhận xóa tài khoản.',
         );
       }
       throw UserRepositoryException(_mapFirebaseAuthException(e));
     } catch (_) {
-      throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ xÃƒÂ³a tÃƒÂ i khoÃ¡ÂºÂ£n.',
-      );
+      throw UserRepositoryException('Không thể xóa tài khoản.');
     }
 
     await _localDataSource.deleteUserById(userId);
@@ -690,7 +634,7 @@ class UserRepository {
       await _auth.signOut();
       await _localDataSource.deactivateAllUsers();
     } catch (_) {
-      throw UserRepositoryException('Ã„ÂÃ„Æ’ng xuÃ¡ÂºÂ¥t thÃ¡ÂºÂ¥t bÃ¡ÂºÂ¡i.');
+      throw UserRepositoryException('Đăng xuất thất bại.');
     }
   }
 
@@ -700,9 +644,7 @@ class UserRepository {
   }) async {
     final normalizedEmail = (firebaseUser.email ?? '').trim().toLowerCase();
     if (normalizedEmail.isEmpty) {
-      throw UserRepositoryException(
-        'TÃƒÂ i khoÃ¡ÂºÂ£n Firebase chÃ†Â°a cÃƒÂ³ email hÃ¡Â»Â£p lÃ¡Â»â€¡.',
-      );
+      throw UserRepositoryException('Tài khoản Firebase chưa có email hợp lệ.');
     }
 
     final remoteProfile = await _fetchRemoteProfile(firebaseUser.uid);
@@ -735,11 +677,7 @@ class UserRepository {
         bio: _readString(remoteProfile, 'bio'),
         location: _readString(remoteProfile, 'location'),
         birthDate: _readString(remoteProfile, 'birthDate'),
-        avatarEmoji: _readString(
-          remoteProfile,
-          'avatarEmoji',
-          fallback: 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â¤',
-        ),
+        avatarEmoji: _readString(remoteProfile, 'avatarEmoji', fallback: '🙂'),
         notificationsEnabled: _readBool(
           remoteProfile,
           'notificationsEnabled',
@@ -764,9 +702,7 @@ class UserRepository {
       await _localDataSource.setOnlyActiveUser(insertedId);
       final persisted = await _localDataSource.getUserById(insertedId);
       if (persisted == null) {
-        throw UserRepositoryException(
-          'KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o hÃ¡Â»â€œ sÃ†Â¡ ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng.',
-        );
+        throw UserRepositoryException('Không thể tạo hồ sơ người dùng.');
       }
       if (remoteProfile == null) {
         await _tryCreateRemoteProfile(
@@ -822,9 +758,7 @@ class UserRepository {
     await _localDataSource.setOnlyActiveUser(user.id!);
     final persisted = await _localDataSource.getUserById(user.id!);
     if (persisted == null) {
-      throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ£i phiÃƒÂªn Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p.',
-      );
+      throw UserRepositoryException('Không thể tải phiên đăng nhập.');
     }
     if (remoteProfile == null) {
       await _tryCreateRemoteProfile(
@@ -867,7 +801,7 @@ class UserRepository {
       'bio': '',
       'location': '',
       'birthDate': '',
-      'avatarEmoji': 'Ã°Å¸â€˜Â¤',
+      'avatarEmoji': '🙂',
       'notificationsEnabled': true,
       'soundEnabled': true,
       'darkModeEnabled': false,
@@ -1096,7 +1030,7 @@ class UserRepository {
     final normalizedEmail = (authUser.email ?? '').trim().toLowerCase();
     if (normalizedEmail.isEmpty) {
       throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ xÃƒÂ¡c thÃ¡Â»Â±c lÃ¡ÂºÂ¡i tÃƒÂ i khoÃ¡ÂºÂ£n hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i.',
+        'Không thể xác thực lại tài khoản hiện tại.',
       );
     }
 
@@ -1110,7 +1044,7 @@ class UserRepository {
       throw UserRepositoryException(_mapFirebaseAuthException(e));
     } catch (_) {
       throw UserRepositoryException(
-        'KhÃƒÂ´ng thÃ¡Â»Æ’ xÃƒÂ¡c thÃ¡Â»Â±c lÃ¡ÂºÂ¡i tÃƒÂ i khoÃ¡ÂºÂ£n. Vui lÃƒÂ²ng thÃ¡Â»Â­ lÃ¡ÂºÂ¡i.',
+        'Không thể xác thực lại tài khoản. Vui lòng thử lại.',
       );
     }
   }
