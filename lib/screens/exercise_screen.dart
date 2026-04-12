@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../data/models/flashcard_model.dart';
 import '../data/services/app_services.dart';
 
 // ─── MULTIPLE CHOICE ─────────────────────────────────────────────────────────
@@ -103,6 +104,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
       'listening' => '/exercise/listening',
       'speaking' => '/exercise/speaking',
       'matching' => '/exercise/matching',
+      'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
     context.go(route);
@@ -482,6 +484,25 @@ class _ListeningScreenState extends State<ListeningScreen>
   late List<_BlankData> _blanks;
   late List<String> _wordBank;
 
+  String _ensureListeningTemplate(String question, String correctAnswer) {
+    final baseQuestion = question.trim();
+    if (baseQuestion.contains('___')) return baseQuestion;
+    if (baseQuestion.isEmpty) return '___';
+
+    final answer = correctAnswer.trim();
+    if (answer.isNotEmpty) {
+      final answerRegex = RegExp(
+        r'\b' + RegExp.escape(answer) + r'\b',
+        caseSensitive: false,
+      );
+      final replaced = baseQuestion.replaceFirst(answerRegex, '___');
+      if (replaced != baseQuestion) return replaced;
+    }
+
+    // Fallback: append one blank so UI always has an input.
+    return '$baseQuestion ___';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -494,15 +515,21 @@ class _ListeningScreenState extends State<ListeningScreen>
     _total = session.total > 0 ? session.total : 10;
     final ex = session.current;
     if (ex != null && ex.type == 'listening') {
-      _fullSentence = ex.question.replaceAll('___', ex.correctAnswer);
+      final template = _ensureListeningTemplate(ex.question, ex.correctAnswer);
+      _fullSentence = template.replaceAll('___', ex.correctAnswer);
       // Parse question to build sentence words, blanks, and word bank
-      final tokens = ex.question.split(RegExp(r'\s+'));
+      final normalizedTemplate = template.replaceAll('___', ' ___ ');
+      final tokens = normalizedTemplate
+          .split(RegExp(r'\s+'))
+          .map((token) => token.trim())
+          .where((token) => token.isNotEmpty)
+          .toList();
       final words = <String>[];
       final blankEntries = <_BlankData>[];
       int blankId = 0;
       for (final token in tokens) {
-        if (token.contains('___')) {
-          final afterIdx = words.isEmpty ? 0 : words.length - 1;
+        if (token == '___') {
+          final afterIdx = words.length - 1;
           blankEntries.add(
             _BlankData(
               id: blankId,
@@ -511,12 +538,22 @@ class _ListeningScreenState extends State<ListeningScreen>
             ),
           );
           blankId++;
-          final suffix = token.replaceAll('___', '').trim();
-          if (suffix.isNotEmpty) words.add(suffix);
         } else {
           words.add(token);
         }
       }
+
+      if (blankEntries.isEmpty) {
+        final afterIdx = words.isEmpty ? 0 : words.length - 1;
+        blankEntries.add(
+          _BlankData(
+            id: 0,
+            afterWordIndex: afterIdx,
+            correctAnswer: ex.correctAnswer,
+          ),
+        );
+      }
+
       _sentence = words;
       _blanks = blankEntries;
       // Build word bank: correct answer + distractors
@@ -573,6 +610,7 @@ class _ListeningScreenState extends State<ListeningScreen>
       'listening' => '/exercise/listening',
       'speaking' => '/exercise/speaking',
       'matching' => '/exercise/matching',
+      'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
     context.go(route);
@@ -866,9 +904,88 @@ class _SentenceBuilder extends StatelessWidget {
   final bool isChecked;
   final bool Function(int) isBlankCorrect;
 
+  Widget _buildBlankWidget(_BlankData blank) {
+    final correct = isChecked && isBlankCorrect(blank.id);
+    final wrong = isChecked && !isBlankCorrect(blank.id);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 110,
+          child: TextField(
+            controller: textCtrlMap[blank.id],
+            enabled: !isChecked,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: correct
+                  ? const Color(0xFF16A34A)
+                  : wrong
+                  ? const Color(0xFFDC2626)
+                  : const Color(0xFF111827),
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFA5C5C),
+                  width: 2,
+                ),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: correct
+                      ? const Color(0xFF22C55E)
+                      : const Color(0xFFEF4444),
+                  width: 2,
+                ),
+              ),
+              fillColor: correct
+                  ? const Color(0xFFF0FDF4)
+                  : wrong
+                  ? const Color(0xFFFEF2F2)
+                  : Colors.white,
+              filled: true,
+            ),
+          ),
+        ),
+        if (wrong)
+          Text(
+            blank.correctAnswer,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF16A34A),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final parts = <Widget>[];
+    final leadingBlanks = blanks.where((b) => b.afterWordIndex < 0).toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    for (final blank in leadingBlanks) {
+      parts.add(_buildBlankWidget(blank));
+    }
+
     for (int i = 0; i < sentence.length; i++) {
       parts.add(
         Text(
@@ -880,80 +997,10 @@ class _SentenceBuilder extends StatelessWidget {
           ),
         ),
       );
-      final blank = blanks.where((b) => b.afterWordIndex == i).firstOrNull;
-      if (blank != null) {
-        final correct = isChecked && isBlankCorrect(blank.id);
-        final wrong = isChecked && !isBlankCorrect(blank.id);
-        parts.add(
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 110,
-                child: TextField(
-                  controller: textCtrlMap[blank.id],
-                  enabled: !isChecked,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: correct
-                        ? const Color(0xFF16A34A)
-                        : wrong
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFF111827),
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 10,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFA5C5C),
-                        width: 2,
-                      ),
-                    ),
-                    disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: correct
-                            ? const Color(0xFF22C55E)
-                            : const Color(0xFFEF4444),
-                        width: 2,
-                      ),
-                    ),
-                    fillColor: correct
-                        ? const Color(0xFFF0FDF4)
-                        : wrong
-                        ? const Color(0xFFFEF2F2)
-                        : Colors.white,
-                    filled: true,
-                  ),
-                ),
-              ),
-              if (wrong)
-                Text(
-                  blank.correctAnswer,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF16A34A),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ],
-          ),
-        );
+      final blanksAfter = blanks.where((b) => b.afterWordIndex == i).toList()
+        ..sort((a, b) => a.id.compareTo(b.id));
+      for (final blank in blanksAfter) {
+        parts.add(_buildBlankWidget(blank));
       }
     }
     return Wrap(
@@ -968,7 +1015,11 @@ class _SentenceBuilder extends StatelessWidget {
 // ─── SPEAKING ─────────────────────────────────────────────────────────────────
 
 class _WordMatch {
-  const _WordMatch({required this.target, required this.spoken, required this.isMatch});
+  const _WordMatch({
+    required this.target,
+    required this.spoken,
+    required this.isMatch,
+  });
   final String target;
   final String spoken;
   final bool isMatch;
@@ -1398,7 +1449,9 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
     for (var i = 0; i < tWords.length; i++) {
       if (i < sWords.length) {
         final match = tWords[i] == sWords[i];
-        matches.add(_WordMatch(target: tWords[i], spoken: sWords[i], isMatch: match));
+        matches.add(
+          _WordMatch(target: tWords[i], spoken: sWords[i], isMatch: match),
+        );
       } else {
         matches.add(_WordMatch(target: tWords[i], spoken: '', isMatch: false));
       }
@@ -1640,6 +1693,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
       'listening' => '/exercise/listening',
       'speaking' => '/exercise/speaking',
       'matching' => '/exercise/matching',
+      'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
     context.go(route);
@@ -1931,10 +1985,19 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: isExcellent
-                                ? [const Color(0xFFF0FDF4), const Color(0xFFDCFCE7)]
+                                ? [
+                                    const Color(0xFFF0FDF4),
+                                    const Color(0xFFDCFCE7),
+                                  ]
                                 : acc >= 50
-                                ? [const Color(0xFFFEFCE8), const Color(0xFFFEF9C3)]
-                                : [const Color(0xFFFEF2F2), const Color(0xFFFEE2E2)],
+                                ? [
+                                    const Color(0xFFFEFCE8),
+                                    const Color(0xFFFEF9C3),
+                                  ]
+                                : [
+                                    const Color(0xFFFEF2F2),
+                                    const Color(0xFFFEE2E2),
+                                  ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -1966,15 +2029,29 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                                     shape: BoxShape.circle,
                                   ),
                                   child: isExcellent
-                                      ? const Icon(Icons.check_circle_rounded, color: Colors.white, size: 32)
+                                      ? const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: Colors.white,
+                                          size: 32,
+                                        )
                                       : acc >= 50
-                                      ? const Center(child: Text('💪', style: TextStyle(fontSize: 26)))
-                                      : const Icon(Icons.refresh_rounded, color: Colors.white, size: 32),
+                                      ? const Center(
+                                          child: Text(
+                                            '💪',
+                                            style: TextStyle(fontSize: 26),
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.refresh_rounded,
+                                          color: Colors.white,
+                                          size: 32,
+                                        ),
                                 ),
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         isExcellent
@@ -2027,7 +2104,10 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                                     ),
                                     const Text(
                                       'Độ chính xác',
-                                      style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF6B7280),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -2041,18 +2121,19 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                                 tween: Tween(begin: 0, end: acc / 100),
                                 duration: const Duration(milliseconds: 1000),
                                 curve: Curves.easeOut,
-                                builder: (context, value, _) => LinearProgressIndicator(
-                                  value: value,
-                                  minHeight: 12,
-                                  backgroundColor: const Color(0xFFE5E7EB),
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    isExcellent
-                                        ? const Color(0xFF22C55E)
-                                        : acc >= 50
-                                        ? const Color(0xFFEAB308)
-                                        : const Color(0xFFEF4444),
-                                  ),
-                                ),
+                                builder: (context, value, _) =>
+                                    LinearProgressIndicator(
+                                      value: value,
+                                      minHeight: 12,
+                                      backgroundColor: const Color(0xFFE5E7EB),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        isExcellent
+                                            ? const Color(0xFF22C55E)
+                                            : acc >= 50
+                                            ? const Color(0xFFEAB308)
+                                            : const Color(0xFFEF4444),
+                                      ),
+                                    ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -2111,12 +2192,17 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                                       runSpacing: 4,
                                       children: _wordMatches.map((wm) {
                                         return Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: wm.isMatch
                                                 ? const Color(0xFFDCFCE7)
                                                 : const Color(0xFFFEE2E2),
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             border: Border.all(
                                               color: wm.isMatch
                                                   ? const Color(0xFF22C55E)
@@ -2125,7 +2211,9 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
                                             ),
                                           ),
                                           child: Text(
-                                            wm.spoken.isNotEmpty ? wm.spoken : '___',
+                                            wm.spoken.isNotEmpty
+                                                ? wm.spoken
+                                                : '___',
                                             style: TextStyle(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w600,
@@ -2258,30 +2346,59 @@ class MatchingExerciseScreen extends StatefulWidget {
 
 class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
     with SingleTickerProviderStateMixin {
-  static const _correctOrder = ['I', 'love', 'learning', 'English'];
+  static const _defaultCorrectOrder = ['I', 'love', 'learning', 'English'];
+  late List<String> _correctOrder;
   late List<_WordItem> _available;
   final List<_WordItem> _ordered = [];
   bool _isChecked = false;
   late AnimationController _resultCtrl;
   late int _progress;
   late int _total;
+  late String _instructionHint;
 
   @override
   void initState() {
     super.initState();
-    _available = [
-      _WordItem(id: 0, text: 'English'),
-      _WordItem(id: 1, text: 'love'),
-      _WordItem(id: 2, text: 'I'),
-      _WordItem(id: 3, text: 'learning'),
-    ];
     _resultCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
+
     final session = AppServices.exerciseSession;
     _progress = session.total > 0 ? session.currentIndex + 1 : 7;
     _total = session.total > 0 ? session.total : 10;
+    _instructionHint = 'Tap words to build the sentence';
+
+    final ex = session.current;
+    if (ex != null && (ex.type == 'matching' || ex.type == 'writing')) {
+      final answerWords = _splitWords(ex.correctAnswer);
+      _correctOrder = answerWords.isNotEmpty
+          ? answerWords
+          : List<String>.from(_defaultCorrectOrder);
+
+      final optionWords = _splitOptions(ex.options);
+      final initialWords = _hasSameWordBag(optionWords, _correctOrder)
+          ? List<String>.from(optionWords)
+          : List<String>.from(_correctOrder);
+      initialWords.shuffle();
+
+      _available = List.generate(
+        initialWords.length,
+        (index) => _WordItem(id: index, text: initialWords[index]),
+      );
+
+      final rawHint = ex.question.trim();
+      if (rawHint.isNotEmpty) {
+        _instructionHint = rawHint;
+      }
+    } else {
+      _correctOrder = List<String>.from(_defaultCorrectOrder);
+      final initialWords = List<String>.from(_defaultCorrectOrder)..shuffle();
+      _available = List.generate(
+        initialWords.length,
+        (index) => _WordItem(id: index, text: initialWords[index]),
+      );
+    }
   }
 
   @override
@@ -2290,9 +2407,65 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
     super.dispose();
   }
 
-  bool get _isCorrect =>
-      _ordered.map((w) => w.text).join(' ') == _correctOrder.join(' ');
+  bool get _isCorrect {
+    if (_ordered.length != _correctOrder.length) return false;
+    for (var i = 0; i < _correctOrder.length; i++) {
+      if (_normalizeWord(_ordered[i].text) !=
+          _normalizeWord(_correctOrder[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool get _canCheck => _ordered.length == _correctOrder.length;
+
+  List<String> _splitWords(String value) {
+    return value
+        .split(RegExp(r'\s+'))
+        .map((word) => word.trim())
+        .where((word) => word.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _splitOptions(String value) {
+    if (value.trim().isEmpty) return const [];
+    return value
+        .split('|')
+        .map((word) => word.trim())
+        .where((word) => word.isNotEmpty)
+        .toList();
+  }
+
+  bool _hasSameWordBag(List<String> left, List<String> right) {
+    if (left.length != right.length) return false;
+    final counts = <String, int>{};
+
+    for (final word in left) {
+      final normalized = _normalizeWord(word);
+      counts.update(normalized, (value) => value + 1, ifAbsent: () => 1);
+    }
+
+    for (final word in right) {
+      final normalized = _normalizeWord(word);
+      final current = counts[normalized];
+      if (current == null || current == 0) return false;
+      if (current == 1) {
+        counts.remove(normalized);
+      } else {
+        counts[normalized] = current - 1;
+      }
+    }
+
+    return counts.isEmpty;
+  }
+
+  String _normalizeWord(String value) {
+    return value.toLowerCase().trim().replaceAll(
+      RegExp(r'^[^A-Za-z0-9]+|[^A-Za-z0-9]+$'),
+      '',
+    );
+  }
 
   void _add(_WordItem w) {
     if (_isChecked) return;
@@ -2336,6 +2509,7 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
       'listening' => '/exercise/listening',
       'speaking' => '/exercise/speaking',
       'matching' => '/exercise/matching',
+      'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
     context.go(route);
@@ -2361,10 +2535,10 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
-                      Text('🔤', style: TextStyle(fontSize: 30)),
-                      SizedBox(width: 10),
-                      Expanded(
+                    children: [
+                      const Text('🔤', style: TextStyle(fontSize: 30)),
+                      const SizedBox(width: 10),
+                      const Expanded(
                         child: Text(
                           'Put the words in the correct order',
                           style: TextStyle(
@@ -2377,11 +2551,14 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 40),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 40),
                     child: Text(
-                      'Tap words to build the sentence',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                      _instructionHint,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6B7280),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -2430,7 +2607,7 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        '👆',
+                                        '👇',
                                         style: TextStyle(fontSize: 32),
                                       ),
                                       SizedBox(height: 6),
@@ -3521,8 +3698,9 @@ class _FlashcardData {
 }
 
 class FlashcardScreen extends StatefulWidget {
-  const FlashcardScreen({super.key, this.isExercise = false});
+  const FlashcardScreen({super.key, this.isExercise = false, this.lessonId});
   final bool isExercise;
+  final int? lessonId;
   @override
   State<FlashcardScreen> createState() => _FlashcardScreenState();
 }
@@ -3535,7 +3713,7 @@ class _FlashcardScreenState extends State<FlashcardScreen>
   late Animation<double> _flipAnim;
   late PageController _pageCtrl;
 
-  static const _cards = [
+  static const _fallbackCards = [
     _FlashcardData(
       word: 'Happy',
       translation: 'Vui Vẻ',
@@ -3583,6 +3761,9 @@ class _FlashcardScreenState extends State<FlashcardScreen>
     ),
   ];
 
+  List<_FlashcardData> _cards = List<_FlashcardData>.from(_fallbackCards);
+  bool _isLoadingCards = true;
+
   @override
   void initState() {
     super.initState();
@@ -3592,6 +3773,40 @@ class _FlashcardScreenState extends State<FlashcardScreen>
       duration: const Duration(milliseconds: 400),
     );
     _flipAnim = CurvedAnimation(parent: _flipCtrl, curve: Curves.easeInOut);
+    _loadCards();
+  }
+
+  Future<void> _loadCards() async {
+    final lessonId = widget.lessonId ?? AppServices.exerciseSession.lessonId;
+    final remoteCards = await AppServices.learningContentService.getFlashcards(
+      lessonId: lessonId > 0 ? lessonId : null,
+    );
+    if (!mounted) return;
+
+    if (remoteCards.isEmpty) {
+      setState(() => _isLoadingCards = false);
+      return;
+    }
+
+    setState(() {
+      _cards = remoteCards.map(_toFlashcardData).toList();
+      _isLoadingCards = false;
+      _currentIndex = 0;
+      _isFlipped = false;
+      _flipCtrl.value = 0;
+    });
+  }
+
+  _FlashcardData _toFlashcardData(FlashcardModel model) {
+    return _FlashcardData(
+      word: model.word,
+      translation: model.translation,
+      phonetic: model.phonetic,
+      example: model.example,
+      illustration: model.illustration,
+      gradStart: Color(model.gradStart),
+      gradEnd: Color(model.gradEnd),
+    );
   }
 
   @override
@@ -3848,6 +4063,13 @@ class _FlashcardScreenState extends State<FlashcardScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingCards) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF9FAFB),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final progress = (_currentIndex + 1) / _cards.length;
     final isLast = _currentIndex == _cards.length - 1;
     return Scaffold(

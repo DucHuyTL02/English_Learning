@@ -16,6 +16,22 @@ class LearningRepository {
   LearningRepository(this._ds);
   final LearningLocalDataSource _ds;
 
+  Future<void> upsertLearningContent({
+    required List<UnitModel> units,
+    required List<LessonModel> lessons,
+    required List<ExerciseModel> exercises,
+  }) async {
+    try {
+      await _ds.upsertLearningContent(
+        units: units,
+        lessons: lessons,
+        exercises: exercises,
+      );
+    } catch (_) {
+      throw LearningRepositoryException('Khong the dong bo noi dung bai hoc.');
+    }
+  }
+
   // ── Units & Lessons ──
 
   Future<List<UnitModel>> getUnits() async {
@@ -126,7 +142,11 @@ class LearningRepository {
     }
   }
 
-  Future<List<DailyActivityModel>> getActivitiesForMonth(int userId, int year, int month) async {
+  Future<List<DailyActivityModel>> getActivitiesForMonth(
+    int userId,
+    int year,
+    int month,
+  ) async {
     try {
       return await _ds.getActivitiesForMonth(userId, year, month);
     } catch (_) {

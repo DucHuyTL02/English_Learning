@@ -554,7 +554,8 @@ class _NextLessonCardState extends State<_NextLessonCard> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => context.push('/lesson-intro'),
+                      onPressed: () =>
+                          context.push('/lesson-intro?lessonId=$_lessonId'),
                       icon: const Icon(Icons.play_arrow_rounded, size: 26),
                       label: const Text(
                         'Bắt Đầu Bài Học',
@@ -734,7 +735,7 @@ class _LearningPathMap extends StatelessWidget {
                                 ? null
                                 : () => context.go(
                                     node.current
-                                        ? '/lesson-intro'
+                                        ? '/lesson-intro?lessonId=${node.id}'
                                         : '/course-map',
                                   ),
                             child: _NodeWidget(node: node),

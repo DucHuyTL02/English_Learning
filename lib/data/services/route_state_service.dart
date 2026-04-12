@@ -36,6 +36,7 @@ class RouteStateService {
       '/register',
       '/verify-email',
       '/forgot-password',
+      '/change-password',
     };
     if (blockedRoutes.contains(path)) return false;
     if (path.startsWith('/onboarding')) return false;

@@ -1,0 +1,180 @@
+{
+  "units": [
+    { "id": 1, "title": "Co Ban", "sort_order": 1 },
+    { "id": 2, "title": "Cuoc Song Hang Ngay", "sort_order": 2 },
+    { "id": 3, "title": "Giao Tiep", "sort_order": 3 }
+  ],
+  "lessons": [
+    { "id": 1, "unit_id": 1, "title": "Chao Hoi", "icon": "👋", "sort_order": 1, "xp_reward": 50 },
+    { "id": 2, "unit_id": 1, "title": "Gia Dinh", "icon": "👨‍👩‍👧", "sort_order": 2, "xp_reward": 50 },
+    { "id": 3, "unit_id": 1, "title": "Do An", "icon": "🍕", "sort_order": 3, "xp_reward": 50 },
+    { "id": 4, "unit_id": 1, "title": "Mau Sac", "icon": "🎨", "sort_order": 4, "xp_reward": 50 },
+    { "id": 5, "unit_id": 1, "title": "So Dem", "icon": "🔢", "sort_order": 5, "xp_reward": 50 },
+    { "id": 6, "unit_id": 2, "title": "Thoi Gian", "icon": "⏰", "sort_order": 1, "xp_reward": 60 },
+    { "id": 7, "unit_id": 2, "title": "Thoi Tiet", "icon": "🌤", "sort_order": 2, "xp_reward": 60 },
+    { "id": 8, "unit_id": 2, "title": "Mua Sam", "icon": "🛍", "sort_order": 3, "xp_reward": 60 },
+    { "id": 9, "unit_id": 2, "title": "Phuong Tien", "icon": "🚗", "sort_order": 4, "xp_reward": 60 },
+    { "id": 10, "unit_id": 3, "title": "Dat Cau Hoi", "icon": "❓", "sort_order": 1, "xp_reward": 70 },
+    { "id": 11, "unit_id": 3, "title": "Chi Duong", "icon": "🧭", "sort_order": 2, "xp_reward": 70 },
+    { "id": 12, "unit_id": 3, "title": "Goi Dien", "icon": "📞", "sort_order": 3, "xp_reward": 70 }
+  ],
+  "exercises": [
+    {
+      "id": 1,
+      "lesson_id": 4,
+      "type": "multiple_choice",
+      "sort_order": 1,
+      "question": "What color is the sky?",
+      "correct_answer": "Blue - Xanh duong",
+      "options": ["Red", "Blue - Xanh duong", "Green", "Yellow"],
+      "illustration": "☁️"
+    },
+    {
+      "id": 2,
+      "lesson_id": 4,
+      "type": "multiple_choice",
+      "sort_order": 2,
+      "question": "What color is a banana?",
+      "correct_answer": "Yellow",
+      "options": ["Red", "Blue", "Green", "Yellow"],
+      "illustration": "🍌"
+    },
+    {
+      "id": 3,
+      "lesson_id": 4,
+      "type": "listening",
+      "sort_order": 3,
+      "question": "The sky is ___.",
+      "correct_answer": "blue",
+      "options": [],
+      "illustration": ""
+    },
+    {
+      "id": 4,
+      "lesson_id": 4,
+      "type": "speaking",
+      "sort_order": 4,
+      "question": "Say: The apple is red.",
+      "correct_answer": "The apple is red",
+      "options": [],
+      "illustration": "🍎"
+    },
+    {
+      "id": 5,
+      "lesson_id": 4,
+      "type": "multiple_choice",
+      "sort_order": 5,
+      "question": "What color is grass?",
+      "correct_answer": "Green - Xanh la",
+      "options": ["Red - Do", "Blue - Xanh duong", "Green - Xanh la", "Yellow - Vang"],
+      "illustration": "🌿"
+    },
+    {
+      "id": 6,
+      "lesson_id": 4,
+      "type": "multiple_choice",
+      "sort_order": 6,
+      "question": "What color is snow?",
+      "correct_answer": "White",
+      "options": ["White", "Black", "Red", "Blue"],
+      "illustration": "❄️"
+    },
+    {
+      "id": 7,
+      "lesson_id": 4,
+      "type": "listening",
+      "sort_order": 7,
+      "question": "The sun is ___.",
+      "correct_answer": "yellow",
+      "options": [],
+      "illustration": ""
+    },
+    {
+      "id": 8,
+      "lesson_id": 4,
+      "type": "multiple_choice",
+      "sort_order": 8,
+      "question": "What color is an orange?",
+      "correct_answer": "Orange - Cam",
+      "options": ["Orange", "Purple", "Pink", "Brown"],
+      "illustration": "🍊"
+    },
+    {
+      "id": 9,
+      "lesson_id": 4,
+      "type": "speaking",
+      "sort_order": 9,
+      "question": "Say: My favorite color is blue.",
+      "correct_answer": "My favorite color is blue",
+      "options": [],
+      "illustration": "💙"
+    },
+    {
+      "id": 10,
+      "lesson_id": 4,
+      "type": "multiple_choice",
+      "sort_order": 10,
+      "question": "What color is a strawberry?",
+      "correct_answer": "Red - Do",
+      "options": ["Red", "Blue", "Green", "Yellow"],
+      "illustration": "🍓"
+    },
+    {
+      "id": 11,
+      "lesson_id": 4,
+      "type": "matching",
+      "sort_order": 11,
+      "question": "Arrange words: I love learning English.",
+      "correct_answer": "I love learning English",
+      "options": ["I", "love", "learning", "English"],
+      "illustration": "✍️"
+    }
+  ],
+  "flashcards": [
+    {
+      "word": "Happy",
+      "translation": "Vui ve",
+      "phonetic": "/ˈhæpi/",
+      "example": "I am happy today",
+      "illustration": "😊",
+      "grad_start": "#FBEF76",
+      "grad_end": "#FEC288"
+    },
+    {
+      "word": "Beautiful",
+      "translation": "Xinh dep",
+      "phonetic": "/ˈbjuːtɪfəl/",
+      "example": "The flower is beautiful",
+      "illustration": "🌸",
+      "grad_start": "#FD8A6B",
+      "grad_end": "#FA5C5C"
+    },
+    {
+      "word": "Friendly",
+      "translation": "Than thien",
+      "phonetic": "/ˈfrendli/",
+      "example": "She is very friendly",
+      "illustration": "🤝",
+      "grad_start": "#FEC288",
+      "grad_end": "#FD8A6B"
+    },
+    {
+      "word": "Delicious",
+      "translation": "Thom ngon",
+      "phonetic": "/dɪˈlɪʃəs/",
+      "example": "This food is delicious",
+      "illustration": "🍕",
+      "grad_start": "#FA5C5C",
+      "grad_end": "#FD8A6B"
+    },
+    {
+      "word": "Exciting",
+      "translation": "Thu vi",
+      "phonetic": "/ɪkˈsaɪtɪŋ/",
+      "example": "The game is exciting",
+      "illustration": "🎉",
+      "grad_start": "#FBEF76",
+      "grad_end": "#FEC288"
+    }
+  ]
+}

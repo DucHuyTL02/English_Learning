@@ -4,17 +4,72 @@ import '../models/lesson_model.dart';
 import '../models/exercise_model.dart';
 import '../models/user_progress_model.dart';
 import '../models/daily_activity_model.dart';
+import 'package:sqflite/sqflite.dart';
 
 class LearningLocalDataSource {
   LearningLocalDataSource(this._appDatabase);
 
   final AppDatabase _appDatabase;
 
+  Future<void> upsertLearningContent({
+    required List<UnitModel> units,
+    required List<LessonModel> lessons,
+    required List<ExerciseModel> exercises,
+  }) async {
+    if (units.isEmpty || lessons.isEmpty || exercises.isEmpty) return;
+
+    final db = await _appDatabase.database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+
+      for (final unit in units) {
+        if (unit.id == null) continue;
+        batch.insert(
+          AppDatabase.unitsTable,
+          unit.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      for (final lesson in lessons) {
+        if (lesson.id == null) continue;
+        batch.insert(
+          AppDatabase.lessonsTable,
+          lesson.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final lessonIds = exercises.map((e) => e.lessonId).toSet();
+      for (final lessonId in lessonIds) {
+        batch.delete(
+          AppDatabase.exercisesTable,
+          where: 'lesson_id = ?',
+          whereArgs: [lessonId],
+        );
+      }
+
+      for (final exercise in exercises) {
+        final payload = exercise.toMap()..remove('id');
+        batch.insert(
+          AppDatabase.exercisesTable,
+          payload,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      await batch.commit(noResult: true);
+    });
+  }
+
   // ── Units ──
 
   Future<List<UnitModel>> getUnits() async {
     final db = await _appDatabase.database;
-    final maps = await db.query(AppDatabase.unitsTable, orderBy: 'sort_order ASC');
+    final maps = await db.query(
+      AppDatabase.unitsTable,
+      orderBy: 'sort_order ASC',
+    );
     return maps.map(UnitModel.fromMap).toList();
   }
 
@@ -33,7 +88,10 @@ class LearningLocalDataSource {
 
   Future<List<LessonModel>> getAllLessons() async {
     final db = await _appDatabase.database;
-    final maps = await db.query(AppDatabase.lessonsTable, orderBy: 'unit_id ASC, sort_order ASC');
+    final maps = await db.query(
+      AppDatabase.lessonsTable,
+      orderBy: 'unit_id ASC, sort_order ASC',
+    );
     return maps.map(LessonModel.fromMap).toList();
   }
 
@@ -105,7 +163,11 @@ class LearningLocalDataSource {
 
   // ── Daily Activity ──
 
-  Future<List<DailyActivityModel>> getActivitiesForMonth(int userId, int year, int month) async {
+  Future<List<DailyActivityModel>> getActivitiesForMonth(
+    int userId,
+    int year,
+    int month,
+  ) async {
     final db = await _appDatabase.database;
     final startDate = '$year-${month.toString().padLeft(2, '0')}-01';
     final endMonth = month == 12 ? 1 : month + 1;
@@ -134,7 +196,8 @@ class LearningLocalDataSource {
   Future<void> recordActivity(int userId, int xpEarned) async {
     final db = await _appDatabase.database;
     final today = DateTime.now();
-    final dateStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
     final existing = await db.query(
       AppDatabase.dailyActivityTable,
@@ -162,7 +225,8 @@ class LearningLocalDataSource {
     final activities = await getAllActivities(userId);
     if (activities.isEmpty) return 0;
 
-    final dates = activities.map((a) => DateTime.parse(a.date)).toList()..sort();
+    final dates = activities.map((a) => DateTime.parse(a.date)).toList()
+      ..sort();
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
 
@@ -170,21 +234,35 @@ class LearningLocalDataSource {
     var checkDate = todayDate;
 
     // Check if today has activity
-    final todayHasActivity = dates.any((d) =>
-        d.year == checkDate.year && d.month == checkDate.month && d.day == checkDate.day);
+    final todayHasActivity = dates.any(
+      (d) =>
+          d.year == checkDate.year &&
+          d.month == checkDate.month &&
+          d.day == checkDate.day,
+    );
 
     if (!todayHasActivity) {
       // Check if yesterday had activity (streak can still be valid)
       checkDate = todayDate.subtract(const Duration(days: 1));
-      final yesterdayHasActivity = dates.any((d) =>
-          d.year == checkDate.year && d.month == checkDate.month && d.day == checkDate.day);
+      final yesterdayHasActivity = dates.any(
+        (d) =>
+            d.year == checkDate.year &&
+            d.month == checkDate.month &&
+            d.day == checkDate.day,
+      );
       if (!yesterdayHasActivity) return 0;
     }
 
     // Count consecutive days backward
-    for (var date = checkDate; ; date = date.subtract(const Duration(days: 1))) {
-      final hasActivity = dates.any((d) =>
-          d.year == date.year && d.month == date.month && d.day == date.day);
+    for (
+      var date = checkDate;
+      ;
+      date = date.subtract(const Duration(days: 1))
+    ) {
+      final hasActivity = dates.any(
+        (d) =>
+            d.year == date.year && d.month == date.month && d.day == date.day,
+      );
       if (hasActivity) {
         streak++;
       } else {
@@ -198,7 +276,8 @@ class LearningLocalDataSource {
     final activities = await getAllActivities(userId);
     if (activities.isEmpty) return 0;
 
-    final dates = activities.map((a) => DateTime.parse(a.date)).toList()..sort();
+    final dates = activities.map((a) => DateTime.parse(a.date)).toList()
+      ..sort();
 
     int longest = 1;
     int current = 1;

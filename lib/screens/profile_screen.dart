@@ -13,6 +13,7 @@ const Set<String> _detailRoutes = {
   '/edit-profile',
   '/subscription',
   '/forgot-password',
+  '/change-password',
   '/help',
 };
 
@@ -1586,7 +1587,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 label: 'Đổi Mật Khẩu',
                                 danger: false,
                                 enabled: !_isDeleting,
-                                onTap: () {},
+                                onTap: () => context.push('/change-password'),
                               ),
                               const SizedBox(height: 10),
                               _AccountActionBtn(
@@ -1905,7 +1906,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: 'Đổi Mật Khẩu',
             desc: 'Cập nhật thông tin bảo mật',
             type: _ItemType.navigate,
-            onTap: () => context.push('/forgot-password'),
+            onTap: () => context.push('/change-password'),
           ),
           _SettingsItem(
             icon: Icons.shield_outlined,

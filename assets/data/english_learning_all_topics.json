@@ -1,0 +1,2483 @@
+{
+  "units": [
+    {
+      "id": 1,
+      "title": "Co Ban",
+      "sort_order": 1
+    },
+    {
+      "id": 2,
+      "title": "Cuoc Song Hang Ngay",
+      "sort_order": 2
+    },
+    {
+      "id": 3,
+      "title": "Giao Tiep",
+      "sort_order": 3
+    }
+  ],
+  "lessons": [
+    {
+      "id": 1,
+      "unit_id": 1,
+      "title": "Chao Hoi",
+      "icon": "👋",
+      "sort_order": 1,
+      "xp_reward": 50
+    },
+    {
+      "id": 2,
+      "unit_id": 1,
+      "title": "Gia Dinh",
+      "icon": "👨‍👩‍👧",
+      "sort_order": 2,
+      "xp_reward": 50
+    },
+    {
+      "id": 3,
+      "unit_id": 1,
+      "title": "Do An",
+      "icon": "🍕",
+      "sort_order": 3,
+      "xp_reward": 50
+    },
+    {
+      "id": 4,
+      "unit_id": 1,
+      "title": "Mau Sac",
+      "icon": "🎨",
+      "sort_order": 4,
+      "xp_reward": 50
+    },
+    {
+      "id": 5,
+      "unit_id": 1,
+      "title": "So Dem",
+      "icon": "🔢",
+      "sort_order": 5,
+      "xp_reward": 50
+    },
+    {
+      "id": 6,
+      "unit_id": 2,
+      "title": "Thoi Gian",
+      "icon": "⏰",
+      "sort_order": 1,
+      "xp_reward": 60
+    },
+    {
+      "id": 7,
+      "unit_id": 2,
+      "title": "Thoi Tiet",
+      "icon": "🌤",
+      "sort_order": 2,
+      "xp_reward": 60
+    },
+    {
+      "id": 8,
+      "unit_id": 2,
+      "title": "Mua Sam",
+      "icon": "🛍",
+      "sort_order": 3,
+      "xp_reward": 60
+    },
+    {
+      "id": 9,
+      "unit_id": 2,
+      "title": "Phuong Tien",
+      "icon": "🚗",
+      "sort_order": 4,
+      "xp_reward": 60
+    },
+    {
+      "id": 10,
+      "unit_id": 3,
+      "title": "Dat Cau Hoi",
+      "icon": "❓",
+      "sort_order": 1,
+      "xp_reward": 70
+    },
+    {
+      "id": 11,
+      "unit_id": 3,
+      "title": "Chi Duong",
+      "icon": "🧭",
+      "sort_order": 2,
+      "xp_reward": 70
+    },
+    {
+      "id": 12,
+      "unit_id": 3,
+      "title": "Goi Dien",
+      "icon": "📞",
+      "sort_order": 3,
+      "xp_reward": 70
+    }
+  ],
+  "topics": [
+    {
+      "unit": {
+        "id": 1,
+        "title": "Co Ban",
+        "sort_order": 1
+      },
+      "lesson": {
+        "id": 1,
+        "unit_id": 1,
+        "title": "Chao Hoi",
+        "icon": "👋",
+        "sort_order": 1,
+        "xp_reward": 50
+      },
+      "flashcards": [
+        {
+          "word": "Hello",
+          "translation": "Xin chao",
+          "phonetic": "/həˈloʊ/",
+          "example": "Hello, how are you?",
+          "illustration": "👋",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Hi",
+          "translation": "Chao",
+          "phonetic": "/haɪ/",
+          "example": "Hi, my name is Tom",
+          "illustration": "🙂",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Good morning",
+          "translation": "Chao buoi sang",
+          "phonetic": "/ɡʊd ˈmɔːrnɪŋ/",
+          "example": "Good morning, teacher",
+          "illustration": "🌅",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Good afternoon",
+          "translation": "Chao buoi chieu",
+          "phonetic": "/ˌɡʊd ˌæftərˈnuːn/",
+          "example": "Good afternoon, everyone",
+          "illustration": "☀️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Good evening",
+          "translation": "Chao buoi toi",
+          "phonetic": "/ˌɡʊd ˌiːvnɪŋ/",
+          "example": "Good evening, sir",
+          "illustration": "🌇",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Goodbye",
+          "translation": "Tam biet",
+          "phonetic": "/ˌɡʊdˈbaɪ/",
+          "example": "Goodbye, see you tomorrow",
+          "illustration": "👋",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Bye",
+          "translation": "Tam biet",
+          "phonetic": "/baɪ/",
+          "example": "Bye, have a nice day",
+          "illustration": "🙋",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "See you later",
+          "translation": "Hen gap lai",
+          "phonetic": "/siː juː ˈleɪtər/",
+          "example": "See you later at school",
+          "illustration": "⏳",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Thank you",
+          "translation": "Cam on",
+          "phonetic": "/θæŋk juː/",
+          "example": "Thank you for your help",
+          "illustration": "🙏",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Thanks",
+          "translation": "Cam on",
+          "phonetic": "/θæŋks/",
+          "example": "Thanks, that is very kind",
+          "illustration": "😊",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Sorry",
+          "translation": "Xin loi",
+          "phonetic": "/ˈsɑːri/",
+          "example": "Sorry, I am late",
+          "illustration": "😔",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Excuse me",
+          "translation": "Xin loi",
+          "phonetic": "/ɪkˈskjuːz miː/",
+          "example": "Excuse me, where is the bus stop?",
+          "illustration": "🗣️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Please",
+          "translation": "Lam on",
+          "phonetic": "/pliːz/",
+          "example": "Please open the door",
+          "illustration": "🤲",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Welcome",
+          "translation": "Chao mung",
+          "phonetic": "/ˈwelkəm/",
+          "example": "Welcome to our class",
+          "illustration": "🏠",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Nice to meet you",
+          "translation": "Rat vui duoc gap ban",
+          "phonetic": "/naɪs tuː miːt juː/",
+          "example": "Nice to meet you, Anna",
+          "illustration": "🤝",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "How are you?",
+          "translation": "Ban khoe khong?",
+          "phonetic": "/haʊ ɑːr juː/",
+          "example": "How are you today?",
+          "illustration": "❓",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "I am fine",
+          "translation": "Toi khoe",
+          "phonetic": "/aɪ æm faɪn/",
+          "example": "I am fine, thank you",
+          "illustration": "😄",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Good night",
+          "translation": "Chuc ngu ngon",
+          "phonetic": "/ɡʊd naɪt/",
+          "example": "Good night, Mom",
+          "illustration": "🌙",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Take care",
+          "translation": "Giu gin suc khoe",
+          "phonetic": "/teɪk keər/",
+          "example": "Take care on your way home",
+          "illustration": "💙",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Have a nice day",
+          "translation": "Chuc mot ngay tot lanh",
+          "phonetic": "/hæv ə naɪs deɪ/",
+          "example": "Have a nice day at work",
+          "illustration": "🌞",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 1,
+        "title": "Co Ban",
+        "sort_order": 1
+      },
+      "lesson": {
+        "id": 2,
+        "unit_id": 1,
+        "title": "Gia Dinh",
+        "icon": "👨‍👩‍👧",
+        "sort_order": 2,
+        "xp_reward": 50
+      },
+      "flashcards": [
+        {
+          "word": "Father",
+          "translation": "Cha",
+          "phonetic": "/ˈfɑːðər/",
+          "example": "My father is a doctor",
+          "illustration": "👨",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Mother",
+          "translation": "Me",
+          "phonetic": "/ˈmʌðər/",
+          "example": "My mother cooks dinner",
+          "illustration": "👩",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Brother",
+          "translation": "Anh/em trai",
+          "phonetic": "/ˈbrʌðər/",
+          "example": "My brother plays football",
+          "illustration": "👦",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Sister",
+          "translation": "Chi/em gai",
+          "phonetic": "/ˈsɪstər/",
+          "example": "My sister is friendly",
+          "illustration": "👧",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Grandfather",
+          "translation": "Ong",
+          "phonetic": "/ˈɡrænfɑːðər/",
+          "example": "My grandfather tells stories",
+          "illustration": "👴",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Grandmother",
+          "translation": "Ba",
+          "phonetic": "/ˈɡrænmʌðər/",
+          "example": "My grandmother makes tea",
+          "illustration": "👵",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Family",
+          "translation": "Gia dinh",
+          "phonetic": "/ˈfæməli/",
+          "example": "I love my family",
+          "illustration": "👨‍👩‍👧",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Parents",
+          "translation": "Cha me",
+          "phonetic": "/ˈperənts/",
+          "example": "My parents work hard",
+          "illustration": "💑",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Son",
+          "translation": "Con trai",
+          "phonetic": "/sʌn/",
+          "example": "Their son is five years old",
+          "illustration": "🧒",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Daughter",
+          "translation": "Con gai",
+          "phonetic": "/ˈdɔːtər/",
+          "example": "Her daughter likes music",
+          "illustration": "👧",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Uncle",
+          "translation": "Chu/cau",
+          "phonetic": "/ˈʌŋkl/",
+          "example": "My uncle drives a taxi",
+          "illustration": "👨‍🦱",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Aunt",
+          "translation": "Co/di",
+          "phonetic": "/ænt/",
+          "example": "My aunt lives in Hue",
+          "illustration": "👩‍🦱",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Cousin",
+          "translation": "Anh chi em ho",
+          "phonetic": "/ˈkʌzn/",
+          "example": "My cousin studies English",
+          "illustration": "🧑",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Baby",
+          "translation": "Em be",
+          "phonetic": "/ˈbeɪbi/",
+          "example": "The baby is sleeping",
+          "illustration": "👶",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Husband",
+          "translation": "Chong",
+          "phonetic": "/ˈhʌzbənd/",
+          "example": "Her husband is a teacher",
+          "illustration": "🤵",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Wife",
+          "translation": "Vo",
+          "phonetic": "/waɪf/",
+          "example": "His wife works at a bank",
+          "illustration": "👰",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Home",
+          "translation": "Nha",
+          "phonetic": "/hoʊm/",
+          "example": "I go home after school",
+          "illustration": "🏡",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Love",
+          "translation": "Yeu",
+          "phonetic": "/lʌv/",
+          "example": "Children need love",
+          "illustration": "❤️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Care",
+          "translation": "Cham soc",
+          "phonetic": "/keər/",
+          "example": "Parents care for their kids",
+          "illustration": "🤲",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Relative",
+          "translation": "Nguoi than",
+          "phonetic": "/ˈrelətɪv/",
+          "example": "My relatives visit us on Tet",
+          "illustration": "👪",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 1,
+        "title": "Co Ban",
+        "sort_order": 1
+      },
+      "lesson": {
+        "id": 3,
+        "unit_id": 1,
+        "title": "Do An",
+        "icon": "🍕",
+        "sort_order": 3,
+        "xp_reward": 50
+      },
+      "flashcards": [
+        {
+          "word": "Rice",
+          "translation": "Com",
+          "phonetic": "/raɪs/",
+          "example": "I eat rice every day",
+          "illustration": "🍚",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Bread",
+          "translation": "Banh mi",
+          "phonetic": "/bred/",
+          "example": "She buys fresh bread",
+          "illustration": "🍞",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Noodles",
+          "translation": "Mi",
+          "phonetic": "/ˈnuːdlz/",
+          "example": "He likes noodles for lunch",
+          "illustration": "🍜",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Soup",
+          "translation": "Sup",
+          "phonetic": "/suːp/",
+          "example": "The soup is hot",
+          "illustration": "🥣",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Meat",
+          "translation": "Thit",
+          "phonetic": "/miːt/",
+          "example": "We cook meat for dinner",
+          "illustration": "🥩",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Fish",
+          "translation": "Ca",
+          "phonetic": "/fɪʃ/",
+          "example": "My father eats fish",
+          "illustration": "🐟",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Chicken",
+          "translation": "Ga",
+          "phonetic": "/ˈtʃɪkɪn/",
+          "example": "Chicken tastes good",
+          "illustration": "🍗",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Egg",
+          "translation": "Trung",
+          "phonetic": "/eɡ/",
+          "example": "I have an egg for breakfast",
+          "illustration": "🥚",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Milk",
+          "translation": "Sua",
+          "phonetic": "/mɪlk/",
+          "example": "The baby drinks milk",
+          "illustration": "🥛",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Water",
+          "translation": "Nuoc",
+          "phonetic": "/ˈwɔːtər/",
+          "example": "Please drink more water",
+          "illustration": "💧",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Juice",
+          "translation": "Nuoc ep",
+          "phonetic": "/dʒuːs/",
+          "example": "Orange juice is sweet",
+          "illustration": "🧃",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Apple",
+          "translation": "Tao",
+          "phonetic": "/ˈæpl/",
+          "example": "The apple is red",
+          "illustration": "🍎",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Banana",
+          "translation": "Chuoi",
+          "phonetic": "/bəˈnænə/",
+          "example": "A banana is yellow",
+          "illustration": "🍌",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Orange",
+          "translation": "Cam",
+          "phonetic": "/ˈɔːrɪndʒ/",
+          "example": "I peel an orange",
+          "illustration": "🍊",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Vegetable",
+          "translation": "Rau cu",
+          "phonetic": "/ˈvedʒtəbl/",
+          "example": "Vegetables are healthy",
+          "illustration": "🥬",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Fruit",
+          "translation": "Trai cay",
+          "phonetic": "/fruːt/",
+          "example": "Fruit is good for you",
+          "illustration": "🍇",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Breakfast",
+          "translation": "Bua sang",
+          "phonetic": "/ˈbrekfəst/",
+          "example": "Breakfast is ready",
+          "illustration": "🍳",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Lunch",
+          "translation": "Bua trua",
+          "phonetic": "/lʌntʃ/",
+          "example": "We eat lunch at noon",
+          "illustration": "🥪",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Dinner",
+          "translation": "Bua toi",
+          "phonetic": "/ˈdɪnər/",
+          "example": "Dinner starts at seven",
+          "illustration": "🍽️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Delicious",
+          "translation": "Ngon",
+          "phonetic": "/dɪˈlɪʃəs/",
+          "example": "This cake is delicious",
+          "illustration": "😋",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 1,
+        "title": "Co Ban",
+        "sort_order": 1
+      },
+      "lesson": {
+        "id": 4,
+        "unit_id": 1,
+        "title": "Mau Sac",
+        "icon": "🎨",
+        "sort_order": 4,
+        "xp_reward": 50
+      },
+      "flashcards": [
+        {
+          "word": "Red",
+          "translation": "Do",
+          "phonetic": "/red/",
+          "example": "The apple is red",
+          "illustration": "🔴",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Blue",
+          "translation": "Xanh duong",
+          "phonetic": "/bluː/",
+          "example": "The sky is blue",
+          "illustration": "🔵",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Yellow",
+          "translation": "Vang",
+          "phonetic": "/ˈjeloʊ/",
+          "example": "The banana is yellow",
+          "illustration": "🟡",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Green",
+          "translation": "Xanh la",
+          "phonetic": "/ɡriːn/",
+          "example": "Grass is green",
+          "illustration": "🟢",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Orange",
+          "translation": "Cam",
+          "phonetic": "/ˈɔːrɪndʒ/",
+          "example": "The orange bag is nice",
+          "illustration": "🟠",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Purple",
+          "translation": "Tim",
+          "phonetic": "/ˈpɜːrpl/",
+          "example": "She wears a purple dress",
+          "illustration": "🟣",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Pink",
+          "translation": "Hong",
+          "phonetic": "/pɪŋk/",
+          "example": "My pen is pink",
+          "illustration": "🩷",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Brown",
+          "translation": "Nau",
+          "phonetic": "/braʊn/",
+          "example": "The table is brown",
+          "illustration": "🟤",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Black",
+          "translation": "Den",
+          "phonetic": "/blæk/",
+          "example": "My shoes are black",
+          "illustration": "⚫",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "White",
+          "translation": "Trang",
+          "phonetic": "/waɪt/",
+          "example": "Snow is white",
+          "illustration": "⚪",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Gray",
+          "translation": "Xam",
+          "phonetic": "/ɡreɪ/",
+          "example": "The cat is gray",
+          "illustration": "🩶",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Color",
+          "translation": "Mau sac",
+          "phonetic": "/ˈkʌlər/",
+          "example": "What color is your car?",
+          "illustration": "🎨",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Light",
+          "translation": "Nhat",
+          "phonetic": "/laɪt/",
+          "example": "I like light blue",
+          "illustration": "💡",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Dark",
+          "translation": "Dam",
+          "phonetic": "/dɑːrk/",
+          "example": "He wears dark green",
+          "illustration": "🌑",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Colorful",
+          "translation": "Day mau sac",
+          "phonetic": "/ˈkʌlərfəl/",
+          "example": "The kite is colorful",
+          "illustration": "🌈",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Bright",
+          "translation": "Sang",
+          "phonetic": "/braɪt/",
+          "example": "The room is bright",
+          "illustration": "✨",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Pale",
+          "translation": "Nhat mau",
+          "phonetic": "/peɪl/",
+          "example": "She chooses a pale pink shirt",
+          "illustration": "🪶",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Golden",
+          "translation": "Mau vang kim",
+          "phonetic": "/ˈɡoʊldən/",
+          "example": "The trophy is golden",
+          "illustration": "🏆",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Silver",
+          "translation": "Mau bac",
+          "phonetic": "/ˈsɪlvər/",
+          "example": "The watch is silver",
+          "illustration": "⌚",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Rainbow",
+          "translation": "Cau vong",
+          "phonetic": "/ˈreɪnboʊ/",
+          "example": "A rainbow has many colors",
+          "illustration": "🌈",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 1,
+        "title": "Co Ban",
+        "sort_order": 1
+      },
+      "lesson": {
+        "id": 5,
+        "unit_id": 1,
+        "title": "So Dem",
+        "icon": "🔢",
+        "sort_order": 5,
+        "xp_reward": 50
+      },
+      "flashcards": [
+        {
+          "word": "One",
+          "translation": "Mot",
+          "phonetic": "/wʌn/",
+          "example": "I have one book",
+          "illustration": "1️⃣",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Two",
+          "translation": "Hai",
+          "phonetic": "/tuː/",
+          "example": "Two cats are sleeping",
+          "illustration": "2️⃣",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Three",
+          "translation": "Ba",
+          "phonetic": "/θriː/",
+          "example": "She has three pens",
+          "illustration": "3️⃣",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Four",
+          "translation": "Bon",
+          "phonetic": "/fɔːr/",
+          "example": "There are four chairs",
+          "illustration": "4️⃣",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Five",
+          "translation": "Nam",
+          "phonetic": "/faɪv/",
+          "example": "I see five birds",
+          "illustration": "5️⃣",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Six",
+          "translation": "Sau",
+          "phonetic": "/sɪks/",
+          "example": "The class has six groups",
+          "illustration": "6️⃣",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Seven",
+          "translation": "Bay",
+          "phonetic": "/ˈsevn/",
+          "example": "We study seven days a week",
+          "illustration": "7️⃣",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Eight",
+          "translation": "Tam",
+          "phonetic": "/eɪt/",
+          "example": "It is eight o'clock",
+          "illustration": "8️⃣",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Nine",
+          "translation": "Chin",
+          "phonetic": "/naɪn/",
+          "example": "Nine students are here",
+          "illustration": "9️⃣",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Ten",
+          "translation": "Muoi",
+          "phonetic": "/ten/",
+          "example": "He counts to ten",
+          "illustration": "🔟",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Eleven",
+          "translation": "Muoi mot",
+          "phonetic": "/ɪˈlevn/",
+          "example": "I am eleven years old",
+          "illustration": "🧮",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Twelve",
+          "translation": "Muoi hai",
+          "phonetic": "/twelv/",
+          "example": "There are twelve months",
+          "illustration": "📅",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Thirteen",
+          "translation": "Muoi ba",
+          "phonetic": "/ˌθɜːrˈtiːn/",
+          "example": "She buys thirteen flowers",
+          "illustration": "💐",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Fourteen",
+          "translation": "Muoi bon",
+          "phonetic": "/ˌfɔːrˈtiːn/",
+          "example": "He is fourteen years old",
+          "illustration": "🎂",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Fifteen",
+          "translation": "Muoi lam",
+          "phonetic": "/ˌfɪfˈtiːn/",
+          "example": "The bus arrives in fifteen minutes",
+          "illustration": "🚌",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Sixteen",
+          "translation": "Muoi sau",
+          "phonetic": "/ˌsɪkˈstiːn/",
+          "example": "There are sixteen desks",
+          "illustration": "🪑",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Seventeen",
+          "translation": "Muoi bay",
+          "phonetic": "/ˌsevnˈtiːn/",
+          "example": "Seventeen players join the game",
+          "illustration": "⚽",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Eighteen",
+          "translation": "Muoi tam",
+          "phonetic": "/ˌeɪˈtiːn/",
+          "example": "The shop opens on the eighteenth day",
+          "illustration": "🏪",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Nineteen",
+          "translation": "Muoi chin",
+          "phonetic": "/ˌnaɪnˈtiːn/",
+          "example": "Nineteen people are waiting",
+          "illustration": "🧍",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Twenty",
+          "translation": "Hai muoi",
+          "phonetic": "/ˈtwenti/",
+          "example": "I need twenty dollars",
+          "illustration": "💵",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 2,
+        "title": "Cuoc Song Hang Ngay",
+        "sort_order": 2
+      },
+      "lesson": {
+        "id": 6,
+        "unit_id": 2,
+        "title": "Thoi Gian",
+        "icon": "⏰",
+        "sort_order": 1,
+        "xp_reward": 60
+      },
+      "flashcards": [
+        {
+          "word": "Time",
+          "translation": "Thoi gian",
+          "phonetic": "/taɪm/",
+          "example": "Time goes by quickly",
+          "illustration": "⏰",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Hour",
+          "translation": "Gio",
+          "phonetic": "/ˈaʊər/",
+          "example": "I study for one hour",
+          "illustration": "🕐",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Minute",
+          "translation": "Phut",
+          "phonetic": "/ˈmɪnɪt/",
+          "example": "Wait a minute",
+          "illustration": "⏱️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Second",
+          "translation": "Giay",
+          "phonetic": "/ˈsekənd/",
+          "example": "One second, please",
+          "illustration": "⌛",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Morning",
+          "translation": "Buoi sang",
+          "phonetic": "/ˈmɔːrnɪŋ/",
+          "example": "I jog every morning",
+          "illustration": "🌅",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Afternoon",
+          "translation": "Buoi chieu",
+          "phonetic": "/ˌæftərˈnuːn/",
+          "example": "We have class this afternoon",
+          "illustration": "☀️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Evening",
+          "translation": "Buoi toi",
+          "phonetic": "/ˈiːvnɪŋ/",
+          "example": "The park is quiet in the evening",
+          "illustration": "🌆",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Night",
+          "translation": "Ban dem",
+          "phonetic": "/naɪt/",
+          "example": "It is cold at night",
+          "illustration": "🌙",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Today",
+          "translation": "Hom nay",
+          "phonetic": "/təˈdeɪ/",
+          "example": "Today is Monday",
+          "illustration": "📆",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Tomorrow",
+          "translation": "Ngay mai",
+          "phonetic": "/təˈmɑːroʊ/",
+          "example": "We have a test tomorrow",
+          "illustration": "➡️",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Yesterday",
+          "translation": "Hom qua",
+          "phonetic": "/ˈjestərdeɪ/",
+          "example": "Yesterday was rainy",
+          "illustration": "⬅️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Week",
+          "translation": "Tuan",
+          "phonetic": "/wiːk/",
+          "example": "A week has seven days",
+          "illustration": "🗓️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Month",
+          "translation": "Thang",
+          "phonetic": "/mʌnθ/",
+          "example": "This month is very busy",
+          "illustration": "📅",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Year",
+          "translation": "Nam",
+          "phonetic": "/jɪr/",
+          "example": "The new year starts in January",
+          "illustration": "🎉",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Early",
+          "translation": "Som",
+          "phonetic": "/ˈɜːrli/",
+          "example": "She gets up early",
+          "illustration": "🐦",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Late",
+          "translation": "Muon",
+          "phonetic": "/leɪt/",
+          "example": "He is late for school",
+          "illustration": "🏃",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Clock",
+          "translation": "Dong ho",
+          "phonetic": "/klɑːk/",
+          "example": "The clock is on the wall",
+          "illustration": "🕰️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Noon",
+          "translation": "Buoi trua",
+          "phonetic": "/nuːn/",
+          "example": "We eat lunch at noon",
+          "illustration": "🌞",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Midnight",
+          "translation": "Nua dem",
+          "phonetic": "/ˈmɪdnaɪt/",
+          "example": "The movie ends at midnight",
+          "illustration": "🌌",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Schedule",
+          "translation": "Lich trinh",
+          "phonetic": "/ˈskedʒuːl/",
+          "example": "My schedule is full today",
+          "illustration": "📋",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 2,
+        "title": "Cuoc Song Hang Ngay",
+        "sort_order": 2
+      },
+      "lesson": {
+        "id": 7,
+        "unit_id": 2,
+        "title": "Thoi Tiet",
+        "icon": "🌤",
+        "sort_order": 2,
+        "xp_reward": 60
+      },
+      "flashcards": [
+        {
+          "word": "Sunny",
+          "translation": "Nang",
+          "phonetic": "/ˈsʌni/",
+          "example": "It is sunny today",
+          "illustration": "☀️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Rainy",
+          "translation": "Mua",
+          "phonetic": "/ˈreɪni/",
+          "example": "The weather is rainy",
+          "illustration": "🌧️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Cloudy",
+          "translation": "Nhieu may",
+          "phonetic": "/ˈklaʊdi/",
+          "example": "It is cloudy this morning",
+          "illustration": "☁️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Windy",
+          "translation": "Co gio",
+          "phonetic": "/ˈwɪndi/",
+          "example": "The beach is windy",
+          "illustration": "🌬️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Stormy",
+          "translation": "Bao",
+          "phonetic": "/ˈstɔːrmi/",
+          "example": "The sea is stormy tonight",
+          "illustration": "⛈️",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Hot",
+          "translation": "Nong",
+          "phonetic": "/hɑːt/",
+          "example": "It is hot in summer",
+          "illustration": "🔥",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Cold",
+          "translation": "Lanh",
+          "phonetic": "/koʊld/",
+          "example": "The water is cold",
+          "illustration": "🧊",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Warm",
+          "translation": "Am",
+          "phonetic": "/wɔːrm/",
+          "example": "The soup is warm",
+          "illustration": "♨️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Cool",
+          "translation": "Mat me",
+          "phonetic": "/kuːl/",
+          "example": "The evening is cool",
+          "illustration": "🍃",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Dry",
+          "translation": "Kho",
+          "phonetic": "/draɪ/",
+          "example": "The air is dry today",
+          "illustration": "🏜️",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Wet",
+          "translation": "Uot",
+          "phonetic": "/wet/",
+          "example": "My shoes are wet",
+          "illustration": "💦",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Snowy",
+          "translation": "Co tuyet",
+          "phonetic": "/ˈsnoʊi/",
+          "example": "The mountains are snowy",
+          "illustration": "❄️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Foggy",
+          "translation": "Suong mu",
+          "phonetic": "/ˈfɑːɡi/",
+          "example": "It is foggy in the morning",
+          "illustration": "🌫️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Weather",
+          "translation": "Thoi tiet",
+          "phonetic": "/ˈweðər/",
+          "example": "The weather changes fast",
+          "illustration": "🌤️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Forecast",
+          "translation": "Du bao",
+          "phonetic": "/ˈfɔːrkæst/",
+          "example": "The forecast says rain",
+          "illustration": "📺",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Temperature",
+          "translation": "Nhiet do",
+          "phonetic": "/ˈtemprətʃər/",
+          "example": "The temperature is 30 degrees",
+          "illustration": "🌡️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Season",
+          "translation": "Mua",
+          "phonetic": "/ˈsiːzn/",
+          "example": "Spring is my favorite season",
+          "illustration": "🍂",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Spring",
+          "translation": "Mua xuan",
+          "phonetic": "/sprɪŋ/",
+          "example": "Flowers bloom in spring",
+          "illustration": "🌸",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Summer",
+          "translation": "Mua he",
+          "phonetic": "/ˈsʌmər/",
+          "example": "Summer is very hot here",
+          "illustration": "🏖️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Winter",
+          "translation": "Mua dong",
+          "phonetic": "/ˈwɪntər/",
+          "example": "Winter nights are long",
+          "illustration": "🧥",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 2,
+        "title": "Cuoc Song Hang Ngay",
+        "sort_order": 2
+      },
+      "lesson": {
+        "id": 8,
+        "unit_id": 2,
+        "title": "Mua Sam",
+        "icon": "🛍",
+        "sort_order": 3,
+        "xp_reward": 60
+      },
+      "flashcards": [
+        {
+          "word": "Shop",
+          "translation": "Cua hang",
+          "phonetic": "/ʃɑːp/",
+          "example": "I go to the shop",
+          "illustration": "🏪",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Store",
+          "translation": "Cua hang",
+          "phonetic": "/stɔːr/",
+          "example": "This store sells shoes",
+          "illustration": "🏬",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Buy",
+          "translation": "Mua",
+          "phonetic": "/baɪ/",
+          "example": "I want to buy a shirt",
+          "illustration": "🛍️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Sell",
+          "translation": "Ban",
+          "phonetic": "/sel/",
+          "example": "They sell fruit here",
+          "illustration": "💸",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Price",
+          "translation": "Gia",
+          "phonetic": "/praɪs/",
+          "example": "The price is too high",
+          "illustration": "🏷️",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Cheap",
+          "translation": "Re",
+          "phonetic": "/tʃiːp/",
+          "example": "This bag is cheap",
+          "illustration": "💰",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Expensive",
+          "translation": "Dat",
+          "phonetic": "/ɪkˈspensɪv/",
+          "example": "That watch is expensive",
+          "illustration": "⌚",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Money",
+          "translation": "Tien",
+          "phonetic": "/ˈmʌni/",
+          "example": "I need more money",
+          "illustration": "💵",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Cash",
+          "translation": "Tien mat",
+          "phonetic": "/kæʃ/",
+          "example": "Do you pay by cash?",
+          "illustration": "💵",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Card",
+          "translation": "The",
+          "phonetic": "/kɑːrd/",
+          "example": "She pays by card",
+          "illustration": "💳",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Customer",
+          "translation": "Khach hang",
+          "phonetic": "/ˈkʌstəmər/",
+          "example": "The customer asks a question",
+          "illustration": "🙋",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Receipt",
+          "translation": "Hoa don",
+          "phonetic": "/rɪˈsiːt/",
+          "example": "Please keep the receipt",
+          "illustration": "🧾",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Discount",
+          "translation": "Giam gia",
+          "phonetic": "/ˈdɪskaʊnt/",
+          "example": "This shirt has a discount",
+          "illustration": "📉",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Market",
+          "translation": "Cho",
+          "phonetic": "/ˈmɑːrkɪt/",
+          "example": "My mom goes to the market",
+          "illustration": "🧺",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Mall",
+          "translation": "Trung tam mua sam",
+          "phonetic": "/mɔːl/",
+          "example": "We meet at the mall",
+          "illustration": "🏢",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Basket",
+          "translation": "Gio hang",
+          "phonetic": "/ˈbæskɪt/",
+          "example": "Put the apples in the basket",
+          "illustration": "🧺",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Size",
+          "translation": "Kich co",
+          "phonetic": "/saɪz/",
+          "example": "What size do you wear?",
+          "illustration": "📏",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Try on",
+          "translation": "Thu do",
+          "phonetic": "/traɪ ɑːn/",
+          "example": "Can I try on this jacket?",
+          "illustration": "🧥",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Open",
+          "translation": "Mo cua",
+          "phonetic": "/ˈoʊpən/",
+          "example": "The shop is open now",
+          "illustration": "🔓",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Closed",
+          "translation": "Dong cua",
+          "phonetic": "/kloʊzd/",
+          "example": "The store is closed",
+          "illustration": "🔒",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 2,
+        "title": "Cuoc Song Hang Ngay",
+        "sort_order": 2
+      },
+      "lesson": {
+        "id": 9,
+        "unit_id": 2,
+        "title": "Phuong Tien",
+        "icon": "🚗",
+        "sort_order": 4,
+        "xp_reward": 60
+      },
+      "flashcards": [
+        {
+          "word": "Car",
+          "translation": "Xe hoi",
+          "phonetic": "/kɑːr/",
+          "example": "My father drives a car",
+          "illustration": "🚗",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Bus",
+          "translation": "Xe buyt",
+          "phonetic": "/bʌs/",
+          "example": "I take the bus to school",
+          "illustration": "🚌",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Bike",
+          "translation": "Xe dap",
+          "phonetic": "/baɪk/",
+          "example": "She rides a bike",
+          "illustration": "🚲",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Motorbike",
+          "translation": "Xe may",
+          "phonetic": "/ˈmoʊtərbaɪk/",
+          "example": "He goes to work by motorbike",
+          "illustration": "🏍️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Train",
+          "translation": "Tau hoa",
+          "phonetic": "/treɪn/",
+          "example": "The train leaves at nine",
+          "illustration": "🚆",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Plane",
+          "translation": "May bay",
+          "phonetic": "/pleɪn/",
+          "example": "The plane is flying high",
+          "illustration": "✈️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Boat",
+          "translation": "Thuyen",
+          "phonetic": "/boʊt/",
+          "example": "They travel by boat",
+          "illustration": "🚤",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Ship",
+          "translation": "Tau",
+          "phonetic": "/ʃɪp/",
+          "example": "The ship is very large",
+          "illustration": "🚢",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Taxi",
+          "translation": "Taxi",
+          "phonetic": "/ˈtæksi/",
+          "example": "We call a taxi home",
+          "illustration": "🚕",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Truck",
+          "translation": "Xe tai",
+          "phonetic": "/trʌk/",
+          "example": "The truck carries goods",
+          "illustration": "🚚",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Driver",
+          "translation": "Tai xe",
+          "phonetic": "/ˈdraɪvər/",
+          "example": "The driver stops here",
+          "illustration": "🧑‍✈️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Passenger",
+          "translation": "Hanh khach",
+          "phonetic": "/ˈpæsɪndʒər/",
+          "example": "The passenger buys a ticket",
+          "illustration": "🎫",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Road",
+          "translation": "Con duong",
+          "phonetic": "/roʊd/",
+          "example": "The road is busy",
+          "illustration": "🛣️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Street",
+          "translation": "Pho",
+          "phonetic": "/striːt/",
+          "example": "The street is crowded",
+          "illustration": "🏙️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Traffic",
+          "translation": "Giao thong",
+          "phonetic": "/ˈtræfɪk/",
+          "example": "Traffic is heavy today",
+          "illustration": "🚦",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Station",
+          "translation": "Nha ga",
+          "phonetic": "/ˈsteɪʃn/",
+          "example": "The station is near my house",
+          "illustration": "🚉",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Ticket",
+          "translation": "Ve",
+          "phonetic": "/ˈtɪkɪt/",
+          "example": "I buy a bus ticket",
+          "illustration": "🎟️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Travel",
+          "translation": "Di chuyen/du lich",
+          "phonetic": "/ˈtrævl/",
+          "example": "We travel to Da Nang",
+          "illustration": "🧳",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Ride",
+          "translation": "Di xe",
+          "phonetic": "/raɪd/",
+          "example": "I ride my bike every day",
+          "illustration": "🚴",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Walk",
+          "translation": "Di bo",
+          "phonetic": "/wɔːk/",
+          "example": "We walk to the park",
+          "illustration": "🚶",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 3,
+        "title": "Giao Tiep",
+        "sort_order": 3
+      },
+      "lesson": {
+        "id": 10,
+        "unit_id": 3,
+        "title": "Dat Cau Hoi",
+        "icon": "❓",
+        "sort_order": 1,
+        "xp_reward": 70
+      },
+      "flashcards": [
+        {
+          "word": "What",
+          "translation": "Cai gi",
+          "phonetic": "/wʌt/",
+          "example": "What is your name?",
+          "illustration": "❓",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Who",
+          "translation": "Ai",
+          "phonetic": "/huː/",
+          "example": "Who is that girl?",
+          "illustration": "👤",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Where",
+          "translation": "O dau",
+          "phonetic": "/wer/",
+          "example": "Where do you live?",
+          "illustration": "📍",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "When",
+          "translation": "Khi nao",
+          "phonetic": "/wen/",
+          "example": "When do you study?",
+          "illustration": "⏰",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Why",
+          "translation": "Tai sao",
+          "phonetic": "/waɪ/",
+          "example": "Why are you sad?",
+          "illustration": "🤔",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "How",
+          "translation": "Nhu the nao",
+          "phonetic": "/haʊ/",
+          "example": "How do you go to school?",
+          "illustration": "🛣️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Which",
+          "translation": "Cai nao",
+          "phonetic": "/wɪtʃ/",
+          "example": "Which color do you like?",
+          "illustration": "🎨",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Whose",
+          "translation": "Cua ai",
+          "phonetic": "/huːz/",
+          "example": "Whose bag is this?",
+          "illustration": "🎒",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Question",
+          "translation": "Cau hoi",
+          "phonetic": "/ˈkwestʃən/",
+          "example": "I have a question",
+          "illustration": "🙋",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Answer",
+          "translation": "Cau tra loi",
+          "phonetic": "/ˈænsər/",
+          "example": "Your answer is correct",
+          "illustration": "✅",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Ask",
+          "translation": "Hoi",
+          "phonetic": "/æsk/",
+          "example": "Please ask the teacher",
+          "illustration": "🗣️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Tell",
+          "translation": "Noi/ke",
+          "phonetic": "/tel/",
+          "example": "Tell me the truth",
+          "illustration": "💬",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Can",
+          "translation": "Co the",
+          "phonetic": "/kæn/",
+          "example": "Can you help me?",
+          "illustration": "🤝",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Do",
+          "translation": "Lam",
+          "phonetic": "/duː/",
+          "example": "Do you like coffee?",
+          "illustration": "☕",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Does",
+          "translation": "Co ... khong",
+          "phonetic": "/dʌz/",
+          "example": "Does he play football?",
+          "illustration": "⚽",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Is",
+          "translation": "La",
+          "phonetic": "/ɪz/",
+          "example": "Is this your pen?",
+          "illustration": "🖊️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Are",
+          "translation": "Thi/thi la",
+          "phonetic": "/ɑːr/",
+          "example": "Are they at home?",
+          "illustration": "🏠",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Could",
+          "translation": "Co the",
+          "phonetic": "/kʊd/",
+          "example": "Could you repeat that?",
+          "illustration": "🔁",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Would",
+          "translation": "Se",
+          "phonetic": "/wʊd/",
+          "example": "Would you like some tea?",
+          "illustration": "🍵",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Maybe",
+          "translation": "Co le",
+          "phonetic": "/ˈmeɪbi/",
+          "example": "Maybe he is busy",
+          "illustration": "🤷",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 3,
+        "title": "Giao Tiep",
+        "sort_order": 3
+      },
+      "lesson": {
+        "id": 11,
+        "unit_id": 3,
+        "title": "Chi Duong",
+        "icon": "🧭",
+        "sort_order": 2,
+        "xp_reward": 70
+      },
+      "flashcards": [
+        {
+          "word": "Go straight",
+          "translation": "Di thang",
+          "phonetic": "/ɡoʊ streɪt/",
+          "example": "Go straight for two blocks",
+          "illustration": "⬆️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Turn left",
+          "translation": "Re trai",
+          "phonetic": "/tɜːrn left/",
+          "example": "Turn left at the corner",
+          "illustration": "⬅️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Turn right",
+          "translation": "Re phai",
+          "phonetic": "/tɜːrn raɪt/",
+          "example": "Turn right after the bank",
+          "illustration": "➡️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Cross",
+          "translation": "Bang qua",
+          "phonetic": "/krɔːs/",
+          "example": "Cross the street carefully",
+          "illustration": "🚸",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Corner",
+          "translation": "Goc duong",
+          "phonetic": "/ˈkɔːrnər/",
+          "example": "The cafe is on the corner",
+          "illustration": "📐",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Near",
+          "translation": "Gan",
+          "phonetic": "/nɪr/",
+          "example": "The school is near the park",
+          "illustration": "📍",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Far",
+          "translation": "Xa",
+          "phonetic": "/fɑːr/",
+          "example": "My house is far from here",
+          "illustration": "🛣️",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Next to",
+          "translation": "Ben canh",
+          "phonetic": "/nekst tuː/",
+          "example": "The bank is next to the post office",
+          "illustration": "🏦",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Opposite",
+          "translation": "Doi dien",
+          "phonetic": "/ˈɑːpəzɪt/",
+          "example": "The hospital is opposite the mall",
+          "illustration": "🏥",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Between",
+          "translation": "O giua",
+          "phonetic": "/bɪˈtwiːn/",
+          "example": "The library is between two shops",
+          "illustration": "↔️",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Behind",
+          "translation": "Phia sau",
+          "phonetic": "/bɪˈhaɪnd/",
+          "example": "The car is behind the house",
+          "illustration": "🔙",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "In front of",
+          "translation": "Phia truoc",
+          "phonetic": "/ɪn frʌnt əv/",
+          "example": "He waits in front of the gate",
+          "illustration": "🔜",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Map",
+          "translation": "Ban do",
+          "phonetic": "/mæp/",
+          "example": "Look at the map",
+          "illustration": "🗺️",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Road",
+          "translation": "Con duong",
+          "phonetic": "/roʊd/",
+          "example": "This road is narrow",
+          "illustration": "🛣️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Street",
+          "translation": "Pho",
+          "phonetic": "/striːt/",
+          "example": "The street is very busy",
+          "illustration": "🏙️",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Traffic light",
+          "translation": "Den giao thong",
+          "phonetic": "/ˈtræfɪk laɪt/",
+          "example": "Stop at the traffic light",
+          "illustration": "🚦",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Bridge",
+          "translation": "Cau",
+          "phonetic": "/brɪdʒ/",
+          "example": "The bridge is over the river",
+          "illustration": "🌉",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Bus stop",
+          "translation": "Tram xe buyt",
+          "phonetic": "/bʌs stɑːp/",
+          "example": "The bus stop is near my school",
+          "illustration": "🚏",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Intersection",
+          "translation": "Nga tu",
+          "phonetic": "/ˌɪntərˈsekʃn/",
+          "example": "Turn right at the intersection",
+          "illustration": "➕",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Direction",
+          "translation": "Huong di",
+          "phonetic": "/dəˈrekʃn/",
+          "example": "Can you give me directions?",
+          "illustration": "🧭",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    },
+    {
+      "unit": {
+        "id": 3,
+        "title": "Giao Tiep",
+        "sort_order": 3
+      },
+      "lesson": {
+        "id": 12,
+        "unit_id": 3,
+        "title": "Goi Dien",
+        "icon": "📞",
+        "sort_order": 3,
+        "xp_reward": 70
+      },
+      "flashcards": [
+        {
+          "word": "Phone",
+          "translation": "Dien thoai",
+          "phonetic": "/foʊn/",
+          "example": "My phone is on the table",
+          "illustration": "📱",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Call",
+          "translation": "Goi dien",
+          "phonetic": "/kɔːl/",
+          "example": "I will call you tonight",
+          "illustration": "📞",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Answer",
+          "translation": "Tra loi",
+          "phonetic": "/ˈænsər/",
+          "example": "Please answer the phone",
+          "illustration": "✅",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Ring",
+          "translation": "Do chuong",
+          "phonetic": "/rɪŋ/",
+          "example": "The phone starts to ring",
+          "illustration": "🔔",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Message",
+          "translation": "Tin nhan",
+          "phonetic": "/ˈmesɪdʒ/",
+          "example": "I send a message to my friend",
+          "illustration": "💬",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Text",
+          "translation": "Nhan tin",
+          "phonetic": "/tekst/",
+          "example": "Text me later",
+          "illustration": "⌨️",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Contact",
+          "translation": "Lien he",
+          "phonetic": "/ˈkɑːntækt/",
+          "example": "Save my contact number",
+          "illustration": "👤",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Number",
+          "translation": "So dien thoai",
+          "phonetic": "/ˈnʌmbər/",
+          "example": "What is your phone number?",
+          "illustration": "🔢",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Speak",
+          "translation": "Noi",
+          "phonetic": "/spiːk/",
+          "example": "Please speak slowly",
+          "illustration": "🗣️",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Listen",
+          "translation": "Lang nghe",
+          "phonetic": "/ˈlɪsn/",
+          "example": "Listen carefully on the phone",
+          "illustration": "👂",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Loud",
+          "translation": "To",
+          "phonetic": "/laʊd/",
+          "example": "Your voice is too loud",
+          "illustration": "📢",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Quiet",
+          "translation": "Nho",
+          "phonetic": "/ˈkwaɪət/",
+          "example": "Please be quiet",
+          "illustration": "🔉",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Signal",
+          "translation": "Song",
+          "phonetic": "/ˈsɪɡnəl/",
+          "example": "The phone signal is weak",
+          "illustration": "📶",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Battery",
+          "translation": "Pin",
+          "phonetic": "/ˈbætəri/",
+          "example": "My battery is low",
+          "illustration": "🔋",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Charge",
+          "translation": "Sac",
+          "phonetic": "/tʃɑːrdʒ/",
+          "example": "I need to charge my phone",
+          "illustration": "⚡",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        },
+        {
+          "word": "Video call",
+          "translation": "Goi video",
+          "phonetic": "/ˈvɪdioʊ kɔːl/",
+          "example": "We have a video call at night",
+          "illustration": "🎥",
+          "grad_start": "#FBEF76",
+          "grad_end": "#FEC288"
+        },
+        {
+          "word": "Voicemail",
+          "translation": "Thu thoai",
+          "phonetic": "/ˈvɔɪsmeɪl/",
+          "example": "Leave a voicemail after the beep",
+          "illustration": "📨",
+          "grad_start": "#FD8A6B",
+          "grad_end": "#FA5C5C"
+        },
+        {
+          "word": "Hold on",
+          "translation": "Cho mot chut",
+          "phonetic": "/hoʊld ɑːn/",
+          "example": "Hold on, I will get him",
+          "illustration": "✋",
+          "grad_start": "#FEC288",
+          "grad_end": "#FD8A6B"
+        },
+        {
+          "word": "Hang up",
+          "translation": "Cat may",
+          "phonetic": "/hæŋ ʌp/",
+          "example": "Do not hang up yet",
+          "illustration": "📴",
+          "grad_start": "#A0E7E5",
+          "grad_end": "#B4F8C8"
+        },
+        {
+          "word": "Busy",
+          "translation": "Ban",
+          "phonetic": "/ˈbɪzi/",
+          "example": "She is busy, so call later",
+          "illustration": "📌",
+          "grad_start": "#CDB4DB",
+          "grad_end": "#FFC8DD"
+        }
+      ]
+    }
+  ]
+}

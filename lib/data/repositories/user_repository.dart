@@ -223,6 +223,52 @@ class UserRepository {
     }
   }
 
+  Future<void> changePasswordWithEmailVerification({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final authUser = _auth.currentUser;
+    if (authUser == null) {
+      throw UserRepositoryException('Phien dang nhap da het han.');
+    }
+
+    if (currentPassword.trim().isEmpty) {
+      throw UserRepositoryException('Vui long nhap mat khau hien tai.');
+    }
+
+    final normalizedNewPassword = newPassword.trim();
+    _validateNewPassword(normalizedNewPassword);
+
+    final isVerified = await reloadAndCheckCurrentUserEmailVerified();
+    if (!isVerified) {
+      try {
+        await sendEmailVerificationForCurrentUser();
+      } catch (_) {
+        // best effort
+      }
+      throw UserRepositoryException(
+        'Email chua duoc xac thuc. Da gui lai email xac thuc, vui long xac thuc roi thu lai.',
+      );
+    }
+
+    try {
+      await _reauthenticateCurrentUser(
+        authUser: authUser,
+        currentPassword: currentPassword,
+      );
+      final refreshedUser = _auth.currentUser ?? authUser;
+      await refreshedUser.updatePassword(normalizedNewPassword);
+    } on FirebaseAuthException catch (e) {
+      throw UserRepositoryException(_mapFirebaseAuthException(e));
+    } on UserRepositoryException {
+      rethrow;
+    } catch (_) {
+      throw UserRepositoryException(
+        'Khong the doi mat khau luc nay. Vui long thu lai.',
+      );
+    }
+  }
+
   Future<bool> reloadAndCheckCurrentUserEmailVerified() async {
     final authUser = _auth.currentUser;
     if (authUser == null) {
@@ -1020,6 +1066,15 @@ class UserRepository {
         return 'Vui long dang nhap lai de thuc hien thao tac nay.';
       default:
         return e.message ?? 'Xac thuc Firebase that bai.';
+    }
+  }
+
+  void _validateNewPassword(String newPassword) {
+    if (newPassword.isEmpty) {
+      throw UserRepositoryException('Vui long nhap mat khau moi.');
+    }
+    if (newPassword.length < 6) {
+      throw UserRepositoryException('Mat khau moi phai co it nhat 6 ky tu.');
     }
   }
 

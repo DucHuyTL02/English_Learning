@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/models/exercise_model.dart';
+import '../data/models/flashcard_model.dart';
+import '../data/models/lesson_model.dart';
+import '../data/repositories/learning_repository.dart';
 import '../data/services/app_services.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -544,7 +548,9 @@ class _LessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: lesson.locked ? null : () => context.push('/lesson-intro'),
+      onTap: lesson.locked
+          ? null
+          : () => context.push('/lesson-intro?lessonId=${lesson.id}'),
       child: Opacity(
         opacity: lesson.locked ? 0.6 : 1.0,
         child: Container(
@@ -776,14 +782,16 @@ class _LessonCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class LessonIntroScreen extends StatefulWidget {
-  const LessonIntroScreen({super.key});
+  const LessonIntroScreen({super.key, this.lessonId});
+
+  final int? lessonId;
 
   @override
   State<LessonIntroScreen> createState() => _LessonIntroScreenState();
 }
 
 class _LessonIntroScreenState extends State<LessonIntroScreen> {
-  static const _vocab = [
+  static const _defaultVocab = [
     _VocabData(
       word: 'Red',
       translation: 'Đỏ',
@@ -822,7 +830,7 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
     ),
   ];
 
-  static const _grammar = [
+  static const _defaultGrammar = [
     _GrammarData(
       title: "Sử dụng 'is' với màu sắc",
       desc: 'Học cách mô tả đồ vật',
@@ -830,12 +838,171 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
     _GrammarData(title: 'Vị trí tính từ', desc: 'Màu sắc đứng ở đâu trong câu'),
   ];
 
-  static const _activities = [
+  static const _defaultActivities = [
     _ActivityData(emoji: '👂', title: 'Nghe', count: 5),
     _ActivityData(emoji: '💬', title: 'Nói', count: 3),
     _ActivityData(emoji: '✍️', title: 'Viết', count: 4),
     _ActivityData(emoji: '🎯', title: 'Kiểm Tra', count: 1),
   ];
+
+  static const _vocabPalette = <int>[
+    0xFFFA5C5C,
+    0xFF4A90E2,
+    0xFF4CAF50,
+    0xFFFBEF76,
+    0xFFFD8A6B,
+    0xFF9C27B0,
+  ];
+
+  LessonModel? _lesson;
+  int _lessonId = 4;
+  List<ExerciseModel> _lessonExercises = const [];
+  List<_VocabData> _vocab = _defaultVocab;
+  List<_GrammarData> _grammar = _defaultGrammar;
+  List<_ActivityData> _activities = _defaultActivities;
+  bool _loadingLesson = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLessonContent();
+  }
+
+  Future<void> _loadLessonContent() async {
+    final repo = AppServices.learningRepository;
+    var selectedLessonId = widget.lessonId ?? 4;
+    LessonModel? lesson = await repo.getLessonById(selectedLessonId);
+
+    if (lesson == null) {
+      final allLessons = await repo.getAllLessons();
+      if (allLessons.isNotEmpty) {
+        lesson = allLessons.first;
+        selectedLessonId = lesson.id ?? selectedLessonId;
+      }
+    }
+
+    final exercises = await _resolveExercisesForLesson(
+      repo: repo,
+      lessonId: selectedLessonId,
+    );
+    final topicFlashcards = await AppServices.learningContentService
+        .getFlashcards(lessonId: selectedLessonId);
+    final vocab = topicFlashcards.isNotEmpty
+        ? _buildVocabularyFromFlashcards(topicFlashcards)
+        : exercises.isEmpty
+        ? _defaultVocab
+        : _buildVocabularyFromExercises(exercises, fallback: _defaultVocab);
+    if (!mounted) return;
+
+    setState(() {
+      _lesson = lesson;
+      _lessonId = selectedLessonId;
+      _lessonExercises = exercises;
+      _activities = exercises.isEmpty
+          ? _defaultActivities
+          : _buildActivities(exercises, vocabularyCount: vocab.length);
+      _vocab = vocab;
+      _grammar = _defaultGrammar;
+      _loadingLesson = false;
+    });
+  }
+
+  Future<List<ExerciseModel>> _resolveExercisesForLesson({
+    required LearningRepository repo,
+    required int lessonId,
+  }) async {
+    final direct = await repo.getExercisesByLesson(lessonId);
+    if (direct.isNotEmpty) return direct;
+
+    final lessons = await repo.getAllLessons();
+    for (final lesson in lessons) {
+      if (lesson.id == null) continue;
+      final fallback = await repo.getExercisesByLesson(lesson.id!);
+      if (fallback.isNotEmpty) return fallback;
+    }
+
+    return const [];
+  }
+
+  List<_ActivityData> _buildActivities(
+    List<ExerciseModel> exercises, {
+    required int vocabularyCount,
+  }) {
+    final listening = exercises.where((e) => e.type == 'listening').length;
+    final speaking = exercises.where((e) => e.type == 'speaking').length;
+    final writing = exercises
+        .where((e) => e.type == 'matching' || e.type == 'writing')
+        .length;
+
+    return [
+      _ActivityData(emoji: '📚', title: 'Từ vựng', count: vocabularyCount),
+      _ActivityData(emoji: '👂', title: 'Nghe', count: listening),
+      _ActivityData(emoji: '💬', title: 'Nói', count: speaking),
+      _ActivityData(emoji: '✍️', title: 'Viết', count: writing),
+    ];
+  }
+
+  List<_VocabData> _buildVocabularyFromFlashcards(
+    List<FlashcardModel> flashcards,
+  ) {
+    return flashcards.asMap().entries.map((entry) {
+      final index = entry.key;
+      final card = entry.value;
+      return _VocabData(
+        word: card.word,
+        translation: card.translation,
+        example: card.example,
+        colorValue: _vocabPalette[index % _vocabPalette.length],
+      );
+    }).toList();
+  }
+
+  List<_VocabData> _buildVocabularyFromExercises(
+    List<ExerciseModel> exercises, {
+    required List<_VocabData> fallback,
+  }) {
+    final result = <_VocabData>[];
+    final seen = <String>{};
+
+    for (final ex in exercises) {
+      final parsed = _extractVocabulary(ex.correctAnswer);
+      if (parsed == null) continue;
+
+      final normalizedWord = parsed.key.toLowerCase();
+      if (seen.contains(normalizedWord)) continue;
+      seen.add(normalizedWord);
+
+      final colorValue = _vocabPalette[result.length % _vocabPalette.length];
+      final example = ex.question.replaceAll('___', parsed.key).trim();
+      result.add(
+        _VocabData(
+          word: parsed.key,
+          translation: parsed.value,
+          example: example.isEmpty ? parsed.key : example,
+          colorValue: colorValue,
+        ),
+      );
+    }
+
+    if (result.isEmpty) return fallback;
+    return result.take(8).toList();
+  }
+
+  MapEntry<String, String>? _extractVocabulary(String rawValue) {
+    final raw = rawValue.trim();
+    if (raw.isEmpty) return null;
+
+    final parts = raw.split('-');
+    final word = parts.first.trim();
+    if (word.isEmpty) return null;
+    if (!RegExp(r'[A-Za-z]').hasMatch(word)) return null;
+    if (word.split(RegExp(r'\s+')).length > 3) return null;
+
+    final translation = parts.length > 1
+        ? parts.sublist(1).join('-').trim()
+        : word;
+    return MapEntry(word, translation.isEmpty ? word : translation);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -878,26 +1045,32 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Đơn Vị 1 - Bài 4',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFFFA5C5C),
-                        fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _lesson == null
+                            ? 'Đang tải bài học'
+                            : 'Đơn vị ${_lesson!.unitId} - Bài ${_lesson!.sortOrder}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFFFA5C5C),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Học Màu Sắc',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
+                      Text(
+                        _lesson?.title ?? 'Bài học',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -980,11 +1153,11 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
 
                   // Vocabulary
                   Row(
-                    children: const [
-                      Text('📚 ', style: TextStyle(fontSize: 16)),
+                    children: [
+                      const Text('📚 ', style: TextStyle(fontSize: 16)),
                       Text(
-                        'Từ Vựng Mới (6 từ)',
-                        style: TextStyle(
+                        'Từ vựng mới (${_vocab.length} từ)',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF111827),
@@ -1033,7 +1206,7 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                     children: const [
                       Text('📝 ', style: TextStyle(fontSize: 16)),
                       Text(
-                        'Điểm Ngữ Pháp',
+                        'Điểm ngữ pháp',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -1139,24 +1312,29 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () async {
-                  // Load exercises for lesson 4 (Màu Sắc) into session
-                  final exercises = await AppServices.learningRepository
-                      .getExercisesByLesson(4);
-                  AppServices.exerciseSession.load(4, exercises);
-                  if (!mounted) return;
-                  if (exercises.isNotEmpty) {
-                    final firstType = exercises.first.type;
-                    final route = switch (firstType) {
-                      'listening' => '/exercise/listening',
-                      'speaking' => '/exercise/speaking',
-                      _ => '/exercise/multiple-choice',
-                    };
-                    context.go(route);
-                  } else {
-                    context.go('/exercise/multiple-choice');
-                  }
-                },
+                onPressed: _loadingLesson
+                    ? null
+                    : () async {
+                        final exercises = _lessonExercises.isNotEmpty
+                            ? _lessonExercises
+                            : await AppServices.learningRepository
+                                  .getExercisesByLesson(_lessonId);
+                        AppServices.exerciseSession.load(_lessonId, exercises);
+                        if (!context.mounted) return;
+                        if (exercises.isNotEmpty) {
+                          final firstType = exercises.first.type;
+                          final route = switch (firstType) {
+                            'listening' => '/exercise/listening',
+                            'speaking' => '/exercise/speaking',
+                            'matching' => '/exercise/matching',
+                            'writing' => '/exercise/matching',
+                            _ => '/exercise/multiple-choice',
+                          };
+                          context.go(route);
+                        } else {
+                          context.go('/exercise/multiple-choice');
+                        }
+                      },
                 icon: const Icon(Icons.play_arrow_rounded, size: 24),
                 label: const Text(
                   'Bắt Đầu Bài Học',
@@ -1173,9 +1351,9 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Thời gian ước tính: 10 phút · Nhận 50 XP',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            Text(
+              'Thời gian ước tính: 10 phút · Nhận ${_lesson?.xpReward ?? 50} XP',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'data/services/app_services.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screen.dart';
+import 'screens/change_password_screen.dart';
 import 'screens/dictionary_screen.dart';
 import 'screens/email_verification_screen.dart';
 import 'screens/exercise_screen.dart';
@@ -102,7 +103,12 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/lesson-intro',
-      builder: (context, state) => const LessonIntroScreen(),
+      builder: (context, state) {
+        final lessonId = int.tryParse(
+          state.uri.queryParameters['lessonId'] ?? '',
+        );
+        return LessonIntroScreen(lessonId: lessonId);
+      },
     ),
     GoRoute(
       path: '/exercise/multiple-choice',
@@ -122,11 +128,21 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/practice/vocabulary',
-      builder: (context, state) => const FlashcardScreen(),
+      builder: (context, state) {
+        final lessonId = int.tryParse(
+          state.uri.queryParameters['lessonId'] ?? '',
+        );
+        return FlashcardScreen(lessonId: lessonId);
+      },
     ),
     GoRoute(
       path: '/flashcard',
-      builder: (context, state) => const FlashcardScreen(),
+      builder: (context, state) {
+        final lessonId = int.tryParse(
+          state.uri.queryParameters['lessonId'] ?? '',
+        );
+        return FlashcardScreen(lessonId: lessonId);
+      },
     ),
     GoRoute(
       path: '/lesson-completed',
@@ -138,7 +154,12 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/exercise/flashcard',
-      builder: (context, state) => const FlashcardScreen(isExercise: true),
+      builder: (context, state) {
+        final lessonId = int.tryParse(
+          state.uri.queryParameters['lessonId'] ?? '',
+        );
+        return FlashcardScreen(isExercise: true, lessonId: lessonId);
+      },
     ),
     GoRoute(
       path: '/notifications',
@@ -161,6 +182,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/change-password',
+      builder: (context, state) => const ChangePasswordScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) => _ShellScaffold(child: child),
