@@ -279,7 +279,7 @@ class _TopicWordsScreenState extends State<TopicWordsScreen>
       _TopicPracticeMode.recognition => '/exercise/multiple-choice',
       _ => '/exercise/multiple-choice',
     };
-    context.go(route);
+    context.push(route);
   }
 
   Future<void> _startFlashcardPractice(List<TopicWordModel> words) async {

@@ -799,7 +799,7 @@ class _LearningPathMapState extends State<_LearningPathMap> {
                                     child: GestureDetector(
                                       onTap: node.locked
                                           ? () => _showLockedDialog(context)
-                                          : () => context.go(
+                                          : () => context.push(
                                               node.current
                                                   ? '/lesson-intro?lessonId=${node.id}'
                                                   : '/course-map',
@@ -1089,7 +1089,7 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go(action.route),
+      onTap: () => context.push(action.route),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,

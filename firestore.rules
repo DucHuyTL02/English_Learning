@@ -26,6 +26,16 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // Learning activity used to calculate streak and XP across devices.
+      match /daily_activity/{activityDate} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Completed lesson progress used for course map sync across devices.
+      match /lesson_progress/{lessonId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // User-created vocabulary topics
       match /topics/{topicId} {
         allow read, write: if isOwner(userId);

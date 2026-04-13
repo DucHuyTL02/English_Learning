@@ -18,15 +18,21 @@ class AppServices {
   AppServices._();
 
   static final AppDatabase database = AppDatabase.instance;
+  static final UserLocalDataSource _userLocalDataSource = UserLocalDataSource(
+    database,
+  );
+  static final LearningLocalDataSource _learningLocalDataSource =
+      LearningLocalDataSource(database);
   static final UserRepository userRepository = UserRepository(
-    UserLocalDataSource(database),
+    _userLocalDataSource,
   );
   static final DictionaryRepository dictionaryRepository = DictionaryRepository(
     DictionaryLocalDataSource(database),
     DictionaryRemoteDataSource(),
   );
   static final LearningRepository learningRepository = LearningRepository(
-    LearningLocalDataSource(database),
+    _learningLocalDataSource,
+    userLocalDataSource: _userLocalDataSource,
   );
   static final LearningContentService learningContentService =
       LearningContentService();
@@ -49,6 +55,8 @@ class AppServices {
     await notificationService.initialize();
     final user = await userRepository.getActiveUser();
     if (user != null && user.id != null) {
+      await learningRepository.ensureRemoteLessonProgressSeeded(user.id!);
+      await learningRepository.ensureRemoteStatsSeeded(user.id!);
       final totalXp = await learningRepository.getTotalXp(user.id!);
       final currentStreak = await learningRepository.getCurrentStreak(user.id!);
       try {

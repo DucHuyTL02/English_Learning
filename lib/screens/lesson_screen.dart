@@ -1344,9 +1344,9 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                             'writing' => '/exercise/matching',
                             _ => '/exercise/multiple-choice',
                           };
-                          context.go(route);
+                          context.push(route);
                         } else {
-                          context.go('/exercise/multiple-choice');
+                          context.push('/exercise/multiple-choice');
                         }
                       },
                 icon: const Icon(Icons.play_arrow_rounded, size: 24),

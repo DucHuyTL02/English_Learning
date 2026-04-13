@@ -97,7 +97,11 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
     session.recordAnswer(_isCorrect);
     final next = session.next();
     if (next == null) {
-      context.go(session.completionRoute);
+      if (session.completionRoute.startsWith('/user-topics') || session.completionRoute == session.exitRoute) {
+        context.pop();
+      } else {
+        context.pushReplacement(session.completionRoute);
+      }
       return;
     }
     final route = switch (next.type) {
@@ -107,7 +111,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
       'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
-    context.go(route);
+    context.pushReplacement(route);
   }
 
   @override
@@ -120,8 +124,7 @@ class _MultipleChoiceScreenState extends State<MultipleChoiceScreen>
             progress: _progress,
             total: _total,
             onClose: () {
-              final session = AppServices.exerciseSession;
-              context.go(session.total > 0 ? session.exitRoute : '/home');
+              context.pop();
             },
           ),
           Expanded(
@@ -622,7 +625,11 @@ class _ListeningScreenState extends State<ListeningScreen>
     session.recordAnswer(allCorrect);
     final next = session.next();
     if (next == null) {
-      context.go(session.completionRoute);
+      if (session.completionRoute.startsWith('/user-topics') || session.completionRoute == session.exitRoute) {
+        context.pop();
+      } else {
+        context.pushReplacement(session.completionRoute);
+      }
       return;
     }
     final route = switch (next.type) {
@@ -632,7 +639,7 @@ class _ListeningScreenState extends State<ListeningScreen>
       'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
-    context.go(route);
+    context.pushReplacement(route);
   }
 
   bool get _allFilled =>
@@ -656,8 +663,7 @@ class _ListeningScreenState extends State<ListeningScreen>
             progress: _progress,
             total: _total,
             onClose: () {
-              final session = AppServices.exerciseSession;
-              context.go(session.total > 0 ? session.exitRoute : '/home');
+              context.pop();
             },
           ),
           Expanded(
@@ -1708,7 +1714,11 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
     session.recordAnswer(_accuracy != null && _accuracy! >= 70);
     final next = session.next();
     if (next == null) {
-      context.go(session.completionRoute);
+      if (session.completionRoute.startsWith('/user-topics') || session.completionRoute == session.exitRoute) {
+        context.pop();
+      } else {
+        context.pushReplacement(session.completionRoute);
+      }
       return;
     }
     final route = switch (next.type) {
@@ -1718,7 +1728,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
       'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
-    context.go(route);
+    context.pushReplacement(route);
   }
 
   @override
@@ -1733,8 +1743,7 @@ class _SpeakingExerciseScreenState extends State<SpeakingExerciseScreen>
             progress: _progress,
             total: _total,
             onClose: () {
-              final session = AppServices.exerciseSession;
-              context.go(session.total > 0 ? session.exitRoute : '/home');
+              context.pop();
             },
           ),
           Expanded(
@@ -2527,7 +2536,11 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
     session.recordAnswer(_isCorrect);
     final next = session.next();
     if (next == null) {
-      context.go(session.completionRoute);
+      if (session.completionRoute.startsWith('/user-topics') || session.completionRoute == session.exitRoute) {
+        context.pop();
+      } else {
+        context.pushReplacement(session.completionRoute);
+      }
       return;
     }
     final route = switch (next.type) {
@@ -2537,7 +2550,7 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
       'writing' => '/exercise/matching',
       _ => '/exercise/multiple-choice',
     };
-    context.go(route);
+    context.pushReplacement(route);
   }
 
   @override
@@ -2551,8 +2564,7 @@ class _MatchingExerciseScreenState extends State<MatchingExerciseScreen>
             progress: _progress,
             total: _total,
             onClose: () {
-              final session = AppServices.exerciseSession;
-              context.go(session.total > 0 ? session.exitRoute : '/home');
+              context.pop();
             },
           ),
           Expanded(
@@ -3949,7 +3961,11 @@ class _FlashcardScreenState extends State<FlashcardScreen>
   void _handleClose() {
     final closeRoute = widget.closeRoute;
     if (closeRoute != null && closeRoute.isNotEmpty) {
-      context.go(closeRoute);
+      if (closeRoute.startsWith('/user-topics')) {
+        context.pop();
+      } else {
+        context.go(closeRoute);
+      }
       return;
     }
 
@@ -3963,13 +3979,17 @@ class _FlashcardScreenState extends State<FlashcardScreen>
 
   void _handleComplete() {
     if (widget.isExercise) {
-      context.go('/lesson-completed');
+      context.pushReplacement('/lesson-completed');
       return;
     }
 
     final completeRoute = widget.completeRoute;
     if (completeRoute != null && completeRoute.isNotEmpty) {
-      context.go(completeRoute);
+      if (completeRoute.startsWith('/user-topics')) {
+        context.pop();
+      } else {
+        context.go(completeRoute);
+      }
       return;
     }
 
