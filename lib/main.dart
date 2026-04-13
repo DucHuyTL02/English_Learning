@@ -111,19 +111,19 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/exercise/multiple-choice',
-      builder: (context, state) => const MultipleChoiceScreen(),
+      builder: (context, state) => MultipleChoiceScreen(key: state.pageKey),
     ),
     GoRoute(
       path: '/exercise/listening',
-      builder: (context, state) => const ListeningScreen(),
+      builder: (context, state) => ListeningScreen(key: state.pageKey),
     ),
     GoRoute(
       path: '/exercise/speaking',
-      builder: (context, state) => const SpeakingExerciseScreen(),
+      builder: (context, state) => SpeakingExerciseScreen(key: state.pageKey),
     ),
     GoRoute(
       path: '/exercise/matching',
-      builder: (context, state) => const MatchingExerciseScreen(),
+      builder: (context, state) => MatchingExerciseScreen(key: state.pageKey),
     ),
     GoRoute(
       path: '/practice/vocabulary',
@@ -165,7 +165,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/practice/speaking',
-      builder: (context, state) => const SpeakingExerciseScreen(),
+      builder: (context, state) => SpeakingExerciseScreen(key: state.pageKey),
     ),
     GoRoute(
       path: '/exercise/flashcard',
@@ -173,7 +173,11 @@ final _router = GoRouter(
         final lessonId = int.tryParse(
           state.uri.queryParameters['lessonId'] ?? '',
         );
-        return FlashcardScreen(isExercise: true, lessonId: lessonId);
+        return FlashcardScreen(
+          key: state.pageKey, 
+          isExercise: true, 
+          lessonId: lessonId,
+        );
       },
     ),
     GoRoute(

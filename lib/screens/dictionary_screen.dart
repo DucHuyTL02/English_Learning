@@ -502,7 +502,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       _SavedPracticeMode.recognition => '/exercise/multiple-choice',
       _ => '/exercise/multiple-choice',
     };
-    context.go(route);
+    context.push(route);
   }
 
   void _startSavedFlashcard(List<DictionaryWordModel> words) {

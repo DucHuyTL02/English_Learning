@@ -67,7 +67,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       setState(() => _errorMessage = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Khong the tai du lieu ban be.');
+      setState(() => _errorMessage = 'Không thể tải dữ liệu bạn bè.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -150,7 +150,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       _showSnack(e.message);
     } catch (_) {
       if (!mounted) return;
-      _showSnack('Khong the chap nhan loi moi luc nay.');
+      _showSnack('Không thể chấp nhận lời mời lúc này.');
     }
   }
 
@@ -158,7 +158,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     try {
       await AppServices.socialService.declineFriendRequest(request.id);
       if (!mounted) return;
-      _showSnack('Da tu choi loi moi.');
+      _showSnack('Đã từ chối lời mời.');
       await _loadData();
     } on SocialServiceException catch (e) {
       if (!mounted) return;
@@ -173,7 +173,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     try {
       await AppServices.socialService.cancelFriendRequest(request.id);
       if (!mounted) return;
-      _showSnack('Da huy loi moi da gui.');
+      _showSnack('Đã hủy lời mời đã gửi.');
       await _loadData();
     } on SocialServiceException catch (e) {
       if (!mounted) return;
@@ -312,7 +312,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tim ban be',
+                  'Tìm bạn bè',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -320,7 +320,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ),
                 ),
                 Text(
-                  'Tim theo email, quan ly loi moi ket ban',
+                  'Tìm theo email, quản lý lời mời kết bạn',
                   style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                 ),
               ],
@@ -587,7 +587,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       child: Row(
         children: [
           _FriendHubTab(
-            label: 'Danh sach ban be',
+            label: 'Danh sách bạn bè',
             selected: _tabIndex == 0,
             onTap: () => setState(() => _tabIndex = 0),
           ),
@@ -603,7 +603,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Widget _buildFriendsTab() {
     if (_friends.isEmpty) {
-      return _buildEmptyCard('Ban chua co ban be nao.');
+      return _buildEmptyCard('Bạn chưa có bạn bè nào.');
     }
 
     return Column(
@@ -626,7 +626,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Da nhan',
+          'Đã nhận',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
@@ -635,7 +635,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
         const SizedBox(height: 8),
         if (_incomingRequests.isEmpty)
-          _buildEmptyCard('Khong co loi moi nao dang cho ban.')
+          _buildEmptyCard('Không có lời mời nào đang chờ bạn.')
         else
           ..._incomingRequests.map(
             (request) => Padding(
@@ -649,7 +649,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         const SizedBox(height: 14),
         const Text(
-          'Dang gui',
+          'Đang gửi',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
@@ -658,7 +658,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
         const SizedBox(height: 8),
         if (_outgoingRequests.isEmpty)
-          _buildEmptyCard('Ban chua gui loi moi nao.')
+          _buildEmptyCard('Bạn chưa gửi lời mời nào.')
         else
           ..._outgoingRequests.map(
             (request) => Padding(
