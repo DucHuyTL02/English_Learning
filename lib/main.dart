@@ -43,16 +43,8 @@ class _ShellScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentPath = GoRouterState.of(context).uri.path;
-
     return PopScope(
-      canPop: currentPath == '/home',
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (currentPath != '/home') {
-          context.go('/home');
-        }
-      },
+      canPop: true,
       child: Stack(
         children: [
           Padding(

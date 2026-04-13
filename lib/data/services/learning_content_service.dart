@@ -225,9 +225,9 @@ class LearningContentService {
         .where((word) => word.trim().isNotEmpty)
         .toList();
 
-    final ordered = sentenceWords.take(4).toList();
-    if (ordered.length < 4) {
-      while (ordered.length < 4) {
+    final ordered = sentenceWords.toList();
+    if (ordered.length < 3) {
+      while (ordered.length < 3) {
         ordered.add(first.word);
       }
     }
