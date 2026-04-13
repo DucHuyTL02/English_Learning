@@ -4,10 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/models/dictionary_word_model.dart';
+import '../data/models/exercise_model.dart';
+import '../data/models/flashcard_model.dart';
 import '../data/models/user_topic_model.dart';
 import '../data/repositories/dictionary_repository.dart';
 import '../data/services/app_services.dart';
 import '../data/services/tts_service.dart';
+import 'exercise_screen.dart';
+
+enum _SavedPracticeMode { flashcard, listening, speaking, recognition }
 
 String _relativeDateLabel(DateTime createdAt) {
   final now = DateTime.now();
@@ -368,6 +373,28 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               position: _footerSlide,
               child: FadeTransition(
                 opacity: _footerFade,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  child: _SavedPracticePanel(
+                    savedCount: _savedCount,
+                    onFlashcard: () =>
+                        _startSavedPractice(_SavedPracticeMode.flashcard),
+                    onListening: () =>
+                        _startSavedPractice(_SavedPracticeMode.listening),
+                    onSpeaking: () =>
+                        _startSavedPractice(_SavedPracticeMode.speaking),
+                    onRecognition: () =>
+                        _startSavedPractice(_SavedPracticeMode.recognition),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: SlideTransition(
+              position: _footerSlide,
+              child: FadeTransition(
+                opacity: _footerFade,
                 child: _StatsFooter(
                   savedCount: _savedCount,
                   onTap: () => context.push('/user-topics'),
@@ -410,6 +437,248 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     return const _EmptyState(
       title: 'No definitions found',
       subtitle: 'Try a different English word',
+    );
+  }
+
+  // ── Practice all saved words ──────────────────────────────────────
+
+  static const int _maxPracticeItems = 24;
+  static const List<List<int>> _flashcardGradients = [
+    [0xFFFA5C5C, 0xFFFD8A6B],
+    [0xFF6366F1, 0xFF818CF8],
+    [0xFF22C55E, 0xFF4ADE80],
+    [0xFFF59E0B, 0xFFFBBF24],
+    [0xFF06B6D4, 0xFF67E8F9],
+  ];
+  static const List<String> _fallbackMeaningOptions = [
+    'Một tính từ mô tả trạng thái hoặc cảm xúc.',
+    'Một hành động thường gặp trong giao tiếp hằng ngày.',
+    'Một danh từ chỉ sự vật hoặc khái niệm quen thuộc.',
+    'Một cụm từ dùng trong ví dụ tiếng Anh cơ bản.',
+  ];
+
+  List<DictionaryWordModel> get _practiceWords {
+    return _savedWords
+        .where((w) => w.word.trim().isNotEmpty)
+        .take(_maxPracticeItems)
+        .toList();
+  }
+
+  void _startSavedPractice(_SavedPracticeMode mode) {
+    final words = _practiceWords;
+    if (words.isEmpty) {
+      _showSnack('Bạn cần lưu ít nhất 1 từ vựng để bắt đầu ôn tập.');
+      return;
+    }
+
+    if (mode == _SavedPracticeMode.flashcard) {
+      _startSavedFlashcard(words);
+      return;
+    }
+
+    final exercises = switch (mode) {
+      _SavedPracticeMode.listening => _buildSavedListening(words),
+      _SavedPracticeMode.speaking => _buildSavedSpeaking(words),
+      _SavedPracticeMode.recognition => _buildSavedRecognition(words),
+      _ => const <ExerciseModel>[],
+    };
+
+    if (exercises.isEmpty) {
+      _showSnack('Chưa đủ dữ liệu để tạo bài luyện cho chế độ này.');
+      return;
+    }
+
+    AppServices.exerciseSession.load(
+      0,
+      exercises,
+      completionRoute: '/dictionary',
+      exitRoute: '/dictionary',
+      shouldPersistProgress: false,
+    );
+
+    if (!mounted) return;
+    final route = switch (mode) {
+      _SavedPracticeMode.listening => '/exercise/listening',
+      _SavedPracticeMode.speaking => '/exercise/speaking',
+      _SavedPracticeMode.recognition => '/exercise/multiple-choice',
+      _ => '/exercise/multiple-choice',
+    };
+    context.go(route);
+  }
+
+  void _startSavedFlashcard(List<DictionaryWordModel> words) {
+    final cards = <FlashcardModel>[];
+    for (var i = 0; i < words.length; i++) {
+      final item = words[i];
+      final word = item.word.trim();
+      if (word.isEmpty) continue;
+      final gradient = _flashcardGradients[i % _flashcardGradients.length];
+      cards.add(FlashcardModel(
+        word: word,
+        translation: item.definition.trim().isNotEmpty
+            ? item.definition.trim()
+            : 'Ý nghĩa của từ "$word".',
+        phonetic: item.phonetic.trim(),
+        example: item.example.trim().isNotEmpty
+            ? item.example.trim()
+            : 'I remember the word $word.',
+        illustration: _pickIllustration(item.partOfSpeech),
+        gradStart: gradient[0],
+        gradEnd: gradient[1],
+      ));
+    }
+    if (cards.isEmpty) {
+      _showSnack('Không thể tạo flashcard từ dữ liệu hiện tại.');
+      return;
+    }
+    context.push(
+      '/flashcard',
+      extra: FlashcardLaunchConfig(
+        cards: cards,
+        title: 'Flashcard · Từ đã lưu',
+        closeRoute: '/dictionary',
+        completeRoute: '/dictionary',
+      ),
+    );
+  }
+
+  List<ExerciseModel> _buildSavedListening(List<DictionaryWordModel> words) {
+    final exercises = <ExerciseModel>[];
+    for (var i = 0; i < words.length; i++) {
+      final answer = words[i].word.trim();
+      if (answer.isEmpty) continue;
+      final example = words[i].example.trim();
+      String question;
+      if (example.isNotEmpty) {
+        final regex = RegExp(r'\b' + RegExp.escape(answer) + r'\b',
+            caseSensitive: false);
+        final replaced = example.replaceFirst(regex, '___');
+        question = replaced != example ? replaced : 'I am learning ___ today.';
+      } else {
+        question = 'I am learning ___ today.';
+      }
+      final bank = _buildWordBank(answer, words);
+      exercises.add(ExerciseModel(
+        lessonId: 0,
+        type: 'listening',
+        question: question,
+        correctAnswer: answer,
+        options: bank.join('|'),
+        illustration: '🔊',
+        sortOrder: i + 1,
+      ));
+    }
+    return exercises;
+  }
+
+  List<ExerciseModel> _buildSavedSpeaking(List<DictionaryWordModel> words) {
+    final exercises = <ExerciseModel>[];
+    for (var i = 0; i < words.length; i++) {
+      final item = words[i];
+      final sentence = item.example.trim().isNotEmpty
+          ? item.example.trim()
+          : (item.word.trim().isNotEmpty
+              ? 'I remember the word ${item.word.trim()}.'
+              : '');
+      if (sentence.isEmpty) continue;
+      exercises.add(ExerciseModel(
+        lessonId: 0,
+        type: 'speaking',
+        question: 'Read this sentence out loud.',
+        correctAnswer: sentence,
+        options: '',
+        illustration: '🎤',
+        sortOrder: i + 1,
+      ));
+    }
+    return exercises;
+  }
+
+  List<ExerciseModel> _buildSavedRecognition(List<DictionaryWordModel> words) {
+    final exercises = <ExerciseModel>[];
+    for (var i = 0; i < words.length; i++) {
+      final word = words[i].word.trim();
+      if (word.isEmpty) continue;
+      final correctMeaning = words[i].definition.trim().isNotEmpty
+          ? words[i].definition.trim()
+          : 'Ý nghĩa của từ "$word".';
+      final distractors = words
+          .asMap()
+          .entries
+          .where((e) => e.key != i)
+          .map((e) => e.value.definition.trim().isNotEmpty
+              ? e.value.definition.trim()
+              : 'Ý nghĩa của từ "${e.value.word.trim()}".')
+          .where((v) =>
+              v.isNotEmpty &&
+              v.toLowerCase() != correctMeaning.toLowerCase())
+          .toList();
+      final options = _buildMeaningChoices(correctMeaning, distractors);
+      exercises.add(ExerciseModel(
+        lessonId: 0,
+        type: 'multiple_choice',
+        question: 'Nghĩa đúng của "$word" là gì?',
+        correctAnswer: correctMeaning,
+        options: options.join('|'),
+        illustration: '🧠',
+        sortOrder: i + 1,
+      ));
+    }
+    return exercises;
+  }
+
+  List<String> _buildWordBank(
+      String correctWord, List<DictionaryWordModel> words) {
+    final options = words
+        .map((w) => w.word.trim())
+        .where(
+            (v) => v.isNotEmpty && v.toLowerCase() != correctWord.toLowerCase())
+        .toSet()
+        .toList()
+      ..shuffle();
+    final result = <String>[correctWord, ...options.take(3)];
+    const fallback = ['friend', 'school', 'happy', 'music', 'family', 'book'];
+    for (final v in fallback) {
+      if (result.length >= 4) break;
+      if (!result.any((r) => r.toLowerCase() == v.toLowerCase())) {
+        result.add(v);
+      }
+    }
+    result.shuffle();
+    return result;
+  }
+
+  List<String> _buildMeaningChoices(
+      String correctMeaning, List<String> distractors) {
+    final result = <String>[correctMeaning];
+    final shuffled = distractors.toSet().toList()..shuffle();
+    result.addAll(shuffled.take(3));
+    for (final fb in _fallbackMeaningOptions) {
+      if (result.length >= 4) break;
+      if (!result.any((v) => v.toLowerCase() == fb.toLowerCase())) {
+        result.add(fb);
+      }
+    }
+    result.shuffle();
+    return result;
+  }
+
+  String _pickIllustration(String partOfSpeech) {
+    final part = partOfSpeech.trim().toLowerCase();
+    if (part.contains('verb') || part.contains('động')) return '🏃';
+    if (part.contains('adjective') || part.contains('tính')) return '✨';
+    if (part.contains('noun') || part.contains('danh')) return '📦';
+    if (part.contains('adverb') || part.contains('trạng')) return '⚡';
+    return '📘';
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFA5C5C),
+      ),
     );
   }
 }
@@ -1064,7 +1333,167 @@ class _StatsFooter extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€ Save to Topic Bottom Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Saved-words Practice Panel ─────────────────────────────────────────
+
+class _SavedPracticePanel extends StatelessWidget {
+  const _SavedPracticePanel({
+    required this.savedCount,
+    required this.onFlashcard,
+    required this.onListening,
+    required this.onSpeaking,
+    required this.onRecognition,
+  });
+
+  final int savedCount;
+  final VoidCallback onFlashcard;
+  final VoidCallback onListening;
+  final VoidCallback onSpeaking;
+  final VoidCallback onRecognition;
+
+  @override
+  Widget build(BuildContext context) {
+    if (savedCount == 0) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.fitness_center_rounded,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ôn tập từ đã lưu',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    Text(
+                      'Luyện tập tất cả từ vựng bạn đã lưu',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            childAspectRatio: 2.4,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            children: [
+              _SavedPracticeButton(
+                icon: Icons.style_rounded,
+                title: 'Flashcard',
+                color: const Color(0xFF6366F1),
+                onTap: onFlashcard,
+              ),
+              _SavedPracticeButton(
+                icon: Icons.hearing_rounded,
+                title: 'Luyện nghe',
+                color: const Color(0xFFF59E0B),
+                onTap: onListening,
+              ),
+              _SavedPracticeButton(
+                icon: Icons.mic_rounded,
+                title: 'Luyện nói',
+                color: const Color(0xFFFA5C5C),
+                onTap: onSpeaking,
+              ),
+              _SavedPracticeButton(
+                icon: Icons.psychology_alt_rounded,
+                title: 'Nhận diện từ',
+                color: const Color(0xFF22C55E),
+                onTap: onRecognition,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SavedPracticeButton extends StatelessWidget {
+  const _SavedPracticeButton({
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Ink(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _SaveToTopicSheet extends StatefulWidget {
   const _SaveToTopicSheet({required this.word});
