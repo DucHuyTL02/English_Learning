@@ -23,6 +23,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/streak_screen.dart';
+import 'screens/subscription_screen.dart';
 import 'screens/topic_words_screen.dart';
 import 'screens/user_topics_screen.dart';
 import 'widgets/bottom_navigation.dart';
@@ -193,8 +194,7 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/subscription',
-      builder: (context, state) =>
-          const _PlaceholderScreen(title: 'GÃ³i Premium'),
+      builder: (context, state) => const SubscriptionScreen(),
     ),
     GoRoute(
       path: '/help',

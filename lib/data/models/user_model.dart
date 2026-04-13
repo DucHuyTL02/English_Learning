@@ -16,6 +16,9 @@ class UserModel {
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
+    this.isPremium = false,
+    this.premiumExpiresAt,
+    this.subscriptionPlan = '',
   });
 
   final int? id;
@@ -34,6 +37,14 @@ class UserModel {
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isPremium;
+  final DateTime? premiumExpiresAt;
+  final String subscriptionPlan;
+
+  bool get isActivePremium =>
+      isPremium &&
+      premiumExpiresAt != null &&
+      premiumExpiresAt!.isAfter(DateTime.now());
 
   String get displayName {
     final trimmed = fullName.trim();
@@ -59,6 +70,9 @@ class UserModel {
       'is_active': isActive ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'is_premium': isPremium ? 1 : 0,
+      'premium_expires_at': premiumExpiresAt?.toIso8601String(),
+      'subscription_plan': subscriptionPlan,
     };
   }
 
@@ -80,6 +94,9 @@ class UserModel {
       isActive: _toBool(map['is_active']),
       createdAt: _toDate(map['created_at']),
       updatedAt: _toDate(map['updated_at']),
+      isPremium: _toBool(map['is_premium']),
+      premiumExpiresAt: _toNullableDate(map['premium_expires_at']),
+      subscriptionPlan: (map['subscription_plan'] as String?) ?? '',
     );
   }
 
@@ -100,6 +117,9 @@ class UserModel {
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isPremium,
+    DateTime? premiumExpiresAt,
+    String? subscriptionPlan,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -118,6 +138,9 @@ class UserModel {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isPremium: isPremium ?? this.isPremium,
+      premiumExpiresAt: premiumExpiresAt ?? this.premiumExpiresAt,
+      subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
     );
   }
 
@@ -134,5 +157,11 @@ class UserModel {
       return DateTime.tryParse(value) ?? DateTime.now();
     }
     return DateTime.now();
+  }
+
+  static DateTime? _toNullableDate(Object? value) {
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 }

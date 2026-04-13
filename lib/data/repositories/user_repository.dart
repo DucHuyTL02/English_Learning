@@ -1156,4 +1156,35 @@ class UserRepository {
       );
     }
   }
+
+  /// Kích hoạt Premium cho user.
+  Future<void> activatePremium({
+    required int userId,
+    required String plan,
+  }) async {
+    final days = plan == 'yearly' ? 365 : 30;
+    final expiresAt = DateTime.now().add(Duration(days: days));
+    final user = await _localDataSource.getUserById(userId);
+    if (user == null) return;
+    final updated = user.copyWith(
+      isPremium: true,
+      premiumExpiresAt: expiresAt,
+      subscriptionPlan: plan,
+    );
+    await _localDataSource.updateUser(updated);
+  }
+
+  /// Kiểm tra & tắt Premium nếu đã hết hạn. Trả về user mới nhất.
+  Future<UserModel?> checkAndExpirePremium(int userId) async {
+    final user = await _localDataSource.getUserById(userId);
+    if (user != null && user.isPremium && !user.isActivePremium) {
+      final updated = user.copyWith(
+        isPremium: false,
+        subscriptionPlan: '',
+      );
+      await _localDataSource.updateUser(updated);
+      return updated;
+    }
+    return user;
+  }
 }

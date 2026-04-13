@@ -373,6 +373,7 @@ class _NextLessonCardState extends State<_NextLessonCard> {
   String _lessonIcon = '📘';
   int _lessonId = 0;
   bool _loading = true;
+  bool _isLocked = false;
 
   @override
   void initState() {
@@ -390,12 +391,14 @@ class _NextLessonCardState extends State<_NextLessonCard> {
       final lessons = await repo.getLessonsByUnit(unit.id!);
       for (final lesson in lessons) {
         if (!completedIds.contains(lesson.id)) {
+          final canAccess = await repo.canAccessLesson(lesson.id!, user);
           if (!mounted) return;
           setState(() {
             _unitLabel = 'Đơn Vị ${unit.id} - Bài ${lesson.sortOrder}';
             _lessonTitle = lesson.title;
             _lessonIcon = lesson.icon;
             _lessonId = lesson.id!;
+            _isLocked = !canAccess;
             _loading = false;
           });
           return;
@@ -569,12 +572,16 @@ class _NextLessonCardState extends State<_NextLessonCard> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () =>
-                          context.push('/lesson-intro?lessonId=$_lessonId'),
-                      icon: const Icon(Icons.play_arrow_rounded, size: 26),
-                      label: const Text(
-                        'Bắt Đầu Bài Học',
-                        style: TextStyle(
+                      onPressed: _isLocked
+                          ? () => _showLockedDialog(context)
+                          : () => context.push('/lesson-intro?lessonId=$_lessonId'),
+                      icon: Icon(
+                        _isLocked ? Icons.lock_rounded : Icons.play_arrow_rounded,
+                        size: 26,
+                      ),
+                      label: Text(
+                        _isLocked ? '🔒 Mở Khóa Premium' : 'Bắt Đầu Bài Học',
+                        style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                         ),
@@ -589,6 +596,17 @@ class _NextLessonCardState extends State<_NextLessonCard> {
                       ),
                     ),
                   ),
+                  if (_isLocked)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Nâng cấp để tiếp tục học!',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -624,65 +642,84 @@ class _PathNode {
   final double yPercent;
 }
 
-const _pathNodes = [
-  _PathNode(
-    id: 1,
-    title: 'Greetings',
-    emoji: '👋',
-    completed: true,
-    locked: false,
-    xPercent: 0.30,
-    yPercent: 0.08,
-  ),
-  _PathNode(
-    id: 2,
-    title: 'Family',
-    emoji: '👨‍👩‍👧',
-    completed: true,
-    locked: false,
-    xPercent: 0.72,
-    yPercent: 0.22,
-  ),
-  _PathNode(
-    id: 3,
-    title: 'Food',
-    emoji: '🍕',
-    completed: true,
-    locked: false,
-    xPercent: 0.38,
-    yPercent: 0.38,
-  ),
-  _PathNode(
-    id: 4,
-    title: 'Colors',
-    emoji: '🎨',
-    completed: false,
-    locked: false,
-    current: true,
-    xPercent: 0.65,
-    yPercent: 0.55,
-  ),
-  _PathNode(
-    id: 5,
-    title: 'Animals',
-    emoji: '🐶',
-    completed: false,
-    locked: true,
-    xPercent: 0.30,
-    yPercent: 0.72,
-  ),
-  _PathNode(
-    id: 6,
-    title: 'Weather',
-    emoji: '🌤️',
-    completed: false,
-    locked: true,
-    xPercent: 0.68,
-    yPercent: 0.88,
-  ),
+// Zigzag positions for nodes on the learning path map.
+// Even index (0,2,4,...) → left side, Odd index (1,3,5,...) → right side.
+const _nodePositions = [
+  [0.30, 0.08],
+  [0.72, 0.22],
+  [0.30, 0.38],
+  [0.72, 0.55],
+  [0.30, 0.72],
+  [0.72, 0.88],
 ];
 
-class _LearningPathMap extends StatelessWidget {
+class _LearningPathMap extends StatefulWidget {
+  @override
+  State<_LearningPathMap> createState() => _LearningPathMapState();
+}
+
+class _LearningPathMapState extends State<_LearningPathMap> {
+  List<_PathNode> _pathNodes = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPathNodes();
+  }
+
+  Future<void> _loadPathNodes() async {
+    final user = await AppServices.userRepository.getActiveUser();
+    if (!mounted || user?.id == null) return;
+
+    final repo = AppServices.learningRepository;
+    final completedIds = await repo.getCompletedLessonIds(user!.id!);
+    final units = await repo.getUnits();
+
+    final List<_PathNode> nodes = [];
+    bool foundCurrent = false;
+    int index = 0;
+
+    for (final unit in units) {
+      final lessons = await repo.getLessonsByUnit(unit.id!);
+      for (final lesson in lessons) {
+        final isCompleted = completedIds.contains(lesson.id);
+        final canAccess = await repo.canAccessLesson(lesson.id!, user);
+        final isCurrent = !isCompleted && !foundCurrent;
+        // Only the first non-completed lesson is "current"
+        if (isCurrent) foundCurrent = true;
+
+        // Determine locked: not completed, not current, or no access (premium)
+        final isLocked = !isCompleted && !canAccess;
+
+        // Position: cycle through predefined positions
+        final pos = _nodePositions[index % _nodePositions.length];
+
+        nodes.add(_PathNode(
+          id: lesson.id!,
+          title: lesson.title,
+          emoji: lesson.icon,
+          completed: isCompleted,
+          locked: isLocked,
+          current: isCurrent && canAccess,
+          xPercent: pos[0],
+          yPercent: pos[1],
+        ));
+
+        index++;
+        // Show max 6 nodes on the map (matching the visual layout)
+        if (index >= 6) break;
+      }
+      if (index >= 6) break;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _pathNodes = nodes;
+      _loading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -729,38 +766,52 @@ class _LearningPathMap extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  return Stack(
-                    children: [
-                      // Path lines
-                      CustomPaint(
-                        size: Size(w, h),
-                        painter: _PathLinePainter(w, h),
-                      ),
-                      // Nodes
-                      ..._pathNodes.map((node) {
-                        return Positioned(
-                          left: node.xPercent * w - 40,
-                          top: node.yPercent * h - 40,
-                          child: GestureDetector(
-                            onTap: node.locked
-                                ? null
-                                : () => context.go(
-                                    node.current
-                                        ? '/lesson-intro?lessonId=${node.id}'
-                                        : '/course-map',
-                                  ),
-                            child: _NodeWidget(node: node),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _pathNodes.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Chưa có bài học nào',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF9CA3AF),
+                            ),
                           ),
-                        );
-                      }),
-                    ],
-                  );
-                },
-              ),
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            final w = constraints.maxWidth;
+                            final h = constraints.maxHeight;
+                            return Stack(
+                              children: [
+                                CustomPaint(
+                                  size: Size(w, h),
+                                  painter: _PathLinePainter(
+                                    w,
+                                    h,
+                                    _pathNodes,
+                                  ),
+                                ),
+                                ..._pathNodes.map((node) {
+                                  return Positioned(
+                                    left: node.xPercent * w - 40,
+                                    top: node.yPercent * h - 40,
+                                    child: GestureDetector(
+                                      onTap: node.locked
+                                          ? () => _showLockedDialog(context)
+                                          : () => context.go(
+                                              node.current
+                                                  ? '/lesson-intro?lessonId=${node.id}'
+                                                  : '/course-map',
+                                            ),
+                                      child: _NodeWidget(node: node),
+                                    ),
+                                  );
+                                }),
+                              ],
+                            );
+                          },
+                        ),
             ),
           ),
         ],
@@ -770,15 +821,16 @@ class _LearningPathMap extends StatelessWidget {
 }
 
 class _PathLinePainter extends CustomPainter {
-  const _PathLinePainter(this.w, this.h);
+  const _PathLinePainter(this.w, this.h, this.nodes);
   final double w;
   final double h;
+  final List<_PathNode> nodes;
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < _pathNodes.length - 1; i++) {
-      final a = _pathNodes[i];
-      final b = _pathNodes[i + 1];
+    for (int i = 0; i < nodes.length - 1; i++) {
+      final a = nodes[i];
+      final b = nodes[i + 1];
       final isDashed = !(a.completed && b.completed);
 
       final paint = Paint()
@@ -1088,4 +1140,51 @@ class _ActionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ------------------------------------------------------------------------------
+// Locked Lesson Dialog
+// ------------------------------------------------------------------------------
+void _showLockedDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Column(
+        children: [
+          Text('🔒', style: TextStyle(fontSize: 40)),
+          SizedBox(height: 8),
+          Text(
+            'Bài học bị khóa',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      content: const Text(
+        'Nâng cấp Premium để mở khóa toàn bộ bài học và tính năng nâng cao!',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Quay lại'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            GoRouter.of(context).push('/subscription');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFFA5C5C),
+            foregroundColor: Colors.white,
+            shape: const StadiumBorder(),
+          ),
+          child: const Text('Xem gói Premium'),
+        ),
+      ],
+    ),
+  );
 }

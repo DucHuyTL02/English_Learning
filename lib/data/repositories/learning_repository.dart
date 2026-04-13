@@ -4,6 +4,7 @@ import '../models/lesson_model.dart';
 import '../models/exercise_model.dart';
 import '../models/user_progress_model.dart';
 import '../models/daily_activity_model.dart';
+import '../models/user_model.dart';
 
 class LearningRepositoryException implements Exception {
   LearningRepositoryException(this.message);
@@ -160,6 +161,20 @@ class LearningRepository {
       return activities.length;
     } catch (_) {
       return 0;
+    }
+  }
+
+  /// Trả về true nếu user được phép học lesson này.
+  /// Bài đầu tiên (sortOrder = 1, unitId = 1) luôn FREE.
+  /// Tất cả bài còn lại yêu cầu Premium.
+  Future<bool> canAccessLesson(int lessonId, UserModel user) async {
+    try {
+      final lesson = await _ds.getLessonById(lessonId);
+      if (lesson == null) return false;
+      if (lesson.unitId == 1 && lesson.sortOrder == 1) return true;
+      return user.isActivePremium;
+    } catch (_) {
+      return false;
     }
   }
 }

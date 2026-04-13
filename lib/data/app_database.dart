@@ -7,7 +7,7 @@ class AppDatabase {
 
   static final AppDatabase instance = AppDatabase._();
 
-  static const int _version = 5;
+  static const int _version = 6;
   static const String usersTable = 'users';
   static const String dictionaryWordsTable = 'dictionary_words';
   static const String unitsTable = 'units';
@@ -52,6 +52,26 @@ class AppDatabase {
         if (oldVersion < 5) {
           await _createNotificationsTable(db);
         }
+        if (oldVersion < 6) {
+          final columns = (await db.rawQuery('PRAGMA table_info($usersTable)'))
+              .map((c) => c['name'] as String)
+              .toSet();
+          if (!columns.contains('is_premium')) {
+            await db.execute(
+              'ALTER TABLE $usersTable ADD COLUMN is_premium INTEGER NOT NULL DEFAULT 0',
+            );
+          }
+          if (!columns.contains('premium_expires_at')) {
+            await db.execute(
+              'ALTER TABLE $usersTable ADD COLUMN premium_expires_at TEXT',
+            );
+          }
+          if (!columns.contains('subscription_plan')) {
+            await db.execute(
+              'ALTER TABLE $usersTable ADD COLUMN subscription_plan TEXT NOT NULL DEFAULT \'\'',
+            );
+          }
+        }
       },
     );
     return _database!;
@@ -75,7 +95,10 @@ class AppDatabase {
         total_xp INTEGER NOT NULL DEFAULT 0,
         is_active INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        is_premium INTEGER NOT NULL DEFAULT 0,
+        premium_expires_at TEXT,
+        subscription_plan TEXT NOT NULL DEFAULT ''
       );
     ''');
     await db.execute(

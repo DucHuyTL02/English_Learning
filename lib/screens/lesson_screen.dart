@@ -123,8 +123,11 @@ class _CourseMapScreenState extends State<CourseMapScreen>
 
       for (final lesson in lessons) {
         final completed = completedIds.contains(lesson.id);
-        final locked = !completed && foundCurrent;
-        final current = !completed && !foundCurrent;
+        final premiumLocked = user != null
+            ? !(await repo.canAccessLesson(lesson.id!, user))
+            : false;
+        final locked = premiumLocked || (!completed && foundCurrent);
+        final current = !completed && !foundCurrent && !premiumLocked;
         if (current) foundCurrent = true;
 
         lessonItems.add(
@@ -549,7 +552,7 @@ class _LessonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: lesson.locked
-          ? null
+          ? () => _showLockedLessonDialog(context)
           : () => context.push('/lesson-intro?lessonId=${lesson.id}'),
       child: Opacity(
         opacity: lesson.locked ? 0.6 : 1.0,
@@ -872,6 +875,17 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
     final repo = AppServices.learningRepository;
     var selectedLessonId = widget.lessonId ?? 4;
     LessonModel? lesson = await repo.getLessonById(selectedLessonId);
+
+    // Premium gate check
+    final user = await AppServices.userRepository.getActiveUser();
+    if (user != null && lesson != null) {
+      final canAccess = await repo.canAccessLesson(selectedLessonId, user);
+      if (!canAccess) {
+        if (!mounted) return;
+        _showLockedLessonDialog(context);
+        return;
+      }
+    }
 
     if (lesson == null) {
       final allLessons = await repo.getAllLessons();
@@ -1626,4 +1640,51 @@ class _OwlPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ------------------------------------------------------------------------------
+// Locked Lesson Dialog
+// ------------------------------------------------------------------------------
+void _showLockedLessonDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Column(
+        children: [
+          Text('🔒', style: TextStyle(fontSize: 40)),
+          SizedBox(height: 8),
+          Text(
+            'Bài học bị khóa',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      content: const Text(
+        'Nâng cấp Premium để mở khóa toàn bộ bài học và tính năng nâng cao!',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Quay lại'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            GoRouter.of(context).push('/subscription');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFFA5C5C),
+            foregroundColor: Colors.white,
+            shape: const StadiumBorder(),
+          ),
+          child: const Text('Xem gói Premium'),
+        ),
+      ],
+    ),
+  );
 }
