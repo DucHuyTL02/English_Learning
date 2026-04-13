@@ -72,7 +72,7 @@ class UserModel {
       bio: (map['bio'] as String?) ?? '',
       location: (map['location'] as String?) ?? '',
       birthDate: (map['birth_date'] as String?) ?? '',
-      avatarEmoji: (map['avatar_emoji'] as String?) ?? '👤',
+      avatarEmoji: (map['avatar_emoji'] as String?) ?? '🙂',
       notificationsEnabled: _toBool(map['notifications_enabled']),
       soundEnabled: _toBool(map['sound_enabled']),
       darkModeEnabled: _toBool(map['dark_mode_enabled']),

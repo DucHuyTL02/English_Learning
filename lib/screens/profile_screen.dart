@@ -117,6 +117,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   int _streak = 0;
   static const double _goalPct = 0.75;
   String _profileName = 'Bạn';
+  String _avatarEmoji = '🙂';
   int _savedWordCount = 0;
 
   List<_StatData> get _stats => [
@@ -221,6 +222,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       setState(() {
         if (user != null) {
           _profileName = user.displayName;
+          _avatarEmoji = user.avatarEmoji;
         }
         _savedWordCount = savedWordCount;
         _streak = streak;
@@ -264,6 +266,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 progressCtrl: _progressCtrl,
                 displayName: _profileName,
                 totalXp: _totalXp,
+                avatarEmoji: _avatarEmoji,
               ),
             ),
 
@@ -482,12 +485,14 @@ class _ProfileHeader extends StatelessWidget {
     required this.progressCtrl,
     required this.displayName,
     required this.totalXp,
+    required this.avatarEmoji,
   });
   final int level;
   final Animation<double> progressAnim;
   final AnimationController progressCtrl;
   final String displayName;
   final int totalXp;
+  final String avatarEmoji;
 
   @override
   Widget build(BuildContext context) {
@@ -588,8 +593,8 @@ class _ProfileHeader extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Center(
-                            child: Text('👤', style: TextStyle(fontSize: 44)),
+                          child: Center(
+                            child: Text(avatarEmoji, style: const TextStyle(fontSize: 44)),
                           ),
                         ),
                       ),
@@ -1091,8 +1096,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _bioCtrl = TextEditingController(text: 'Passionate English learner 📚');
   final _locationCtrl = TextEditingController(text: 'San Francisco, CA');
   String _birthdate = '1995-03-15';
+  String _avatarEmoji = '🙂';
   int? _activeUserId;
   bool _isSaving = false;
+  bool _isSavingAvatar = false;
   bool _isDeleting = false;
   bool _isLoadingUser = true;
 
@@ -1122,6 +1129,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _bioCtrl.text = user.bio;
         _locationCtrl.text = user.location;
         _birthdate = user.birthDate.isEmpty ? _birthdate : user.birthDate;
+        _avatarEmoji = user.avatarEmoji;
       });
     } catch (_) {
       // Keep fallback values if loading fails.
@@ -1154,6 +1162,125 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _birthdate =
             '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       });
+    }
+  }
+
+  static const List<String> _avatarEmojiOptions = [
+    '🙂', '😊', '😎', '🤓', '😇', '🥳', '😺', '🐱',
+    '🐶', '🦊', '🐻', '🐼', '🐨', '🦁', '🐯', '🐸',
+    '🐵', '🦄', '🐲', '🦋', '🌸', '🌟', '⭐', '🔥',
+    '💎', '🎯', '🎨', '🎵', '📚', '✏️', '🏆', '🎓',
+    '🚀', '🌈', '☀️', '🌙', '❤️', '💜', '💙', '💚',
+    '👤', '👩', '👨', '🧑', '👧', '👦', '🤖', '👻',
+  ];
+
+  Future<void> _pickAvatarEmoji() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD1D5DB),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Text(
+                'Chọn avatar của bạn',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text(
+                'Nhấn vào biểu tượng để chọn',
+                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _avatarEmojiOptions.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 8,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                ),
+                itemBuilder: (context, index) {
+                  final emoji = _avatarEmojiOptions[index];
+                  final isSelected = emoji == _avatarEmoji;
+                  return GestureDetector(
+                    onTap: () => Navigator.of(ctx).pop(emoji),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xFFFFF1F1)
+                            : const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFFFA5C5C)
+                              : const Color(0xFFE5E7EB),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (selected == null || selected == _avatarEmoji) return;
+    if (_activeUserId == null) return;
+
+    setState(() => _isSavingAvatar = true);
+    try {
+      await AppServices.userRepository.updateAvatarEmoji(
+        userId: _activeUserId!,
+        avatarEmoji: selected,
+      );
+      if (!mounted) return;
+      setState(() => _avatarEmoji = selected);
+    } on UserRepositoryException catch (e) {
+      if (!mounted) return;
+      _showSnackBar(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar('Không thể đổi avatar lúc này.');
+    } finally {
+      if (mounted) setState(() => _isSavingAvatar = false);
     }
   }
 
@@ -1378,76 +1505,86 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         // Avatar
                         _SlideIn(
                           delay: 100,
-                          child: Column(
-                            children: [
-                              Stack(
-                                children: [
-                                  Container(
-                                    width: 110,
-                                    height: 110,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFFFA5C5C),
-                                          Color(0xFFFD8A6B),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      shape: BoxShape.circle,
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Color(0x40FA5C5C),
-                                          blurRadius: 16,
-                                          offset: Offset(0, 6),
+                          child: GestureDetector(
+                            onTap: _pickAvatarEmoji,
+                            child: Column(
+                              children: [
+                                Stack(
+                                  children: [
+                                    Container(
+                                      width: 110,
+                                      height: 110,
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Color(0xFFFA5C5C),
+                                            Color(0xFFFD8A6B),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
                                         ),
-                                      ],
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        '👤',
-                                        style: TextStyle(fontSize: 54),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFBEF76),
                                         shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 3,
-                                        ),
-                                        boxShadow: const [
+                                        boxShadow: [
                                           BoxShadow(
-                                            color: Color(0x20000000),
-                                            blurRadius: 6,
+                                            color: Color(0x40FA5C5C),
+                                            blurRadius: 16,
+                                            offset: Offset(0, 6),
                                           ),
                                         ],
                                       ),
-                                      child: const Icon(
-                                        Icons.camera_alt_rounded,
-                                        size: 18,
-                                        color: Color(0xFF374151),
+                                      child: Center(
+                                        child: _isSavingAvatar
+                                            ? const CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2.5,
+                                              )
+                                            : Text(
+                                                _avatarEmoji,
+                                                style: const TextStyle(
+                                                  fontSize: 54,
+                                                ),
+                                              ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Nhấn để đổi ảnh',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF9CA3AF),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFBEF76),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 3,
+                                          ),
+                                          boxShadow: const [
+                                            BoxShadow(
+                                              color: Color(0x20000000),
+                                              blurRadius: 6,
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.edit_rounded,
+                                          size: 18,
+                                          color: Color(0xFF374151),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Nhấn để đổi avatar',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF9CA3AF),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 28),

@@ -491,6 +491,61 @@ class UserRepository {
     }
   }
 
+  Future<UserModel> updateAvatarEmoji({
+    required int userId,
+    required String avatarEmoji,
+  }) async {
+    final emoji = avatarEmoji.trim();
+    if (emoji.isEmpty) {
+      throw UserRepositoryException('Vui lòng chọn một biểu tượng avatar.');
+    }
+
+    final user = await _localDataSource.getUserById(userId);
+    if (user == null) {
+      throw UserRepositoryException('Không tìm thấy tài khoản để cập nhật.');
+    }
+
+    final authUser = _auth.currentUser;
+    if (authUser == null) {
+      throw UserRepositoryException('Phiên đăng nhập đã hết hạn.');
+    }
+    if (!_isSameSignedInUser(localUser: user, authUser: authUser)) {
+      throw UserRepositoryException(
+        'Bạn không có quyền cập nhật tài khoản này.',
+      );
+    }
+
+    try {
+      await _updateRemoteProfile(
+        firebaseUid: authUser.uid,
+        data: {'avatarEmoji': emoji},
+      );
+
+      final updated = user.copyWith(
+        avatarEmoji: emoji,
+        updatedAt: DateTime.now(),
+      );
+      await _localDataSource.updateUser(updated);
+      await _localDataSource.setOnlyActiveUser(userId);
+
+      final refreshed = await _localDataSource.getUserById(userId);
+      if (refreshed == null) {
+        throw UserRepositoryException(
+          'Không thể tải hồ sơ sau khi cập nhật avatar.',
+        );
+      }
+      return refreshed;
+    } on FirebaseException catch (_) {
+      throw UserRepositoryException(
+        'Không thể cập nhật avatar trên Firebase.',
+      );
+    } on UserRepositoryException {
+      rethrow;
+    } catch (_) {
+      throw UserRepositoryException('Cập nhật avatar thất bại.');
+    }
+  }
+
   Future<UserModel> updatePreferences({
     required int userId,
     required bool notificationsEnabled,
