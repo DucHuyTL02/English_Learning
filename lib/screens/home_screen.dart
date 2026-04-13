@@ -51,6 +51,7 @@ class _HeaderState extends State<_Header> {
     await AppServices.notificationService.maybeSendDailyStudyReminder(
       user: user,
     );
+    await AppServices.socialService.syncInAppNotifications(user: user);
     final unread = user.id == null
         ? 0
         : await AppServices.notificationService.getUnreadCount(user.id!);

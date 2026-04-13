@@ -194,6 +194,43 @@ class _TopicWordsScreenState extends State<TopicWordsScreen>
 
   String get _topicRoute => '/user-topics/${widget.topicId}';
 
+  Future<void> _showEditWordSheet(TopicWordModel word) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final updated = await showModalBottomSheet<TopicWordModel>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _EditWordSheet(word: word),
+    );
+    if (updated == null) return;
+    try {
+      final saved = await AppServices.userTopicService.updateWordInTopic(
+        topicId: widget.topicId,
+        wordId: updated.id,
+        word: updated.word,
+        phonetic: updated.phonetic,
+        partOfSpeech: updated.partOfSpeech,
+        definition: updated.definition,
+        example: updated.example,
+      );
+      if (!mounted) return;
+      setState(() {
+        final idx = _words.indexWhere((w) => w.id == saved.id);
+        if (idx != -1) _words[idx] = saved;
+      });
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Đã cập nhật từ vựng.'),
+        backgroundColor: Color(0xFF22C55E),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        backgroundColor: const Color(0xFFFA5C5C),
+      ));
+    }
+  }
+
   List<TopicWordModel> get _practiceWords {
     return _words
         .where((item) => item.word.trim().isNotEmpty)
@@ -593,6 +630,7 @@ class _TopicWordsScreenState extends State<TopicWordsScreen>
                     index: index,
                     tts: AppServices.tts,
                     onDelete: () => _deleteWord(_words[index]),
+                    onEdit: () => _showEditWordSheet(_words[index]),
                   ),
                   childCount: _words.length,
                 ),
@@ -1020,12 +1058,14 @@ class _TopicWordCard extends StatefulWidget {
     required this.index,
     required this.tts,
     required this.onDelete,
+    required this.onEdit,
   });
 
   final TopicWordModel word;
   final int index;
   final TtsService tts;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   @override
   State<_TopicWordCard> createState() => _TopicWordCardState();
@@ -1186,24 +1226,48 @@ class _TopicWordCardState extends State<_TopicWordCard>
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: widget.onDelete,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8, top: 2),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline_rounded,
-                      size: 16,
-                      color: Color(0xFFFA5C5C),
+              Column(
+                children: [
+                  GestureDetector(
+                    onTap: widget.onEdit,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8, top: 2),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF2FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.edit_rounded,
+                          size: 16,
+                          color: Color(0xFF6366F1),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: widget.onDelete,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 16,
+                          color: Color(0xFFFA5C5C),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1292,6 +1356,238 @@ class _ErrorWidget extends StatelessWidget {
             child: const Text('Thử lại'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Edit Word Sheet ────────────────────────────────────────────────────
+
+class _EditWordSheet extends StatefulWidget {
+  const _EditWordSheet({required this.word});
+
+  final TopicWordModel word;
+
+  @override
+  State<_EditWordSheet> createState() => _EditWordSheetState();
+}
+
+class _EditWordSheetState extends State<_EditWordSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _wordCtrl;
+  late final TextEditingController _phoneticCtrl;
+  late final TextEditingController _partCtrl;
+  late final TextEditingController _definitionCtrl;
+  late final TextEditingController _exampleCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _wordCtrl = TextEditingController(text: widget.word.word);
+    _phoneticCtrl = TextEditingController(text: widget.word.phonetic);
+    _partCtrl = TextEditingController(text: widget.word.partOfSpeech);
+    _definitionCtrl = TextEditingController(text: widget.word.definition);
+    _exampleCtrl = TextEditingController(text: widget.word.example);
+  }
+
+  @override
+  void dispose() {
+    _wordCtrl.dispose();
+    _phoneticCtrl.dispose();
+    _partCtrl.dispose();
+    _definitionCtrl.dispose();
+    _exampleCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final form = _formKey.currentState;
+    if (form == null || !form.validate()) return;
+
+    Navigator.pop(
+      context,
+      TopicWordModel(
+        id: widget.word.id,
+        word: _wordCtrl.text.trim(),
+        phonetic: _phoneticCtrl.text.trim(),
+        partOfSpeech: _partCtrl.text.trim().isEmpty
+            ? widget.word.partOfSpeech
+            : _partCtrl.text.trim(),
+        definition: _definitionCtrl.text.trim(),
+        example: _exampleCtrl.text.trim(),
+        createdAt: widget.word.createdAt,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 14, 20, 20 + bottomInset),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD1D5DB),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.edit_rounded,
+                      size: 18,
+                      color: Color(0xFF6366F1),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Sửa từ vựng',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        Text(
+                          'Cập nhật thông tin hoặc thêm ví dụ.',
+                          style: TextStyle(
+                              fontSize: 12, color: Color(0xFF6B7280)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _InputField(
+                controller: _wordCtrl,
+                label: 'Từ vựng *',
+                hint: 'Ví dụ: resilient',
+                textInputAction: TextInputAction.next,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Vui lòng nhập từ vựng.' : null,
+              ),
+              const SizedBox(height: 10),
+              _InputField(
+                controller: _phoneticCtrl,
+                label: 'Phiên âm',
+                hint: 'Ví dụ: /rɪˈzɪliənt/',
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 10),
+              _InputField(
+                controller: _partCtrl,
+                label: 'Từ loại',
+                hint: 'Ví dụ: adjective',
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 10),
+              _InputField(
+                controller: _definitionCtrl,
+                label: 'Nghĩa *',
+                hint: 'Nhập nghĩa tiếng Việt hoặc tiếng Anh',
+                maxLines: 2,
+                textInputAction: TextInputAction.newline,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Vui lòng nhập nghĩa.' : null,
+              ),
+              const SizedBox(height: 10),
+              // Example field with tip
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _InputField(
+                    controller: _exampleCtrl,
+                    label: 'Ví dụ',
+                    hint: 'Ví dụ: She is resilient after every failure.',
+                    maxLines: 3,
+                    textInputAction: TextInputAction.newline,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 13,
+                        color: Color(0xFF6366F1),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Có ví dụ sẽ cho phép luyện nghe, luyện nói và nhận diện từ.',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF374151),
+                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Hủy'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Lưu thay đổi'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

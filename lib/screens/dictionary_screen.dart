@@ -1514,16 +1514,19 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
   String? _error;
   String? _actionError;
   final TextEditingController _newTopicCtrl = TextEditingController();
+  late final TextEditingController _exampleCtrl;
 
   @override
   void initState() {
     super.initState();
+    _exampleCtrl = TextEditingController(text: widget.word.example);
     _loadTopics();
   }
 
   @override
   void dispose() {
     _newTopicCtrl.dispose();
+    _exampleCtrl.dispose();
     super.dispose();
   }
 
@@ -1612,7 +1615,7 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
           phonetic: widget.word.phonetic,
           partOfSpeech: widget.word.partOfSpeech,
           definition: widget.word.definition,
-          example: widget.word.example,
+          example: _exampleCtrl.text.trim(),
         );
       }
       if (!mounted) return;
@@ -1964,6 +1967,54 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
                   ),
           ),
 
+
+          // Example field
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _exampleCtrl,
+                  maxLines: 3,
+                  textInputAction: TextInputAction.newline,
+                  decoration: InputDecoration(
+                    labelText: 'C\u00e2u v\u00ed d\u1ee5 (t\u00f9y ch\u1ecdn)',
+                    hintText: 'V\u00ed d\u1ee5: She showed great resilience.',
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFFA5C5C), width: 1.2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 13, color: Color(0xFF6366F1)),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'C\u00f3 v\u00ed d\u1ee5 \u0111\u1ec3 luy\u1ec7n nghe, luy\u1ec7n n\u00f3i v\u00e0 nh\u1eadn di\u1ec7n t\u1eeb.',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
           // â”€â”€ Save button â”€â”€
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),

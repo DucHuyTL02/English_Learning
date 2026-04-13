@@ -133,11 +133,19 @@ class _NotificationTile extends StatelessWidget {
     final iconData = switch (item.type) {
       'lesson_completed' => Icons.emoji_events_rounded,
       'study_reminder' => Icons.alarm_rounded,
+      'friend_request_received' => Icons.person_add_alt_1_rounded,
+      'friend_request_accepted' => Icons.handshake_rounded,
+      'leaderboard_rank_up' => Icons.trending_up_rounded,
+      'leaderboard_overtaken' => Icons.trending_down_rounded,
       _ => Icons.notifications_active_outlined,
     };
     final iconColor = switch (item.type) {
       'lesson_completed' => const Color(0xFF22C55E),
       'study_reminder' => const Color(0xFFFA5C5C),
+      'friend_request_received' => const Color(0xFF3B82F6),
+      'friend_request_accepted' => const Color(0xFF10B981),
+      'leaderboard_rank_up' => const Color(0xFF8B5CF6),
+      'leaderboard_overtaken' => const Color(0xFFF59E0B),
       _ => const Color(0xFF6366F1),
     };
 

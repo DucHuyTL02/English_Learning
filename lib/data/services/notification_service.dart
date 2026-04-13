@@ -17,10 +17,21 @@ class NotificationService {
   static const String _lessonChannelName = 'Lesson Updates';
   static const String _lessonChannelDescription =
       'Notification when finishing lessons';
+
   static const String _reminderChannelId = 'study_reminder_channel';
   static const String _reminderChannelName = 'Study Reminder';
   static const String _reminderChannelDescription =
       'Daily reminders to keep learning';
+
+  static const String _socialChannelId = 'social_updates_channel';
+  static const String _socialChannelName = 'Social Updates';
+  static const String _socialChannelDescription =
+      'Friend requests and social updates';
+
+  static const String _leaderboardChannelId = 'leaderboard_updates_channel';
+  static const String _leaderboardChannelName = 'Leaderboard Updates';
+  static const String _leaderboardChannelDescription =
+      'Ranking changes among friends';
 
   final AppDatabase _database;
   final FlutterLocalNotificationsPlugin _plugin;
@@ -47,8 +58,8 @@ class NotificationService {
   }) async {
     if (user.id == null) return;
 
-    final title = 'Hoàn thành chủ đề: $lessonTitle';
-    final message = 'Bạn đạt $score% và nhận +$xpEarned XP. Tiếp tục nhé!';
+    final title = 'Hoan thanh chu de: $lessonTitle';
+    final message = 'Ban dat $score% va nhan +$xpEarned XP. Tiep tuc nhe!';
     await _insertNotification(
       userId: user.id!,
       type: 'lesson_completed',
@@ -59,6 +70,106 @@ class NotificationService {
       channelId: _lessonChannelId,
       channelName: _lessonChannelName,
       channelDescription: _lessonChannelDescription,
+    );
+  }
+
+  Future<void> notifyFriendRequestReceived({
+    required UserModel user,
+    required String requestId,
+    required String fromName,
+    String? dedupeToken,
+  }) async {
+    if (user.id == null) return;
+    final trimmedId = requestId.trim();
+    if (trimmedId.isEmpty) return;
+
+    final sender = _safeName(fromName);
+    final token = (dedupeToken ?? trimmedId).trim();
+    await _insertNotification(
+      userId: user.id!,
+      type: 'friend_request_received',
+      title: 'Loi moi ket ban moi',
+      message: '$sender da gui loi moi ket ban cho ban.',
+      payload:
+          '/friends?requestId=$trimmedId&event=${Uri.encodeQueryComponent(token)}',
+      showSystem: user.notificationsEnabled,
+      channelId: _socialChannelId,
+      channelName: _socialChannelName,
+      channelDescription: _socialChannelDescription,
+      dedupeByTypeAndPayload: true,
+    );
+  }
+
+  Future<void> notifyFriendRequestAccepted({
+    required UserModel user,
+    required String requestId,
+    required String friendName,
+    String? dedupeToken,
+  }) async {
+    if (user.id == null) return;
+    final trimmedId = requestId.trim();
+    if (trimmedId.isEmpty) return;
+
+    final friend = _safeName(friendName);
+    final token = (dedupeToken ?? trimmedId).trim();
+    await _insertNotification(
+      userId: user.id!,
+      type: 'friend_request_accepted',
+      title: 'Loi moi da duoc chap nhan',
+      message: '$friend da chap nhan loi moi ket ban cua ban.',
+      payload:
+          '/friends?acceptedRequestId=$trimmedId&event=${Uri.encodeQueryComponent(token)}',
+      showSystem: user.notificationsEnabled,
+      channelId: _socialChannelId,
+      channelName: _socialChannelName,
+      channelDescription: _socialChannelDescription,
+      dedupeByTypeAndPayload: true,
+    );
+  }
+
+  Future<void> notifyLeaderboardRankUp({
+    required UserModel user,
+    required int previousRank,
+    required int currentRank,
+  }) async {
+    if (user.id == null) return;
+    if (previousRank <= 0 || currentRank <= 0 || currentRank >= previousRank) {
+      return;
+    }
+
+    await _insertNotification(
+      userId: user.id!,
+      type: 'leaderboard_rank_up',
+      title: 'Ban vua thang hang!',
+      message:
+          'Ban da tang tu hang #$previousRank len #$currentRank tren bang xep hang ban be.',
+      payload: '/leaderboard',
+      showSystem: user.notificationsEnabled,
+      channelId: _leaderboardChannelId,
+      channelName: _leaderboardChannelName,
+      channelDescription: _leaderboardChannelDescription,
+    );
+  }
+
+  Future<void> notifyLeaderboardOvertaken({
+    required UserModel user,
+    required String friendName,
+    required int currentRank,
+  }) async {
+    if (user.id == null) return;
+    if (currentRank <= 0) return;
+
+    final friend = _safeName(friendName);
+    await _insertNotification(
+      userId: user.id!,
+      type: 'leaderboard_overtaken',
+      title: 'Ban vua bi vuot hang',
+      message: '$friend vua vuot ban tren bang xep hang ban be.',
+      payload: '/leaderboard',
+      showSystem: user.notificationsEnabled,
+      channelId: _leaderboardChannelId,
+      channelName: _leaderboardChannelName,
+      channelDescription: _leaderboardChannelDescription,
     );
   }
 
@@ -80,8 +191,8 @@ class NotificationService {
     await _insertNotification(
       userId: user.id!,
       type: 'study_reminder',
-      title: 'Nhắc học tập hôm nay',
-      message: 'Dành 10 phút luyện tiếng Anh để giữ chuỗi học nhé!',
+      title: 'Nhac hoc tap hom nay',
+      message: 'Danh 10 phut luyen tieng Anh de giu chuoi hoc nhe!',
       payload: '/home',
       showSystem: true,
       channelId: _reminderChannelId,
@@ -145,8 +256,23 @@ class NotificationService {
     required String channelId,
     required String channelName,
     required String channelDescription,
+    bool dedupeByTypeAndPayload = false,
   }) async {
     final db = await _database.database;
+
+    if (dedupeByTypeAndPayload) {
+      final existing = await db.query(
+        AppDatabase.notificationsTable,
+        columns: const ['id'],
+        where: 'user_id = ? AND type = ? AND payload = ?',
+        whereArgs: [userId, type, payload],
+        limit: 1,
+      );
+      if (existing.isNotEmpty) {
+        return;
+      }
+    }
+
     final createdAt = DateTime.now().toIso8601String();
     final id = await db.insert(AppDatabase.notificationsTable, {
       'user_id': userId,
@@ -193,5 +319,11 @@ class NotificationService {
   String _todayKey() {
     final now = DateTime.now();
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  String _safeName(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return 'Mot nguoi ban';
+    return trimmed;
   }
 }

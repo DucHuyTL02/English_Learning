@@ -35,6 +35,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         AppServices.socialService.getFriendsLeaderboard(limit: 100),
         AppServices.socialService.getGlobalLeaderboard(limit: 100),
       ]);
+      final activeUser = await AppServices.userRepository.getActiveUser();
+      if (activeUser != null) {
+        await AppServices.socialService.syncInAppNotifications(user: activeUser);
+      }
       if (!mounted) return;
       setState(() {
         _friendUsers = responses[0] as List<RankedSocialUser>;

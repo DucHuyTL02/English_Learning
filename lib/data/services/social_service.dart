@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'notification_service.dart';
 import '../models/user_model.dart';
 
 class SocialServiceException implements Exception {
@@ -78,18 +80,26 @@ class FriendRequestItem {
 }
 
 class SocialService {
-  SocialService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+  SocialService({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    NotificationService? notificationService,
+  })
     : _auth = auth ?? FirebaseAuth.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+      _firestore = firestore ?? FirebaseFirestore.instance,
+      _notificationService = notificationService;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+  final NotificationService? _notificationService;
 
   static const String _usersCollection = 'users';
   static const String _friendsCollection = 'friends';
   static const String _friendRequestsCollection = 'friend_requests';
   static const String _statusPending = 'pending';
   static const String _statusAccepted = 'accepted';
+  static const String _prefsRankKeyPrefix = 'friends_rank_prev_user_';
+  static const String _prefsAboveKeyPrefix = 'friends_rank_above_user_';
   static final RegExp _emailRegex = RegExp(
     r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
     caseSensitive: false,
@@ -392,6 +402,19 @@ class SocialService {
     }
   }
 
+  Future<void> syncInAppNotifications({required UserModel user}) async {
+    if (user.id == null) return;
+    final notifier = _notificationService;
+    if (notifier == null) return;
+
+    try {
+      await _syncFriendRequestNotifications(user: user, notifier: notifier);
+      await _syncLeaderboardNotifications(user: user, notifier: notifier);
+    } catch (_) {
+      // Keep social sync resilient. Notifications should never block UI flow.
+    }
+  }
+
   Future<void> acceptFriendRequest(String requestId) async {
     final trimmedId = requestId.trim();
     if (trimmedId.isEmpty) {
@@ -443,6 +466,37 @@ class SocialService {
     );
   }
 
+  /// Removes the friendship between the current user and [friendUid].
+  /// Cleans up both accepted friend-request documents and legacy subcollection
+  /// entries on both sides.
+  Future<void> unfriend(String friendUid) async {
+    if (friendUid.trim().isEmpty) {
+      throw SocialServiceException('ID ban be khong hop le.');
+    }
+    try {
+      final currentUid = _requireCurrentUid();
+      final batch = _firestore.batch();
+
+      // ── Delete accepted request docs (both directions) ──
+      final outgoingId = _requestId(fromUid: currentUid, toUid: friendUid);
+      final incomingId = _requestId(fromUid: friendUid, toUid: currentUid);
+      batch.delete(_friendRequestsRef.doc(outgoingId));
+      batch.delete(_friendRequestsRef.doc(incomingId));
+
+      // ── Delete legacy friends subcollection entries ──
+      batch.delete(_friendsRef(currentUid).doc(friendUid));
+      batch.delete(_friendsRef(friendUid).doc(currentUid));
+
+      await batch.commit();
+    } on SocialServiceException {
+      rethrow;
+    } on FirebaseException catch (_) {
+      throw SocialServiceException('Khong the huy ket ban luc nay.');
+    } catch (_) {
+      throw SocialServiceException('Khong the huy ket ban luc nay.');
+    }
+  }
+
   Future<void> syncCurrentUserStats({
     required int totalXp,
     required int streak,
@@ -482,6 +536,118 @@ class SocialService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
+
+  Future<void> _syncFriendRequestNotifications({
+    required UserModel user,
+    required NotificationService notifier,
+  }) async {
+    final incomingRequests = await getIncomingFriendRequests();
+    for (final request in incomingRequests) {
+      await notifier.notifyFriendRequestReceived(
+        user: user,
+        requestId: request.id,
+        fromName: request.fromName,
+        dedupeToken: '${request.id}_${request.createdAt.millisecondsSinceEpoch}',
+      );
+    }
+
+    final acceptedOutgoing = await _getAcceptedOutgoingFriendRequests();
+    for (final request in acceptedOutgoing) {
+      await notifier.notifyFriendRequestAccepted(
+        user: user,
+        requestId: request.id,
+        friendName: request.toName,
+        dedupeToken: '${request.id}_${request.createdAt.millisecondsSinceEpoch}',
+      );
+    }
+  }
+
+  Future<void> _syncLeaderboardNotifications({
+    required UserModel user,
+    required NotificationService notifier,
+  }) async {
+    final rankings = await getFriendsLeaderboard(limit: 200);
+    if (rankings.isEmpty) return;
+
+    RankedSocialUser? currentUserEntry;
+    for (final item in rankings) {
+      if (item.isCurrentUser) {
+        currentUserEntry = item;
+        break;
+      }
+    }
+    if (currentUserEntry == null) return;
+    final currentEntry = currentUserEntry;
+
+    final prefs = await SharedPreferences.getInstance();
+    final rankKey = _rankPrefsKey(user.id!);
+    final aboveKey = _abovePrefsKey(user.id!);
+
+    final previousRank = prefs.getInt(rankKey);
+    final previousAbove = prefs.getStringList(aboveKey) ?? const <String>[];
+    final previousAboveSet = previousAbove.toSet();
+
+    final currentAboveIds = rankings
+        .where((entry) => !entry.isCurrentUser && entry.rank < currentEntry.rank)
+        .map((entry) => entry.uid)
+        .toList();
+
+    if (previousRank != null && previousRank > 0) {
+      if (currentEntry.rank < previousRank) {
+        await notifier.notifyLeaderboardRankUp(
+          user: user,
+          previousRank: previousRank,
+          currentRank: currentEntry.rank,
+        );
+      } else if (currentEntry.rank > previousRank) {
+        final newOvertakerIds = currentAboveIds
+            .where((uid) => !previousAboveSet.contains(uid))
+            .toList();
+        if (newOvertakerIds.isNotEmpty) {
+          final friendName = _nameFromUid(
+            uid: newOvertakerIds.first,
+            rankings: rankings,
+          );
+          await notifier.notifyLeaderboardOvertaken(
+            user: user,
+            friendName: friendName,
+            currentRank: currentEntry.rank,
+          );
+        }
+      }
+    }
+
+    await prefs.setInt(rankKey, currentEntry.rank);
+    await prefs.setStringList(aboveKey, currentAboveIds);
+  }
+
+  Future<List<FriendRequestItem>> _getAcceptedOutgoingFriendRequests() async {
+    final currentUid = _requireCurrentUid();
+    final snapshot = await _friendRequestsRef
+        .where('fromUid', isEqualTo: currentUid)
+        .where('status', isEqualTo: _statusAccepted)
+        .get();
+    final requests = snapshot.docs.map(_toFriendRequest).toList();
+    requests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return requests;
+  }
+
+  String _nameFromUid({
+    required String uid,
+    required List<RankedSocialUser> rankings,
+  }) {
+    for (final item in rankings) {
+      if (item.uid == uid) {
+        return item.fullName;
+      }
+    }
+    return 'Mot nguoi ban';
+  }
+
+  String _rankPrefsKey(int localUserId) => '$_prefsRankKeyPrefix$localUserId';
+
+  String _abovePrefsKey(int localUserId) =>
+      '$_prefsAboveKeyPrefix$localUserId';
 
   String _requireCurrentUid() {
     final authUser = _auth.currentUser;

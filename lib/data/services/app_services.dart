@@ -33,9 +33,11 @@ class AppServices {
   static final TtsService tts = TtsService.instance;
   static final ExerciseSession exerciseSession = ExerciseSession.instance;
   static final RouteStateService routeStateService = RouteStateService();
-  static final SocialService socialService = SocialService();
   static final NotificationService notificationService = NotificationService(
     database: database,
+  );
+  static final SocialService socialService = SocialService(
+    notificationService: notificationService,
   );
   static final UserTopicService userTopicService = UserTopicService();
 
@@ -59,6 +61,7 @@ class AppServices {
         // Keep app startup resilient when Firestore is temporarily unavailable.
       }
       await notificationService.maybeSendDailyStudyReminder(user: user);
+      await socialService.syncInAppNotifications(user: user);
     }
     await routeStateService.initialize();
     await tts.init();

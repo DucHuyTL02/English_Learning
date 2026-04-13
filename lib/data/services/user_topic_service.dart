@@ -195,6 +195,41 @@ class UserTopicService {
     }
   }
 
+  /// Updates fields of an existing word in a topic.
+  Future<TopicWordModel> updateWordInTopic({
+    required String topicId,
+    required String wordId,
+    required String word,
+    required String phonetic,
+    required String partOfSpeech,
+    required String definition,
+    required String example,
+  }) async {
+    try {
+      final userId = _currentUserId;
+      final ref = _wordsCol(userId, topicId).doc(wordId);
+      final updated = {
+        'word': word.trim(),
+        'phonetic': phonetic.trim(),
+        'partOfSpeech': partOfSpeech.trim(),
+        'definition': definition.trim(),
+        'example': example.trim(),
+      };
+      await ref.update(updated);
+      final snap = await ref.get();
+      if (!snap.exists) {
+        throw UserTopicServiceException('Không tìm thấy từ vựng sau khi cập nhật.');
+      }
+      return TopicWordModel.fromMap(snap.data()!);
+    } on FirebaseException catch (e) {
+      throw UserTopicServiceException('Firebase error: ${e.code}.');
+    } on UserTopicServiceException {
+      rethrow;
+    } catch (_) {
+      throw UserTopicServiceException('Không thể cập nhật từ vựng.');
+    }
+  }
+
   /// Deletes a single word from a topic.
   Future<void> deleteWordFromTopic({
     required String topicId,

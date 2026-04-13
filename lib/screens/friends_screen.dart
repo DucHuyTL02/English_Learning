@@ -52,6 +52,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
         AppServices.socialService.getIncomingFriendRequests(),
         AppServices.socialService.getOutgoingFriendRequests(),
       ]);
+      final activeUser = await AppServices.userRepository.getActiveUser();
+      if (activeUser != null) {
+        await AppServices.socialService.syncInAppNotifications(user: activeUser);
+      }
       if (!mounted) return;
       setState(() {
         _friends = responses[0] as List<SocialUserProfile>;
@@ -177,6 +181,57 @@ class _FriendsScreenState extends State<FriendsScreen> {
     } catch (_) {
       if (!mounted) return;
       _showSnack('Khong the xu ly luc nay.');
+    }
+  }
+
+  Future<void> _unfriend(SocialUserProfile friend) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Hủy kết bạn?',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
+        content: Text(
+          'Bạn có chắc muốn hủy kết bạn với ${friend.fullName}?\nHành động này không thể hoàn tác.',
+          style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Hủy',
+              style: TextStyle(color: Color(0xFF6B7280)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFA5C5C),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Xác nhận hủy'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await AppServices.socialService.unfriend(friend.uid);
+      if (!mounted) return;
+      setState(() => _friends.removeWhere((f) => f.uid == friend.uid));
+      _showSnack('Đã hủy kết bạn với ${friend.fullName}.');
+    } on SocialServiceException catch (e) {
+      if (!mounted) return;
+      _showSnack(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('Không thể hủy kết bạn lúc này.');
     }
   }
 
@@ -556,7 +611,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
           .map(
             (friend) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _FriendCard(friend: friend),
+              child: _FriendCard(
+                friend: friend,
+                onUnfriend: () => _unfriend(friend),
+              ),
             ),
           )
           .toList(),
@@ -673,9 +731,10 @@ class _FriendHubTab extends StatelessWidget {
 }
 
 class _FriendCard extends StatelessWidget {
-  const _FriendCard({required this.friend});
+  const _FriendCard({required this.friend, required this.onUnfriend});
 
   final SocialUserProfile friend;
+  final VoidCallback onUnfriend;
 
   @override
   Widget build(BuildContext context) {
@@ -735,6 +794,25 @@ class _FriendCard extends StatelessWidget {
               Text(
                 '🔥 ${friend.streak}',
                 style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 6),
+              GestureDetector(
+                onTap: onUnfriend,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Hủy kết bạn',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFFA5C5C),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
