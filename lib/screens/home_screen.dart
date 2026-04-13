@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/services/app_services.dart';
+import '../data/models/exercise_model.dart';
+import '../data/models/flashcard_model.dart';
+import '../data/models/user_topic_model.dart';
+import 'exercise_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -1082,14 +1086,140 @@ class _Action {
   final String route;
 }
 
-class _ActionCard extends StatelessWidget {
+class _ActionCard extends StatefulWidget {
   const _ActionCard({required this.action});
   final _Action action;
 
   @override
+  State<_ActionCard> createState() => _ActionCardState();
+}
+
+class _ActionCardState extends State<_ActionCard> {
+  bool _isLoading = false;
+
+  Future<void> _handleTap() async {
+    final route = widget.action.route;
+    if (route != '/practice/vocabulary' && route != '/practice/speaking') {
+      context.push(route);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final user = await AppServices.userRepository.getActiveUser();
+      final userId = user?.id;
+
+      // Completed lessons mapping
+      final repo = AppServices.learningRepository;
+      final Set<int> completedIds = userId != null
+          ? await repo.getCompletedLessonIds(userId)
+          : <int>{};
+
+      // Custom user topics mapping
+      final customTopics = await AppServices.userTopicService.getTopics();
+      final userWords = <TopicWordModel>[];
+      for (final topic in customTopics) {
+        final words = await AppServices.userTopicService.getWordsForTopic(topic.id);
+        userWords.addAll(words);
+      }
+
+      if (route == '/practice/vocabulary') {
+        final payload = await AppServices.learningContentService.loadContent();
+        final byLesson = payload?.flashcardsByLesson ?? {};
+        final cards = <FlashcardModel>[];
+        for (final id in completedIds) {
+          final mapped = byLesson[id];
+          if (mapped != null) cards.addAll(mapped);
+        }
+
+        cards.addAll(userWords.map((w) => FlashcardModel(
+          word: w.word,
+          translation: w.definition,
+          phonetic: w.phonetic,
+          example: w.example.isNotEmpty ? w.example : w.word,
+          illustration: '',
+          gradStart: 0xFFFA5C5C,
+          gradEnd: 0xFFFD8A6B,
+        )));
+
+        if (cards.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Bạn chưa học hoặc chưa tạo từ vựng nào!')),
+            );
+          }
+          return;
+        }
+
+        cards.shuffle();
+        final finalCards = cards.length > 20 ? cards.take(20).toList() : cards;
+
+        if (mounted) {
+          context.push('/practice/vocabulary', extra: FlashcardLaunchConfig(
+            cards: finalCards,
+            title: 'Từ Vựng Đã Học',
+            closeRoute: '/home',
+            completeRoute: '/home',
+          ));
+        }
+
+      } else if (route == '/practice/speaking') {
+        final payload = await AppServices.learningContentService.loadContent();
+        final exercises = <ExerciseModel>[];
+        
+        final allEx = payload?.exercises ?? [];
+        for (final ex in allEx) {
+          if (ex.type == 'speaking' && completedIds.contains(ex.lessonId)) {
+            exercises.add(ex);
+          }
+        }
+
+        for (final w in userWords) {
+          exercises.add(ExerciseModel(
+             lessonId: 0,
+             type: 'speaking',
+             question: 'Say: ${w.word}',
+             correctAnswer: w.word,
+             options: '',
+             illustration: '',
+             sortOrder: 0,
+          ));
+        }
+
+        if (exercises.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Bạn chưa có bài luyện phát âm nào!')),
+            );
+          }
+          return;
+        }
+
+        exercises.shuffle();
+        final finalEx = exercises.length > 10 ? exercises.take(10).toList() : exercises;
+
+        AppServices.exerciseSession.load(
+          0,
+          finalEx,
+          completionRoute: '/home',
+          exitRoute: '/home',
+        );
+
+        if (mounted) {
+          context.push(route);
+        }
+      }
+    } catch (_) {
+      if (mounted) context.push(route);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push(action.route),
+      onTap: _isLoading ? null : _handleTap,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1111,19 +1241,21 @@ class _ActionCard extends StatelessWidget {
               height: 46,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: action.gradientColors,
+                  colors: widget.action.gradientColors,
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
-                child: Text(action.emoji, style: const TextStyle(fontSize: 22)),
+                child: _isLoading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text(widget.action.emoji, style: const TextStyle(fontSize: 22)),
               ),
             ),
             const SizedBox(height: 10),
             Text(
-              action.title,
+              widget.action.title,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -1132,7 +1264,7 @@ class _ActionCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              action.subtitle,
+              widget.action.subtitle,
               style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
             ),
           ],

@@ -49,7 +49,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       setState(() => _errorMessage = e.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Khong the tai bang xep hang.');
+      setState(() => _errorMessage = 'Không thể tải bảng xếp hạng.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -82,7 +82,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           _buildPodium(_currentUsers),
                           const SizedBox(height: 18),
                           const Text(
-                            'All Rankings',
+                            'Tất Cả Thứ Hạng',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -113,29 +113,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap: () => context.go('/home'),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    size: 20,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Bang xep hang',
+                      'Bảng xếp hạng',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -143,7 +126,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       ),
                     ),
                     Text(
-                      'Bang xep hang dua tren XP',
+                      'Bảng xếp hạng dựa trên XP',
                       style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                     ),
                   ],
@@ -166,13 +149,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: Row(
               children: [
                 _LeaderboardTabButton(
-                  label: 'Friends',
+                  label: 'Bạn bè',
                   icon: Icons.people_outline_rounded,
                   selected: _isFriendsTab,
                   onTap: () => setState(() => _isFriendsTab = true),
                 ),
                 _LeaderboardTabButton(
-                  label: 'Global',
+                  label: 'Toàn cầu',
                   icon: Icons.public_rounded,
                   selected: !_isFriendsTab,
                   onTap: () => setState(() => _isFriendsTab = false),
@@ -195,7 +178,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         ),
         padding: const EdgeInsets.all(18),
         child: const Text(
-          'Chua co du lieu xep hang.',
+          'Chưa có dữ liệu xếp hạng.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         ),
@@ -250,7 +233,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         Padding(
           padding: EdgeInsets.symmetric(vertical: 10),
           child: Text(
-            'Chua co du lieu.',
+            'Chưa có dữ liệu.',
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
         ),
@@ -446,7 +429,7 @@ class _PodiumColumn extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Text(
-            '🔥 ${user!.streak} days',
+            '🔥 ${user!.streak} ngày',
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -531,7 +514,7 @@ class _RankCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
-                          'You',
+                          'Bạn',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -544,7 +527,7 @@ class _RankCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '🔥 ${user.streak} days',
+                  '🔥 ${user.streak} ngày',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF9CA3AF),
@@ -615,7 +598,7 @@ class _LeaderboardCta extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Climb Higher!',
+                        'Thăng hạng vèo vèo!',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -624,7 +607,7 @@ class _LeaderboardCta extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Nhan them ban be, gui loi moi va canh tranh XP',
+                        'Kết bạn, gửi lời mời và cùng nhau đua top thi đấu XP',
                         style: TextStyle(fontSize: 12, color: Colors.white70),
                       ),
                     ],
@@ -642,7 +625,7 @@ class _LeaderboardCta extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: const Text(
-                'Find Friends',
+                'Thêm Bạn Bè',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -689,7 +672,7 @@ class _ErrorState extends StatelessWidget {
                 backgroundColor: const Color(0xFFFA5C5C),
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Thu lai'),
+              child: const Text('Thử lại'),
             ),
           ],
         ),

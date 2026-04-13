@@ -296,23 +296,6 @@ class _CourseMapHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap: () => context.go('/home'),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: Color(0xFF374151),
-                    size: 20,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

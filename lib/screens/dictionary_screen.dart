@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -19,15 +19,15 @@ String _relativeDateLabel(DateTime createdAt) {
   final diff = now.difference(createdAt);
   if (diff.inDays >= 7) {
     final weeks = (diff.inDays / 7).floor();
-    return '$weeks week${weeks > 1 ? 's' : ''} ago';
+    return '$weeks tuần trước';
   }
   if (diff.inDays >= 1) {
-    return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+    return '${diff.inDays} ngày trước';
   }
   if (diff.inHours >= 1) {
-    return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+    return '${diff.inHours} giờ trước';
   }
-  return 'today';
+  return 'Hôm nay';
 }
 
 String _wordContentKey(DictionaryWordModel word) {
@@ -47,12 +47,12 @@ bool _isSameWordEntry(DictionaryWordModel left, DictionaryWordModel right) {
 
 String _wordStatusLabel(DictionaryWordModel word) {
   if (word.isSaved) {
-    return 'Saved ${_relativeDateLabel(word.createdAt)}';
+    return 'Đã lưu ${_relativeDateLabel(word.createdAt)}';
   }
   if (word.id != null) {
-    return 'Stored locally';
+    return 'Đã lưu cục bộ';
   }
-  return 'Search result';
+  return 'Kết quả tra cứu';
 }
 
 class DictionaryScreen extends StatefulWidget {
@@ -148,8 +148,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       if (!mounted) return;
       setState(() => _savedWordsError = e.message);
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _savedWordsError = 'Failed to load saved words.');
+      setState(() => _savedWordsError = 'Tải từ vựng đã lưu thất bại.');
     } finally {
       if (mounted) {
         setState(() => _isLoadingSavedWords = false);
@@ -208,7 +207,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _searchResults = [];
-        _searchError = 'Failed to search dictionary.';
+        _searchError = 'Tra từ điển thất bại.';
       });
     } finally {
       if (mounted && requestId == _searchRequestId) {
@@ -256,7 +255,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Unable to update bookmark. Please try again.'),
+          content: Text('Không thể cập nhật đánh dấu. Vui lòng thử lại.'),
           backgroundColor: Color(0xFFFA5C5C),
         ),
       );
@@ -415,28 +414,28 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     if (isSavedTab) {
       if (trimmedQuery.isNotEmpty) {
         return const _EmptyState(
-          title: 'No saved words found',
-          subtitle: 'Try a different search term',
+          title: 'Không tìm thấy từ vựng',
+          subtitle: 'Hãy thử một từ khóa khác',
         );
       }
 
       return const _EmptyState(
-        title: 'No saved words yet',
-        subtitle: 'Save words from lessons or search results to see them here',
+        title: 'Chưa có từ vựng nào',
+        subtitle: 'Lưu từ vựng từ bài học hoặc tra cứu để hiển thị ở đây',
       );
     }
 
     if (trimmedQuery.isEmpty) {
       return const _EmptyState(
-        title: 'Search a word',
+        title: 'Tra cứu từ vựng',
         subtitle:
-            'Enter an English word to look it up with Free Dictionary API',
+            'Nhập một từ tiếng Anh để tra cứu với Free Dictionary API',
       );
     }
 
     return const _EmptyState(
-      title: 'No definitions found',
-      subtitle: 'Try a different English word',
+      title: 'Không tìm thấy định nghĩa',
+      subtitle: 'Hãy thử tra một từ tiếng Anh khác',
     );
   }
 
@@ -703,8 +702,8 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitle = activeTab == 'saved'
-        ? 'Your saved vocabulary'
-        : 'Search with Free Dictionary API';
+        ? 'Từ vựng đã lưu của bạn'
+        : 'Tra cứu với Free Dictionary API';
 
     return Container(
       color: Colors.white,
@@ -717,29 +716,12 @@ class _Header extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => context.go('/home'),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 20,
-                        color: Color(0xFF374151),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Dictionary',
+                          'Từ Điển',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -796,7 +778,7 @@ class _Header extends StatelessWidget {
                       child: TextField(
                         controller: searchCtrl,
                         decoration: const InputDecoration(
-                          hintText: 'Search words...',
+                          hintText: 'Tra từ...',
                           hintStyle: TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 14,
