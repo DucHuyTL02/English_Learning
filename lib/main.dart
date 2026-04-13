@@ -13,8 +13,10 @@ import 'screens/dictionary_screen.dart';
 import 'screens/email_verification_screen.dart';
 import 'screens/exercise_screen.dart';
 import 'screens/forgot_password_screen.dart';
-import 'screens/gamification_screen.dart';
+import 'screens/friends_screen.dart';
+import 'screens/gamification_screen.dart' show AchievementsScreen;
 import 'screens/home_screen.dart';
+import 'screens/leaderboard_screen.dart';
 import 'screens/lesson_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -206,6 +208,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/change-password',
       builder: (context, state) => const ChangePasswordScreen(),
+    ),
+    GoRoute(
+      path: '/friends',
+      builder: (context, state) => const FriendsScreen(),
     ),
     GoRoute(
       path: '/user-topics',

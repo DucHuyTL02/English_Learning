@@ -16,19 +16,89 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   bool _isFriends = true;
 
   static const _topThree = [
-    _PodiumUser(rank: 2, name: 'Emma Wilson',  avatar: '👩', points: 1450, streak: 12, isCurrentUser: false),
-    _PodiumUser(rank: 1, name: 'Sarah Chen',   avatar: '👤', points: 1850, streak: 25, isCurrentUser: true),
-    _PodiumUser(rank: 3, name: 'Alex Kim',     avatar: '👨', points: 1320, streak: 8,  isCurrentUser: false),
+    _PodiumUser(
+      rank: 2,
+      name: 'Emma Wilson',
+      avatar: '👩',
+      points: 1450,
+      streak: 12,
+      isCurrentUser: false,
+    ),
+    _PodiumUser(
+      rank: 1,
+      name: 'Sarah Chen',
+      avatar: '👤',
+      points: 1850,
+      streak: 25,
+      isCurrentUser: true,
+    ),
+    _PodiumUser(
+      rank: 3,
+      name: 'Alex Kim',
+      avatar: '👨',
+      points: 1320,
+      streak: 8,
+      isCurrentUser: false,
+    ),
   ];
 
   static const _otherUsers = [
-    _RankUser(rank: 4,  name: 'John Davis',   avatar: '👨', points: 1180, streak: 15, isCurrentUser: false),
-    _RankUser(rank: 5,  name: 'Maria Garcia', avatar: '👩', points: 1050, streak: 10, isCurrentUser: false),
-    _RankUser(rank: 6,  name: 'Bạn',          avatar: '👤', points: 980,  streak: 7,  isCurrentUser: true),
-    _RankUser(rank: 7,  name: 'Lisa Brown',   avatar: '👩', points: 890,  streak: 5,  isCurrentUser: false),
-    _RankUser(rank: 8,  name: 'Mike Johnson', avatar: '👨', points: 750,  streak: 12, isCurrentUser: false),
-    _RankUser(rank: 9,  name: 'Anna Lee',     avatar: '👩', points: 680,  streak: 3,  isCurrentUser: false),
-    _RankUser(rank: 10, name: 'Tom White',    avatar: '👨', points: 590,  streak: 6,  isCurrentUser: false),
+    _RankUser(
+      rank: 4,
+      name: 'John Davis',
+      avatar: '👨',
+      points: 1180,
+      streak: 15,
+      isCurrentUser: false,
+    ),
+    _RankUser(
+      rank: 5,
+      name: 'Maria Garcia',
+      avatar: '👩',
+      points: 1050,
+      streak: 10,
+      isCurrentUser: false,
+    ),
+    _RankUser(
+      rank: 6,
+      name: 'Bạn',
+      avatar: '👤',
+      points: 980,
+      streak: 7,
+      isCurrentUser: true,
+    ),
+    _RankUser(
+      rank: 7,
+      name: 'Lisa Brown',
+      avatar: '👩',
+      points: 890,
+      streak: 5,
+      isCurrentUser: false,
+    ),
+    _RankUser(
+      rank: 8,
+      name: 'Mike Johnson',
+      avatar: '👨',
+      points: 750,
+      streak: 12,
+      isCurrentUser: false,
+    ),
+    _RankUser(
+      rank: 9,
+      name: 'Anna Lee',
+      avatar: '👩',
+      points: 680,
+      streak: 3,
+      isCurrentUser: false,
+    ),
+    _RankUser(
+      rank: 10,
+      name: 'Tom White',
+      avatar: '👨',
+      points: 590,
+      streak: 6,
+      isCurrentUser: false,
+    ),
   ];
 
   @override
@@ -53,13 +123,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     GestureDetector(
                       onTap: () => context.go('/home'),
                       child: Container(
-                        width: 40, height: 40,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(Icons.arrow_back_rounded,
-                            size: 20, color: Color(0xFF374151)),
+                        child: const Icon(
+                          Icons.arrow_back_rounded,
+                          size: 20,
+                          color: Color(0xFF374151),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -67,14 +141,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Bảng Xếp Hạng',
-                              style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF111827))),
-                          Text('Xếp hạng tuần này',
-                              style: TextStyle(
-                                  fontSize: 13, color: Color(0xFF6B7280))),
+                          Text(
+                            'Bảng Xếp Hạng',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                          Text(
+                            'Xếp hạng tuần này',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -120,11 +201,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   const SizedBox(height: 24),
                   _PodiumSection(users: _topThree),
                   const SizedBox(height: 16),
-                  const Text('Tất Cả Xếp Hạng',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827))),
+                  const Text(
+                    'Tất Cả Xếp Hạng',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   ..._otherUsers.map(
                     (u) => Padding(
@@ -201,29 +285,33 @@ class _TabBtn extends StatelessWidget {
             boxShadow: selected
                 ? const [
                     BoxShadow(
-                        color: Color(0x1A000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 1))
+                      color: Color(0x1A000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 1),
+                    ),
                   ]
                 : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 16,
-                  color: selected
-                      ? const Color(0xFF111827)
-                      : const Color(0xFF6B7280)),
+              Icon(
+                icon,
+                size: 16,
+                color: selected
+                    ? const Color(0xFF111827)
+                    : const Color(0xFF6B7280),
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? const Color(0xFF111827)
-                        : const Color(0xFF6B7280)),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: selected
+                      ? const Color(0xFF111827)
+                      : const Color(0xFF6B7280),
+                ),
               ),
             ],
           ),
@@ -275,24 +363,31 @@ class _PodiumSection extends StatelessWidget {
                       height: 68,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                            colors: grad,
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight),
+                          colors: grad,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         shape: BoxShape.circle,
                         border: user.isCurrentUser
                             ? Border.all(
-                                color: const Color(0xFFFA5C5C), width: 3)
+                                color: const Color(0xFFFA5C5C),
+                                width: 3,
+                              )
                             : null,
                         boxShadow: [
                           BoxShadow(
-                              color: grad.last.withValues(alpha: 0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4))
+                            color: grad.last.withValues(alpha: 0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Center(
-                          child: Text(user.avatar,
-                              style: const TextStyle(fontSize: 30))),
+                        child: Text(
+                          user.avatar,
+                          style: const TextStyle(fontSize: 30),
+                        ),
+                      ),
                     ),
                     Positioned(
                       bottom: -8,
@@ -305,13 +400,16 @@ class _PodiumSection extends StatelessWidget {
                           border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: Center(
-                          child: Text('${user.rank}',
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: user.rank == 1
-                                      ? const Color(0xFF374151)
-                                      : Colors.white)),
+                          child: Text(
+                            '${user.rank}',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: user.rank == 1
+                                  ? const Color(0xFF374151)
+                                  : Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -321,9 +419,10 @@ class _PodiumSection extends StatelessWidget {
                 Text(
                   user.name.split(' ').first,
                   style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF111827)),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
@@ -331,11 +430,14 @@ class _PodiumSection extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text('⭐', style: TextStyle(fontSize: 12)),
-                    Text('${user.points}',
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF111827))),
+                    Text(
+                      '${user.points}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -346,27 +448,33 @@ class _PodiumSection extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                        colors: grad,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight),
+                      colors: grad,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        topRight: Radius.circular(12)),
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                          color: grad.last.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, -2))
+                        color: grad.last.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, -2),
+                      ),
                     ],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('🔥 ${user.streak}d',
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70)),
+                      Text(
+                        '🔥 ${user.streak}d',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -395,7 +503,10 @@ class _RankCard extends StatelessWidget {
             : null,
         boxShadow: const [
           BoxShadow(
-              color: Color(0x0F000000), blurRadius: 8, offset: Offset(0, 2))
+            color: Color(0x0F000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -409,11 +520,14 @@ class _RankCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: Text('${user.rank}',
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF6B7280))),
+              child: Text(
+                '${user.rank}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -422,14 +536,15 @@ class _RankCard extends StatelessWidget {
             height: 44,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                  colors: [Color(0xFFFEC288), Color(0xFFFBEF76)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight),
+                colors: [Color(0xFFFEC288), Color(0xFFFBEF76)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
             ),
             child: Center(
-                child: Text(user.avatar,
-                    style: const TextStyle(fontSize: 22))),
+              child: Text(user.avatar, style: const TextStyle(fontSize: 22)),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -439,35 +554,47 @@ class _RankCard extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(user.name,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827)),
-                          overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        user.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF111827),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     if (user.isCurrentUser) ...[
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFA5C5C),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text('Bạn',
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
+                        child: const Text(
+                          'Bạn',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ],
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text('🔥 ${user.streak} ngày',
-                    style: const TextStyle(
-                        fontSize: 12, color: Color(0xFF9CA3AF))),
+                Text(
+                  '🔥 ${user.streak} ngày',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                ),
               ],
             ),
           ),
@@ -475,11 +602,14 @@ class _RankCard extends StatelessWidget {
             children: [
               const Text('⭐', style: TextStyle(fontSize: 16)),
               const SizedBox(width: 2),
-              Text('${user.points}',
-                  style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827))),
+              Text(
+                '${user.points}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
+              ),
             ],
           ),
         ],
@@ -495,15 +625,17 @@ class _LeaderboardCTA extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-            colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight),
+          colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x40FA5C5C),
-              blurRadius: 16,
-              offset: Offset(0, 6))
+            color: Color(0x40FA5C5C),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(20),
@@ -517,15 +649,19 @@ class _LeaderboardCTA extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Leo Lên Cao Hơn!',
-                        style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    Text(
+                      'Leo Lên Cao Hơn!',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                     SizedBox(height: 2),
-                    Text('Hoàn thành bài học để kiếm thêm XP',
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.white70)),
+                    Text(
+                      'Hoàn thành bài học để kiếm thêm XP',
+                      style: TextStyle(fontSize: 13, color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
@@ -543,9 +679,10 @@ class _LeaderboardCTA extends StatelessWidget {
                 shape: const StadiumBorder(),
                 elevation: 0,
               ),
-              child: const Text('Bắt Đầu Học',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Bắt Đầu Học',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -570,69 +707,143 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   static const _achievements = [
     _AchievItem(
-        id: 1, title: 'Bước Đầu Tiên', desc: 'Hoàn thành bài học đầu tiên',
-        icon: '🎯', unlocked: true,
-        gradStart: Color(0xFFFBEF76), gradEnd: Color(0xFFFEC288),
-        date: '2 ngày trước', rarity: 'Thường'),
+      id: 1,
+      title: 'Bước Đầu Tiên',
+      desc: 'Hoàn thành bài học đầu tiên',
+      icon: '🎯',
+      unlocked: true,
+      gradStart: Color(0xFFFBEF76),
+      gradEnd: Color(0xFFFEC288),
+      date: '2 ngày trước',
+      rarity: 'Thường',
+    ),
     _AchievItem(
-        id: 2, title: 'Chiến Binh Tuần', desc: 'Duy trì chuỗi 7 ngày',
-        icon: '🔥', unlocked: true,
-        gradStart: Color(0xFFFA5C5C), gradEnd: Color(0xFFFD8A6B),
-        date: '1 ngày trước', rarity: 'Hiếm'),
+      id: 2,
+      title: 'Chiến Binh Tuần',
+      desc: 'Duy trì chuỗi 7 ngày',
+      icon: '🔥',
+      unlocked: true,
+      gradStart: Color(0xFFFA5C5C),
+      gradEnd: Color(0xFFFD8A6B),
+      date: '1 ngày trước',
+      rarity: 'Hiếm',
+    ),
     _AchievItem(
-        id: 3, title: 'Điểm Tuyệt Đối', desc: 'Đạt 100% trong bất kỳ bài học',
-        icon: '⭐', unlocked: true,
-        gradStart: Color(0xFFFEC288), gradEnd: Color(0xFFFBEF76),
-        date: '3 ngày trước', rarity: 'Thường'),
+      id: 3,
+      title: 'Điểm Tuyệt Đối',
+      desc: 'Đạt 100% trong bất kỳ bài học',
+      icon: '⭐',
+      unlocked: true,
+      gradStart: Color(0xFFFEC288),
+      gradEnd: Color(0xFFFBEF76),
+      date: '3 ngày trước',
+      rarity: 'Thường',
+    ),
     _AchievItem(
-        id: 4, title: 'Học Viên Nhanh', desc: 'Hoàn thành 5 bài học trong ngày',
-        icon: '⚡', unlocked: true,
-        gradStart: Color(0xFFFD8A6B), gradEnd: Color(0xFFFA5C5C),
-        date: '5 ngày trước', rarity: 'Hiếm'),
+      id: 4,
+      title: 'Học Viên Nhanh',
+      desc: 'Hoàn thành 5 bài học trong ngày',
+      icon: '⚡',
+      unlocked: true,
+      gradStart: Color(0xFFFD8A6B),
+      gradEnd: Color(0xFFFA5C5C),
+      date: '5 ngày trước',
+      rarity: 'Hiếm',
+    ),
     _AchievItem(
-        id: 5, title: 'Bậc Thầy Từ Vựng', desc: 'Học 100 từ mới',
-        icon: '📚', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 65, rarity: 'Sử Thi'),
+      id: 5,
+      title: 'Bậc Thầy Từ Vựng',
+      desc: 'Học 100 từ mới',
+      icon: '📚',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      progress: 65,
+      rarity: 'Sử Thi',
+    ),
     _AchievItem(
-        id: 6, title: 'Cánh Bướm Xã Hội', desc: 'Thêm 5 bạn bè',
-        icon: '👥', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 3, total: 5, rarity: 'Thường'),
+      id: 6,
+      title: 'Cánh Bướm Xã Hội',
+      desc: 'Thêm 5 bạn bè',
+      icon: '👥',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      progress: 3,
+      total: 5,
+      rarity: 'Thường',
+    ),
     _AchievItem(
-        id: 7, title: 'Người Chạy Marathon', desc: 'Chuỗi 30 ngày',
-        icon: '🏃', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 15, total: 30, rarity: 'Sử Thi'),
+      id: 7,
+      title: 'Người Chạy Marathon',
+      desc: 'Chuỗi 30 ngày',
+      icon: '🏃',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      progress: 15,
+      total: 30,
+      rarity: 'Sử Thi',
+    ),
     _AchievItem(
-        id: 8, title: 'Nhà Vô Địch Quiz', desc: 'Vượt qua 20 bài kiểm tra',
-        icon: '🎓', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 12, total: 20, rarity: 'Hiếm'),
+      id: 8,
+      title: 'Nhà Vô Địch Quiz',
+      desc: 'Vượt qua 20 bài kiểm tra',
+      icon: '🎓',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      progress: 12,
+      total: 20,
+      rarity: 'Hiếm',
+    ),
     _AchievItem(
-        id: 9, title: 'Chim Sớm', desc: 'Học trước 8 giờ sáng',
-        icon: '🌅', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        rarity: 'Hiếm'),
+      id: 9,
+      title: 'Chim Sớm',
+      desc: 'Học trước 8 giờ sáng',
+      icon: '🌅',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      rarity: 'Hiếm',
+    ),
     _AchievItem(
-        id: 10, title: 'Cú Đêm', desc: 'Học sau 10 giờ tối',
-        icon: '🦉', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        rarity: 'Hiếm'),
+      id: 10,
+      title: 'Cú Đêm',
+      desc: 'Học sau 10 giờ tối',
+      icon: '🦉',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      rarity: 'Hiếm',
+    ),
     _AchievItem(
-        id: 11, title: 'Huyền Thoại', desc: 'Hoàn thành tất cả đơn vị',
-        icon: '👑', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 1, total: 10, rarity: 'Huyền Thoại'),
+      id: 11,
+      title: 'Huyền Thoại',
+      desc: 'Hoàn thành tất cả đơn vị',
+      icon: '👑',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      progress: 1,
+      total: 10,
+      rarity: 'Huyền Thoại',
+    ),
     _AchievItem(
-        id: 12, title: 'Chuyên Gia Phát Âm', desc: '90%+ trong 10 bài nói',
-        icon: '🎤', unlocked: false,
-        gradStart: Color(0xFFD1D5DB), gradEnd: Color(0xFF9CA3AF),
-        progress: 4, total: 10, rarity: 'Sử Thi'),
+      id: 12,
+      title: 'Chuyên Gia Phát Âm',
+      desc: '90%+ trong 10 bài nói',
+      icon: '🎤',
+      unlocked: false,
+      gradStart: Color(0xFFD1D5DB),
+      gradEnd: Color(0xFF9CA3AF),
+      progress: 4,
+      total: 10,
+      rarity: 'Sử Thi',
+    ),
   ];
 
-  int get _unlockedCount =>
-      _achievements.where((a) => a.unlocked).length;
+  int get _unlockedCount => _achievements.where((a) => a.unlocked).length;
 
   @override
   Widget build(BuildContext context) {
@@ -665,8 +876,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               color: const Color(0xFFF3F4F6),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Icon(Icons.arrow_back_rounded,
-                                size: 20, color: Color(0xFF374151)),
+                            child: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 20,
+                              color: Color(0xFF374151),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -674,15 +888,21 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Thành Tích',
-                                  style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF111827))),
-                              Text('Các cột mốc học tập của bạn',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF6B7280))),
+                              Text(
+                                'Thành Tích',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                              Text(
+                                'Các cột mốc học tập của bạn',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -694,35 +914,40 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                            colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight),
+                          colors: [Color(0xFFFA5C5C), Color(0xFFFD8A6B)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: const [
                           BoxShadow(
-                              color: Color(0x40FA5C5C),
-                              blurRadius: 16,
-                              offset: Offset(0, 6))
+                            color: Color(0x40FA5C5C),
+                            blurRadius: 16,
+                            offset: Offset(0, 6),
+                          ),
                         ],
                       ),
                       padding: const EdgeInsets.all(18),
                       child: Column(
                         children: [
                           Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Tiến Độ Tổng',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white)),
+                              const Text(
+                                'Tiến Độ Tổng',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                               Text(
                                 '${(_unlockedCount / _achievements.length * 100).round()}%',
                                 style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ],
                           ),
@@ -737,9 +962,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                 value: value,
                                 minHeight: 10,
                                 backgroundColor: Colors.white30,
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -749,7 +974,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                             child: Text(
                               '$_unlockedCount trong ${_achievements.length} thành tích đã mở khóa',
                               style: const TextStyle(
-                                  fontSize: 13, color: Colors.white70),
+                                fontSize: 13,
+                                color: Colors.white70,
+                              ),
                             ),
                           ),
                         ],
@@ -770,11 +997,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.72,
-                        ),
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.72,
+                            ),
                         itemCount: _achievements.length,
                         itemBuilder: (context, index) {
                           final a = _achievements[index];
@@ -793,34 +1020,37 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                              color: const Color(0xFFE5E7EB), width: 2),
+                            color: const Color(0xFFE5E7EB),
+                            width: 2,
+                          ),
                           boxShadow: const [
-                            BoxShadow(
-                                color: Color(0x0F000000), blurRadius: 8)
+                            BoxShadow(color: Color(0x0F000000), blurRadius: 8),
                           ],
                         ),
                         padding: const EdgeInsets.all(18),
                         child: Row(
                           children: [
-                            const Text('🎯',
-                                style: TextStyle(fontSize: 44)),
+                            const Text('🎯', style: TextStyle(fontSize: 44)),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Tiếp Tục Cố Gắng!',
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF111827))),
+                                  const Text(
+                                    'Tiếp Tục Cố Gắng!',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF111827),
+                                    ),
+                                  ),
                                   const SizedBox(height: 2),
                                   Text(
                                     '${_achievements.length - _unlockedCount} thành tích nữa cần mở khóa',
                                     style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Color(0xFF6B7280)),
+                                      fontSize: 13,
+                                      color: Color(0xFF6B7280),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -839,8 +1069,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           // ── Modal overlay ──
           if (_selectedId != null)
             _AchievModal(
-              achievement: _achievements
-                  .firstWhere((a) => a.id == _selectedId),
+              achievement: _achievements.firstWhere((a) => a.id == _selectedId),
               onClose: () => setState(() => _selectedId = null),
             ),
         ],
@@ -889,17 +1118,19 @@ class _AchievCard extends StatelessWidget {
               ? LinearGradient(
                   colors: [a.gradStart, a.gradEnd],
                   begin: Alignment.topLeft,
-                  end: Alignment.bottomRight)
+                  end: Alignment.bottomRight,
+                )
               : null,
           color: a.unlocked ? null : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-                color: a.unlocked
-                    ? a.gradEnd.withValues(alpha: 0.3)
-                    : const Color(0x0F000000),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
+              color: a.unlocked
+                  ? a.gradEnd.withValues(alpha: 0.3)
+                  : const Color(0x0F000000),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         padding: const EdgeInsets.all(14),
@@ -910,22 +1141,18 @@ class _AchievCard extends StatelessWidget {
             Align(
               alignment: Alignment.topRight,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: a.unlocked
-                      ? Colors.white24
-                      : const Color(0xFFE5E7EB),
+                  color: a.unlocked ? Colors.white24 : const Color(0xFFE5E7EB),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   a.rarity,
                   style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: a.unlocked
-                          ? Colors.white
-                          : const Color(0xFF6B7280)),
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: a.unlocked ? Colors.white : const Color(0xFF6B7280),
+                  ),
                 ),
               ),
             ),
@@ -933,10 +1160,13 @@ class _AchievCard extends StatelessWidget {
             // Icon with lock overlay
             Stack(
               children: [
-                Text(a.icon,
-                    style: TextStyle(
-                        fontSize: 42,
-                        color: a.unlocked ? null : const Color(0x40000000))),
+                Text(
+                  a.icon,
+                  style: TextStyle(
+                    fontSize: 42,
+                    color: a.unlocked ? null : const Color(0x40000000),
+                  ),
+                ),
                 if (!a.unlocked)
                   Positioned(
                     top: 6,
@@ -948,8 +1178,11 @@ class _AchievCard extends StatelessWidget {
                         color: const Color(0xFF9CA3AF).withValues(alpha: 0.85),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.lock_rounded,
-                          size: 13, color: Colors.white),
+                      child: const Icon(
+                        Icons.lock_rounded,
+                        size: 13,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
               ],
@@ -958,9 +1191,10 @@ class _AchievCard extends StatelessWidget {
             Text(
               a.title,
               style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: a.unlocked ? Colors.white : const Color(0xFF6B7280)),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: a.unlocked ? Colors.white : const Color(0xFF6B7280),
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -968,10 +1202,9 @@ class _AchievCard extends StatelessWidget {
             Text(
               a.desc,
               style: TextStyle(
-                  fontSize: 11,
-                  color: a.unlocked
-                      ? Colors.white70
-                      : const Color(0xFF9CA3AF)),
+                fontSize: 11,
+                color: a.unlocked ? Colors.white70 : const Color(0xFF9CA3AF),
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -981,15 +1214,18 @@ class _AchievCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Tiến độ',
-                      style: TextStyle(
-                          fontSize: 10, color: Color(0xFF9CA3AF))),
+                  const Text(
+                    'Tiến độ',
+                    style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                  ),
                   Text(
                     a.total != null
                         ? '${a.progress}/${a.total}'
                         : '${a.progress}%',
                     style: const TextStyle(
-                        fontSize: 10, color: Color(0xFF9CA3AF)),
+                      fontSize: 10,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
                 ],
               ),
@@ -1003,16 +1239,18 @@ class _AchievCard extends StatelessWidget {
                   minHeight: 6,
                   backgroundColor: const Color(0xFFD1D5DB),
                   valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF9CA3AF)),
+                    Color(0xFF9CA3AF),
+                  ),
                 ),
               ),
             ],
             // Unlock date
             if (a.unlocked && a.date != null) ...[
               const SizedBox(height: 8),
-              Text(a.date!,
-                  style: const TextStyle(
-                      fontSize: 10, color: Colors.white60)),
+              Text(
+                a.date!,
+                style: const TextStyle(fontSize: 10, color: Colors.white60),
+              ),
             ],
           ],
         ),
@@ -1043,7 +1281,7 @@ class _AchievModal extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 32)
+                  BoxShadow(color: Colors.black26, blurRadius: 32),
                 ],
               ),
               padding: const EdgeInsets.all(28),
@@ -1056,53 +1294,71 @@ class _AchievModal extends StatelessWidget {
                     height: 110,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                          colors: [a.gradStart, a.gradEnd],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight),
+                        colors: [a.gradStart, a.gradEnd],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                            color: a.gradEnd.withValues(alpha: 0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8))
+                          color: a.gradEnd.withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
                       ],
                     ),
                     child: Center(
-                        child: Text(a.icon,
-                            style: const TextStyle(fontSize: 54))),
+                      child: Text(a.icon, style: const TextStyle(fontSize: 54)),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Rarity badge
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 5),
+                      horizontal: 14,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(a.rarity,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF6B7280))),
+                    child: Text(
+                      a.rarity,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  Text(a.title,
-                      style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF111827)),
-                      textAlign: TextAlign.center),
+                  Text(
+                    a.title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 6),
-                  Text(a.desc,
-                      style: const TextStyle(
-                          fontSize: 14, color: Color(0xFF6B7280)),
-                      textAlign: TextAlign.center),
+                  Text(
+                    a.desc,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   if (a.date != null) ...[
                     const SizedBox(height: 6),
-                    Text('Mở khóa ${a.date}',
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF9CA3AF))),
+                    Text(
+                      'Mở khóa ${a.date}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 20),
                   SizedBox(
@@ -1112,15 +1368,17 @@ class _AchievModal extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFA5C5C),
                         foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: const StadiumBorder(),
                         elevation: 0,
                       ),
-                      child: const Text('Đóng',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Đóng',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],

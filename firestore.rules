@@ -1,18 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     match /users/{userId} {
-      allow read, delete: if isOwner(userId);
+      // Public profile for authenticated users (needed for global leaderboard
+      // and searching by email).
+      allow get, list: if isSignedIn();
+      allow delete: if isOwner(userId);
       allow create: if isOwner(userId)
         && request.resource.data.id == request.auth.uid
         && request.resource.data.email is string
         && request.resource.data.hoTen is string;
       allow update: if isOwner(userId)
         && request.resource.data.id == request.auth.uid;
+
+      // Friend list of the current user.
+      match /friends/{friendUid} {
+        allow read, write: if isOwner(userId);
+      }
 
       // User-created vocabulary topics
       match /topics/{topicId} {
@@ -23,6 +35,27 @@ service cloud.firestore {
           allow read, write: if isOwner(userId);
         }
       }
+    }
+
+    match /friend_requests/{requestId} {
+      allow create: if isSignedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && request.resource.data.status == 'pending';
+      allow update: if isSignedIn()
+        && resource.data.toUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.fromUid == resource.data.fromUid
+        && request.resource.data.toUid == resource.data.toUid
+        && request.resource.data.status == 'accepted';
+      // get: cho phép đọc doc chưa tồn tại (resource == null) để check trùng lặp
+      allow get: if isSignedIn()
+        && (resource == null
+            || resource.data.fromUid == request.auth.uid
+            || resource.data.toUid == request.auth.uid);
+      allow list, delete: if isSignedIn()
+        && (resource.data.fromUid == request.auth.uid
+            || resource.data.toUid == request.auth.uid);
     }
   }
 }

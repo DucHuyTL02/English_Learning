@@ -10,6 +10,7 @@ import 'exercise_session.dart';
 import 'learning_content_service.dart';
 import 'notification_service.dart';
 import 'route_state_service.dart';
+import 'social_service.dart';
 import 'tts_service.dart';
 import 'user_topic_service.dart';
 
@@ -32,6 +33,7 @@ class AppServices {
   static final TtsService tts = TtsService.instance;
   static final ExerciseSession exerciseSession = ExerciseSession.instance;
   static final RouteStateService routeStateService = RouteStateService();
+  static final SocialService socialService = SocialService();
   static final NotificationService notificationService = NotificationService(
     database: database,
   );
@@ -44,7 +46,18 @@ class AppServices {
     );
     await notificationService.initialize();
     final user = await userRepository.getActiveUser();
-    if (user != null) {
+    if (user != null && user.id != null) {
+      final totalXp = await learningRepository.getTotalXp(user.id!);
+      final currentStreak = await learningRepository.getCurrentStreak(user.id!);
+      try {
+        await socialService.syncCurrentUserStats(
+          totalXp: totalXp,
+          streak: currentStreak,
+          localUser: user,
+        );
+      } catch (_) {
+        // Keep app startup resilient when Firestore is temporarily unavailable.
+      }
       await notificationService.maybeSendDailyStudyReminder(user: user);
     }
     await routeStateService.initialize();

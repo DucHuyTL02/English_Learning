@@ -3332,6 +3332,20 @@ class _LessonCompletedScreenState extends State<LessonCompletedScreen>
       xpEarned: _xp,
     );
 
+    final totalXp = await AppServices.learningRepository.getTotalXp(user.id!);
+    final currentStreak = await AppServices.learningRepository.getCurrentStreak(
+      user.id!,
+    );
+    try {
+      await AppServices.socialService.syncCurrentUserStats(
+        totalXp: totalXp,
+        streak: currentStreak,
+        localUser: user,
+      );
+    } catch (_) {
+      // Keep lesson completion flow smooth even if remote sync fails.
+    }
+
     final lesson = await AppServices.learningRepository.getLessonById(
       safeLessonId,
     );
@@ -4011,82 +4025,91 @@ class _FlashcardScreenState extends State<FlashcardScreen>
             ),
           ),
           Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(card.illustration, style: const TextStyle(fontSize: 80)),
-                  const SizedBox(height: 22),
-                  Text(
-                    card.word,
-                    style: const TextStyle(
-                      fontSize: 44,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 40,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      card.illustration,
+                      style: const TextStyle(fontSize: 80),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    card.phonetic,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'monospace',
-                      color: Colors.white.withValues(alpha: 0.9),
+                    const SizedBox(height: 22),
+                    Text(
+                      card.word,
+                      style: const TextStyle(
+                        fontSize: 44,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 26),
-                  GestureDetector(
-                    onTap: () => AppServices.tts.speak(card.word),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
+                    const SizedBox(height: 10),
+                    Text(
+                      card.phonetic,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'monospace',
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.22),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.volume_up_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Phát Âm',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.95),
-                              fontWeight: FontWeight.w600,
+                    ),
+                    const SizedBox(height: 26),
+                    GestureDetector(
+                      onTap: () => AppServices.tts.speak(card.word),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.volume_up_rounded,
+                              color: Colors.white,
+                              size: 22,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.flip_rounded,
-                        size: 15,
-                        color: Colors.white54,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Nhấn để xem nghĩa',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.7),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Phát Âm',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.95),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 22),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.flip_rounded,
+                          size: 15,
+                          color: Colors.white54,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Nhấn để xem nghĩa',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -4109,74 +4132,77 @@ class _FlashcardScreenState extends State<FlashcardScreen>
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Nghĩa',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF9CA3AF),
-              letterSpacing: 0.5,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Nghĩa',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF9CA3AF),
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            card.translation,
-            style: const TextStyle(
-              fontSize: 38,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
+            const SizedBox(height: 10),
+            Text(
+              card.translation,
+              style: const TextStyle(
+                fontSize: 38,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF111827),
+              ),
             ),
-          ),
-          const SizedBox(height: 22),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+            const SizedBox(height: 22),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ví Dụ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '"${card.example}"',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF374151),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 20),
+            Text(card.illustration, style: const TextStyle(fontSize: 46)),
+            const SizedBox(height: 16),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'Ví Dụ',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9CA3AF),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                Icon(Icons.flip_rounded, size: 15, color: Color(0xFFD1D5DB)),
+                SizedBox(width: 6),
                 Text(
-                  '"${card.example}"',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                    height: 1.4,
-                  ),
+                  'Nhấn để lật lại',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(card.illustration, style: const TextStyle(fontSize: 46)),
-          const SizedBox(height: 16),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.flip_rounded, size: 15, color: Color(0xFFD1D5DB)),
-              SizedBox(width: 6),
-              Text(
-                'Nhấn để lật lại',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
