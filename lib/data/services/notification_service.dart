@@ -58,8 +58,8 @@ class NotificationService {
   }) async {
     if (user.id == null) return;
 
-    final title = 'Hoan thanh chu de: $lessonTitle';
-    final message = 'Ban dat $score% va nhan +$xpEarned XP. Tiep tuc nhe!';
+    final title = 'Hoàn thành chủ đề: $lessonTitle';
+    final message = 'Bạn đã đạt $score% và nhận +$xpEarned XP. Tiếp tục nhé!';
     await _insertNotification(
       userId: user.id!,
       type: 'lesson_completed',
@@ -88,8 +88,8 @@ class NotificationService {
     await _insertNotification(
       userId: user.id!,
       type: 'friend_request_received',
-      title: 'Loi moi ket ban moi',
-      message: '$sender da gui loi moi ket ban cho ban.',
+      title: 'Lời mời kết bạn mới',
+      message: '$sender đã gửi lời mời kết bạn cho bạn.',
       payload:
           '/friends?requestId=$trimmedId&event=${Uri.encodeQueryComponent(token)}',
       showSystem: user.notificationsEnabled,
@@ -115,8 +115,8 @@ class NotificationService {
     await _insertNotification(
       userId: user.id!,
       type: 'friend_request_accepted',
-      title: 'Loi moi da duoc chap nhan',
-      message: '$friend da chap nhan loi moi ket ban cua ban.',
+      title: 'Lời mời đã được chấp nhận',
+      message: '$friend đã chấp nhận lời mời kết bạn của bạn.',
       payload:
           '/friends?acceptedRequestId=$trimmedId&event=${Uri.encodeQueryComponent(token)}',
       showSystem: user.notificationsEnabled,
@@ -140,9 +140,9 @@ class NotificationService {
     await _insertNotification(
       userId: user.id!,
       type: 'leaderboard_rank_up',
-      title: 'Ban vua thang hang!',
+      title: 'Bạn vua thăng hạng!',
       message:
-          'Ban da tang tu hang #$previousRank len #$currentRank tren bang xep hang ban be.',
+          'Bạn đã tăng từ hạng #$previousRank lên #$currentRank trên bảng xếp hạng bạn bè.',
       payload: '/leaderboard',
       showSystem: user.notificationsEnabled,
       channelId: _leaderboardChannelId,
@@ -163,8 +163,8 @@ class NotificationService {
     await _insertNotification(
       userId: user.id!,
       type: 'leaderboard_overtaken',
-      title: 'Ban vua bi vuot hang',
-      message: '$friend vua vuot ban tren bang xep hang ban be.',
+      title: 'Bạn vua bị vượt hạng',
+      message: '$friend vua vượt bạn trên bảng xếp hạng bạn bè.',
       payload: '/leaderboard',
       showSystem: user.notificationsEnabled,
       channelId: _leaderboardChannelId,
@@ -191,8 +191,8 @@ class NotificationService {
     await _insertNotification(
       userId: user.id!,
       type: 'study_reminder',
-      title: 'Nhac hoc tap hom nay',
-      message: 'Danh 10 phut luyen tieng Anh de giu chuoi hoc nhe!',
+      title: 'Nhắc học tập hôm nay',
+      message: 'Hãy dành 10 phút luyện tiếng Anh để giữ chuỗi học tập nhe!',
       payload: '/home',
       showSystem: true,
       channelId: _reminderChannelId,
