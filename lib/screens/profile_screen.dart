@@ -208,11 +208,13 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           .countSavedWords();
       int streak = 0;
       int totalXp = 0;
+      int learnedFromLessons = 0;
       if (user != null && user.id != null) {
         streak = await AppServices.learningRepository.getCurrentStreak(
           user.id!,
         );
         totalXp = await AppServices.learningRepository.getTotalXp(user.id!);
+        learnedFromLessons = await AppServices.learningRepository.countLearnedWordsFromLessons(user.id!);
       }
       if (!mounted) return;
       final xpPerLevel = 500;
@@ -224,7 +226,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           _profileName = user.displayName;
           _avatarEmoji = user.avatarEmoji;
         }
-        _savedWordCount = savedWordCount;
+        _savedWordCount = savedWordCount + learnedFromLessons;
         _streak = streak;
         _totalXp = totalXp;
         _level = level;

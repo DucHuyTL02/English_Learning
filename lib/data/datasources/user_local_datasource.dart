@@ -84,6 +84,11 @@ class UserLocalDataSource {
         whereArgs: [userId],
       );
       await txn.delete(
+        AppDatabase.notificationsTable,
+        where: 'user_id = ?',
+        whereArgs: [userId],
+      );
+      await txn.delete(
         AppDatabase.dailyActivityTable,
         where: 'user_id = ?',
         whereArgs: [userId],

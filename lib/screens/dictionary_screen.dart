@@ -1625,11 +1625,11 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(bottom: bottomInset),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // â”€â”€ Handle â”€â”€
-          const SizedBox(height: 12),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
           Container(
             width: 40,
             height: 4,
@@ -1830,8 +1830,7 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
             ),
 
           // â”€â”€ Topics list â”€â”€
-          Flexible(
-            child: _isLoading
+          _isLoading
                 ? const Padding(
                     padding: EdgeInsets.all(32),
                     child: Center(child: CircularProgressIndicator()),
@@ -1859,6 +1858,7 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
                   )
                 : ListView.builder(
                     shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 8,
@@ -1947,8 +1947,6 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
                       );
                     },
                   ),
-          ),
-
 
           // Example field
           Padding(
@@ -2035,6 +2033,7 @@ class _SaveToTopicSheetState extends State<_SaveToTopicSheet> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

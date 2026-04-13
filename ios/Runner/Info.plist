@@ -1,11 +1,11 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>English Learning</string>
+	<string>LinguaJoy</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>english_learning</string>
+	<string>LinguaJoy</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -46,11 +46,11 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>English Learning cáº§n quyá»n micrÃ´ Ä‘á»ƒ chuyá»ƒn lá»i nÃ³i thÃ nh vÄƒn báº£n khi báº¡n lÃ m bÃ i nÃ³i.</string>
+	<string>LinguaJoy cần quyền micrô để ghi âm khi luyện phát âm.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>English Learning cáº§n quyá»n nháº­n diá»‡n giá»ng nÃ³i Ä‘á»ƒ cháº¥m Ä‘iá»ƒm bÃ i nÃ³i dá»±a trÃªn ná»™i dung báº¡n phÃ¡t Ã¢m.</string>
+	<string>LinguaJoy cần nhận diện giọng nói để kiểm tra và chấm điểm phát âm.</string>
 	<key>NSUserNotificationsUsageDescription</key>
-	<string>English Learning sử dụng thông báo để nhắc bạn học tập và báo khi hoàn thành bài học.</string>
+	<string>LinguaJoy gửi thông báo để nhắc nhở và cập nhật quá trình học tập.</string>
 </dict>
 </plist>
 

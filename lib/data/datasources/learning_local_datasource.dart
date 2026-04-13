@@ -144,6 +144,24 @@ class LearningLocalDataSource {
     return maps.map((m) => m['lesson_id'] as int).toSet();
   }
 
+  Future<int> countLearnedWordsFromLessons(int userId) async {
+    final db = await _appDatabase.database;
+    final result = await db.rawQuery(
+      '''
+      SELECT COUNT(DISTINCT LOWER(TRIM(correct_answer))) as word_count 
+      FROM ${AppDatabase.exercisesTable} 
+      WHERE lesson_id IN (
+        SELECT lesson_id 
+        FROM ${AppDatabase.userProgressTable} 
+        WHERE user_id = ?
+      )
+      ''',
+      [userId],
+    );
+    if (result.isEmpty) return 0;
+    return (result.first['word_count'] as num?)?.toInt() ?? 0;
+  }
+
   Future<int> getTotalXp(int userId) async {
     final db = await _appDatabase.database;
     final result = await db.rawQuery(

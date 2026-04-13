@@ -121,6 +121,14 @@ class LearningRepository {
     }
   }
 
+  Future<int> countLearnedWordsFromLessons(int userId) async {
+    try {
+      return await _ds.countLearnedWordsFromLessons(userId);
+    } catch (_) {
+      throw LearningRepositoryException('Không thể tải số từ vựng khóa học.');
+    }
+  }
+
   Future<int> getTotalXp(int userId) async {
     try {
       final remote = await _getRemoteStats(userId);
